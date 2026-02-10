@@ -1,0 +1,4 @@
+Require: python 3.7
+Steps:
+    1.  pip3 install -i https://pypi.tuna.tsinghua.edu.cn/simple -r requirements.txt
+    2.  pytest -vs --maxfail 1 --host <HOST> --password <PASSWORD> --CRDVersion 1.0.0-master --alluredir ./allure-results/

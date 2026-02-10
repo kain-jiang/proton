@@ -1,0 +1,110 @@
+depServices:
+  class-443:
+    ingressClass: class-443
+image:
+  job:
+    repository: public/ubuntu
+    tag: 22.04.20251014
+  pullPolicy: IfNotPresent
+  registry: acr.aishu.cn
+ingress:
+  auto-regstry-service-class-443:
+    append_service: []
+    class_name: class-443
+    enable: true
+    services:
+    - deploy-abandon
+  rule-443:
+    annotations:
+      nginx.ingress.kubernetes.io/affinity: cookie
+      nginx.ingress.kubernetes.io/configuration-snippet: 'more_set_headers ''Access-Control-Expose-Headers:
+        Location'';'
+      nginx.ingress.kubernetes.io/cors-allow-credentials: 'true'
+      nginx.ingress.kubernetes.io/cors-allow-headers: DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization,Location,pragma,X-Language
+      nginx.ingress.kubernetes.io/cors-allow-methods: GET,PUT,POST,DELETE,HEAD,OPTIONS
+      nginx.ingress.kubernetes.io/cors-allow-origin: '*'
+      nginx.ingress.kubernetes.io/enable-cors: 'true'
+      nginx.ingress.kubernetes.io/force-ssl-redirect: 'false'
+      nginx.ingress.kubernetes.io/proxy-body-size: 2048m
+      nginx.ingress.kubernetes.io/session-cookie-change-on-failure: 'true'
+      nginx.ingress.kubernetes.io/session-cookie-max-age: '1800'
+    append_service: []
+    class_name: class-443
+    enable: true
+    offline_service: []
+    release: nginx-ingress-controller-class-443
+    services:
+    - ecosearch
+    - ecoconfig-public
+    - portal-management
+    - audit-management
+    - document-sync-scheduling
+    - document-domain-management
+    - confidential-public
+    - deploy-service
+    - webservice
+    - webportal
+    - webmobile
+    - staticresourcemanagement
+    - autosheets
+    - collaboration-public
+    - sheet-public
+    - transformation
+    - infoinsight-quy
+    - infoinsight-stg
+    - egress-package-microservice
+    - encryption-microservice
+    - ecoindex-public
+    - kc-topic
+    - kc-mc
+    - kc-web
+    - label-recommend
+    - appstore-public
+    - appstore-static
+    - site-agent
+    - ossgatewaymanager-public
+    - osspolicy-public
+    - pipelinesensitivescan-public
+    - intelliinfo-public
+    - eantivirus-public
+    - capp-archive-proxy
+    - capp-scs-public
+    - capp-sap-cert-mgt-public
+    - capp-eetl-public
+    - capp-sap-edgp-public
+    - capp-model-public
+    - capp-permission-public
+    - capp-permission-proxy
+    - capp-sap-cert-mgt-ui
+    - capp-sap-edgp-link-conf-ui
+    - capp-sap-edgp-ui
+    - capp-model-ui
+    - capp-cmis-proxy-public
+    - applet-static
+    - file-collector
+    - proximate-access-public
+    - intelli-search-public
+    - deploy-web-service
+    - studio-web-service
+    - deploy-web-static
+    - studio-web-static
+    - staticresourcemanagement-host
+    - nodemgnt-host
+    - third-app-management-host
+    - license-host
+    - webconsolestatic
+    - webconsoleinterface
+    - webconsolethrift
+    - sheet-policy
+    - doc-center-public
+    - doc-center
+    - recommend
+    - similar-recommend
+    - smart-search-frontend
+    - sp-remote-deploy
+    - sp-certmgm-web
+    - identity-access-management-public
+    - session
+    - cognitive-assistant
+
+rootRedirect: anyshare

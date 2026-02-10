@@ -1,0 +1,44 @@
+{{- if .Values.config.enable }}
+{{- $net :=  (fromYaml (include "net" .)) -}}
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-ingress-{{ include "ingressClassName" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app-service: ingress-nginx-{{ include "ingressClassName" . }}
+  annotations:
+    prometheus.io/scrape: 'true'
+    prometheus.io/port: '{{.Values.service.healthzPort }}'
+    {{- with $.Values.service.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  type: {{ .Values.service.type }}
+{{- if .Values.service.enableDualStack }}
+  ipFamilies:
+  - IPv6
+  - IPv4
+  ipFamilyPolicy: PreferDualStack
+{{- end }}
+  selector:
+    app: ingress-nginx-{{ include "ingressClassName" . }}
+  ports:
+    {{- if gt ( $net.httpPort | int) 0 }}
+    - name: http
+      port: {{$net.httpPort}}
+      protocol: TCP
+      targetPort: {{$net.httpPort}}
+    {{- end }}
+    {{- if gt ( $net.httpsPort | int) 0 }}
+    - name: https
+      port: {{$net.httpsPort}}
+      protocol: TCP
+      targetPort: {{$net.httpsPort}}
+    {{- end }}
+    - name: healthz
+      port: {{.Values.service.healthzPort}}
+      protocol: TCP
+      targetPort: {{.Values.service.healthzPort}}
+{{- end }}

@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}
+  {{- if .Release.Namespace }}
+  namespace: {{ .Release.Namespace }}
+  {{- else}}
+  namespace: {{ .Values.namespace }}
+  {{- end}}
+  labels:
+    k8s-app: {{ .Release.Name }}
+    version: {{ .Values.image.NodeExporter.tag }}
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/path: "/metrics"
+    prometheus.io/port: "{{ .Values.service.port }}"
+spec:
+  type: ClusterIP
+  selector:
+    k8s-app: {{ .Release.Name }}
+    version: {{ .Values.image.NodeExporter.tag }}
+  ports:
+    - name: metrics
+      port: {{ .Values.service.port }}
+      targetPort: metrics
+      protocol: TCP

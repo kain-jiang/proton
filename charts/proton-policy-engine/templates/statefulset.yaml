@@ -1,0 +1,141 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ template "policy-engine.name" . }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ template "policy-engine.name" . }}
+spec:
+  serviceName: {{ template "policy-engine.name" . }}
+  podManagementPolicy: Parallel
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ template "policy-engine.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "policy-engine.name" . }}
+    spec:
+      securityContext:
+        fsGroup: 1001
+      initContainers:
+      - name: init-etcd
+        image: {{ template "policy-engine.etcd-image" . }}
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        env:
+        - name: ETCD_ENDPOINTS
+          value: "{{ .Values.depServices.etcd.endpoints }}"
+        - name: ETCDCTL_API
+          value: "3"
+        - name: useSSL
+          value: "{{ .Values.depServices.etcd.tlsConfig.requireSSL }}"
+        command:
+          - "/bin/sh"
+          - "-ecx"
+          - |
+            tlsArgs=""
+            if [ "$useSSL" = "true" ]; then
+              tlsArgs="--cert /etc/tls/server-cert.pem --cacert /etc/tls/ca.pem --key /etc/tls/server-key.pem"
+            fi
+            while true
+            do
+              if etcdctl endpoint health --endpoints=$ETCD_ENDPOINTS  $tlsArgs 2>&1 |  grep 'is healthy'; then
+                break
+              fi
+              echo 'waiting for etcd ready'
+              sleep 1
+            done
+{{- if .Values.depServices.etcd.tlsConfig.requireSSL }}
+        volumeMounts:
+        - name: ssl-file
+          mountPath: /etc/tls
+      volumes:
+      - name: ssl-file
+        secret:
+          secretName: {{ .Values.depServices.etcd.tlsConfig.secretName }}
+          items:
+          - key: {{ .Values.depServices.etcd.tlsConfig.certName }}
+            path: server-cert.pem
+          - key: {{ .Values.depServices.etcd.tlsConfig.keyName }}
+            path: server-key.pem
+          - key: {{ .Values.depServices.etcd.tlsConfig.caName }}
+            path: ca.pem
+{{- end }}
+      containers:
+      - name: policy-engine
+        image: {{ template "policy-engine.engine-image" . }}
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+        - name: engine
+          containerPort: 8180
+        env:
+        - name: TZ
+          value: {{ .Values.env.timezone }}
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: HOST
+          value: $(POD_NAME).{{ template "policy-engine.name" . }}
+        - name: CLUSTER_SIZE
+          value: '{{ .Values.replicaCount }}'
+        livenessProbe:
+          httpGet:
+            path: /health/alive
+            port: 8182
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 2
+          failureThreshold: 10
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: 8182
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 2
+          failureThreshold: 10
+        resources:
+          {{- with .Values.resources }}
+{{ toYaml . | indent 10 }}
+          {{- end }}
+        volumeMounts:
+        - name: policy-engine-datadir
+          mountPath: /var/lib/policy-engine
+        - name: policy-engine-configdir
+          mountPath: /etc/policy-engine-conf/
+{{- if .Values.depServices.etcd.tlsConfig.requireSSL }}
+        - name: ssl-file
+          mountPath: /etc/tls
+{{- end }}
+      volumes:
+      - name: policy-engine-configdir
+        configMap:
+          name: {{ template "policy-engine.name" . }}-cm
+          items:
+          - key: policy-engine.yaml
+            path: policy-engine.yaml
+{{- if .Values.depServices.etcd.tlsConfig.requireSSL }}
+      - name: ssl-file
+        secret:
+          secretName: {{ .Values.depServices.etcd.tlsConfig.secretName }}
+          items:
+          - key: {{ .Values.depServices.etcd.tlsConfig.certName }}
+            path: server-cert.pem
+          - key: {{ .Values.depServices.etcd.tlsConfig.keyName }}
+            path: server-key.pem
+          - key: {{ .Values.depServices.etcd.tlsConfig.caName }}
+            path: ca.pem
+{{- end }}
+  volumeClaimTemplates:
+  - metadata:
+      name: policy-engine-datadir
+    spec:
+{{- if .Values.storage.storageClassName }}
+      storageClassName: "{{ .Values.storage.storageClassName }}"
+{{- end }}
+      accessModes: [ ReadWriteOnce ]
+      resources:
+        requests:
+          storage: {{ .Values.storage.capacity }}

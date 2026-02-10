@@ -1,0 +1,36 @@
+{
+    "conf": {
+        "upstream": {
+            "eceph_10001": {
+                "check_http_send": "\"HEAD / HTTP/1.1\\r\\nConnection: keep-alive\\r\\n\\r\\n\"",
+                "check": "interval=10000 rise=2 fall=3 timeout=1000 type=http  default_down=true",
+                "server": [
+                    "10.10.14.215:7480",
+                    "10.10.14.216:7480",
+                    "10.10.14.217:7480"
+                ],
+                "keepalive": "300"
+            }
+        },
+        "server": {
+            "listen": "10001 default_server",
+            "client_max_body_size": "0",
+            "location": [
+                {
+                    "= /crossdomain.xml": {
+                        "root": "html"
+                    }
+                },
+                {
+                    "/": {
+                        "proxy_pass": "http://eceph_10001",
+                        "proxy_set_header": "Host $http_host",
+                        "proxy_max_temp_file_size": "0"
+                    }
+                }
+            ],
+            "proxy_request_buffering": "off",
+            "access_log": "off"
+        }
+    }
+}

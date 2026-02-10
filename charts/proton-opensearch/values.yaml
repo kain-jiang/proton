@@ -1,0 +1,151 @@
+namespace: resource
+env:
+  language: en_US.UTF-8
+  timezone: Asia/Shanghai
+replicaCount: 3
+nodeSelector: {}
+image:
+  registry: acr.aishu.cn
+  pullPolicy: IfNotPresent
+  #pullPolicy: Always
+  opensearch:
+    repository: proton/proton-opensearch
+    tag: 1.8.8
+  exporter:
+    repository: proton/proton-opensearch-exporter
+    tag: 1.8.8
+# only master will create the services
+service:
+  enableDualStack: false
+  http:
+    type: ClusterIP # ClusterIP, NodePort, LoadBalancer
+    port: 9200
+    nodePort: 30920
+  read:
+    type: ClusterIP # ClusterIP, NodePort, LoadBalancer
+    port: 9200
+    nodePort: 30921
+  write:
+    type: ClusterIP # ClusterIP, NodePort, LoadBalancer
+    port: 9200
+    nodePort: 30922
+  transport:
+    type: ClusterIP # ClusterIP, NodePort, LoadBalancer
+    port: 9300
+    nodePort: 30930
+  exporter:
+    type: ClusterIP
+    port: 9108
+    nodePort: 31908
+sysctlInitContainer:
+  enabled: true
+antiAffinity:
+  enabled: true
+  rule: "soft" # hard, soft
+config:
+  clusterName: opensearch
+  nodeGroup: master # 可选参数 master, hot, warm
+  roles:
+    data: true
+    search: true
+    ingest: false
+    remoteClusterClient: true
+  jvmOptions: "-Xmx1g -Xms1g"
+  enableSSL: false
+  nodesDN:
+    - "CN=proton-node@aishu.cn,OU=Proton,O=aishu,L=Shanghai,ST=Shanghai,C=CN"
+  hanlpRemote:
+    #需为远程http请求
+    #extDict: "http://10.4.98.144:81/hanlp-dict.txt"
+    #extStopwords: "http://10.4.98.144:81/hanlp-stopwords.txt"
+    extDict: ""
+    extStopwords: ""
+  exporter:
+    logLevel: info
+    timeout: 30s
+    collector:
+      - collector.clustersettings
+      - collector.cluster-info
+      - opensearch.all
+      - opensearch.indexbases
+# OpenSearch原生参数，可自行扩展
+settings:
+  action.auto_create_index: -company*,-ar-*,+*
+  bootstrap.system_call_filter: true
+  bootstrap.memory_lock: true
+  cluster.max_shards_per_node: 1000
+  cluster.routing.allocation.disk.watermark.flood_stage: 95%
+  cluster.routing.allocation.disk.watermark.high: 90%
+  cluster.routing.allocation.disk.watermark.low: 85%
+  cluster.routing.allocation.node_concurrent_recoveries: 5
+  cluster.routing.allocation.node_initial_primaries_recoveries: 5
+  http.max_content_length: 100mb
+  http.max_initial_line_length: 16kb
+  indices.fielddata.cache.size: 35%
+  indices.memory.index_buffer_size: 15%
+  node.search.cache.size: 5gb
+  reindex.remote.whitelist: ""
+secret:
+  secretName: "" # if secretName is empty, default is <clusterName>-certs
+  caName: root-ca.pem
+  nodeCertName: node.pem
+  nodeKeyName: node-key.pem
+  clientCertName: client.pem
+  clientKeyName: client-key.pem
+storage:
+  capacity: 10Gi
+  storageClassName: ""
+  local:
+    0:
+      host: node-108-114
+      path: /sysvol/opensearch/master
+    1:
+      host: node-108-117
+      path: /sysvol/opensearch/master
+    2:
+      host: node-108-124
+      path: /sysvol/opensearch/master
+  repo:
+    nfs:
+      enabled: false
+      server: 10.4.108.114
+      path: /mnt/nfs-test
+    hdfs:
+      enabled: false
+resources:
+  opensearch:
+    requests:
+      cpu: 1
+      memory: 2Gi
+      # limits:
+      #   cpu: 1000m
+      #   memory: 2Gi
+  exporter:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 2Gi
+probes:
+  startupProbe:
+    tcpSocket:
+      port: 9200
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    timeoutSeconds: 3
+    failureThreshold: 30
+  livenessProbe:
+    tcpSocket:
+      port: 9200
+    initialDelaySeconds: 10
+    periodSeconds: 20
+    timeoutSeconds: 5
+    successThreshold: 1
+    failureThreshold: 10
+  readinessProbe:
+    tcpSocket:
+      port: 9200
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3

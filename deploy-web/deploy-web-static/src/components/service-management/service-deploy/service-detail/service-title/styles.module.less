@@ -1,0 +1,32 @@
+@import "../../../../common/common.less";
+
+.service-name {
+  font-weight: 500;
+  font-size: 20px;
+  color: rgba(0, 0, 0, 0.85);
+}
+
+.title-info {
+  height: 30px;
+
+  .text-item {
+    display: inline-block;
+    max-width: 130px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: top;
+  }
+  .input-title {
+    display: inline-block;
+    width: 200px;
+    height: 30px;
+  }
+  .icon {
+    margin-left: 10px;
+    color: @black!important;
+    &:disabled {
+      color: @disabled-color!important;
+    }
+  }
+}

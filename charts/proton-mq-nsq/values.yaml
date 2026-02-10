@@ -1,0 +1,74 @@
+# Default values for proton-mq-nsq
+
+namespace: default
+
+image:
+  registry: acr.aishu.cn
+  pullPolicy: IfNotPresent
+  nsq:
+    repository: /proton/mq-nsq
+    tag: v1.2.0-1
+  exporter:
+    repository: proton/nsq-exporter
+    tag: 1.0.1
+
+# nsqd replicas
+replicaCount: 3
+
+env:
+  language: en_US.UTF-8
+  timezone: Asia/Shanghai
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 100Mi
+
+service:
+  enableDualStack: false
+  type: ClusterIP
+  # set log verbosity: debug, info, warn, error, or fatal
+  logLevel: WARN
+  nsqadmin:
+    enabled: true
+    # type: ClusterIP
+    httpPort: 4171
+    # Following is used by service.type=NodePort
+    httpNodePort: 32171
+
+  nsqd:
+    dataPath: /nsq-data
+    # type: ClusterIP
+    tcpPort: 4150
+    # Following is used by service.type=NodePort
+    tcpNodePort: 32150
+    httpPort: 4151
+    # Following is used by service.type=NodePort
+    httpNodePort: 32151
+
+  nsqlookupd:
+    # If haEnabled is true, nsqlookupd will deploy two replicas.
+    haEnabled: false
+    # type: ClusterIP
+    tcpPort: 4160
+    # Following is used by service.type=NodePort
+    tcpNodePort: 32160
+    httpPort: 4161
+    # Following is used by service.type=NodePort
+    httpNodePort: 32161
+
+storage:
+  storageClassName: ""
+  capacity: 10Gi
+  path: /data/local/proton-mq-nsq
+  local:
+    0:
+      host: node166
+      # path: /data/local/proton-mq-nsq-0
+    1:
+      host: node167
+      # path: /data/local/proton-mq-nsq-1
+    2:
+      host: node168
+      # path: /data/local/proton-mq-nsq-2
+

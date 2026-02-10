@@ -1,0 +1,5 @@
+Require: python3.8
+Steps:
+    1.  pip3 install requests paramiko allure-pytest pymongo==4.2.0
+    2.  cp yaml/proton-mongodb-operator.yaml /tmp/
+    2.  pytest -vs --maxfail 1 --host <HOST> --user <USER>--password <PASSWORD> --alluredir ./allure-results/

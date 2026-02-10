@@ -1,0 +1,310 @@
+conf:
+  apiVersion: v1
+  proton_mariadb:
+    hosts:
+      - test-0
+      - test-1
+    admin_passwd: testpass
+    admin_user: testuser
+  proton_redis:
+    admin_user: testuser
+    admin_passwd: testpasswd
+  proton_mq_nsq:
+    hosts: []
+  kafka:
+    hosts: []
+  opensearch:
+    hosts: []
+  proton_mongodb:
+    hosts:
+      - m0
+      - m1
+  resource_connect_info:
+    rds:
+      hosts: test.test
+      hosts_read: testread.test
+      password: test
+      port: 3306
+      port_read: 3306
+      rds_type: MariaDB
+      source_type: internal
+      username: test
+testcases:
+  - obj:
+      conf:
+        rds:
+          hosts: test.test
+          hosts_read: testread.test
+          password: test
+          port: 3306
+          port_read: 3306
+          rds_type: MariaDB
+          source_type: internal
+          username: test
+      resourceType: "rds"
+    want:
+      source_type: "internal"
+      host: "test.test"
+      port: 3306
+      type: MariaDB
+      mgmt_port: 0
+      hostRead: "testread.test"
+      portRead: 3306
+      admin_key: dGVzdHVzZXI6dGVzdHBhc3M=
+      user: "test"
+      password: "test"
+  - obj:
+      conf:
+        rds:
+          hosts: test.test
+          hosts_read: testread.test
+          password: test
+          port: 3306
+          port_read: 3306
+          rds_type: MariaDB
+          source_type: external
+          username: test
+      resourceType: "rds"
+    want:
+      source_type: "external"
+      host: "test.test"
+      port: 3306
+      type: MariaDB
+      mgmt_port: 0
+      hostRead: "testread.test"
+      portRead: 3306
+      user: "test"
+      password: "test"
+      admin_key: ""
+  - obj:
+      conf:
+        redis:
+          source_type: "internal"
+          connect_type: "sentinel"
+          hosts: test.test
+          port: 3306
+          username: test
+          password: test
+          master_hosts: testm.test
+          master_port: 3306
+          slave_hosts: tests.test
+          slave_port: 3306
+          sentinel_hosts: testse.test
+          sentinel_port: 3306
+          sentinel_username: test
+          sentinel_password: test
+      resourceType: "redis"
+    want:
+      connectType: "sentinel"
+      sourceType: "internal"
+      connectInfo:
+        masterGroupName: "mymaster"
+        sentinelHost: testse.test
+        sentinelPort: 3306
+        sentinelUsername: test
+        sentinelPassword: test
+        username: test
+        password: test
+  - obj:
+      conf:
+        redis:
+          source_type: "internal"
+          connect_type: "master-slave"
+          hosts: test.test
+          port: 3306
+          username: test
+          password: test
+          master_hosts: testm.test
+          master_port: 3306
+          slave_hosts: tests.test
+          slave_port: 3306
+          sentinel_hosts: testse.test
+          sentinel_port: 3306
+          sentinel_username: test
+          sentinel_password: test
+      resourceType: "redis"
+    want:
+      sourceType: "internal"
+      connectType: "master-slave"
+      connectInfo:
+        masterHost: testm.test
+        masterPort: 3306
+        slaveHost: tests.test
+        slavePort: 3306
+        username: test
+        password: test
+  - obj:
+      conf:
+        redis:
+          source_type: "internal"
+          connect_type: "standalone"
+          hosts: test.test
+          port: 3306
+          username: test
+          password: test
+          master_hosts: testm.test
+          master_port: 3306
+          slave_hosts: tests.test
+          slave_port: 3306
+          sentinel_hosts: testse.test
+          sentinel_port: 3306
+          sentinel_username: test
+          sentinel_password: test
+      resourceType: "redis"
+    want:
+      sourceType: "internal"
+      connectType: "standalone"
+      connectInfo:
+        host: test.test
+        port: 3306
+        username: test
+        password: test
+  - obj:
+      resourceType: "mq"
+      conf:
+        mq:
+          source_type: internal
+          mq_hosts: "123"
+          mq_port: 123
+          mq_type: nsq
+          mq_lookupd_hosts: "123"
+          mq_lookupd_port: 123
+    want:
+      mqHost: "123"
+      mqPort: 123
+      mqLookupdHost: "123"
+      mqLookupdPort: 123
+      mqType: nsq
+      auth: {}
+  - obj:
+      resourceType: "mq"
+      conf:
+        mq:
+          source_type: internal
+          mq_hosts: "123"
+          mq_port: 123
+          mq_type: nsq
+          mq_lookupd_hosts: "123"
+          mq_lookupd_port: 123
+          auth:
+            username: tetst
+            password: test
+            mechanism: test
+    want:
+      mqHost: "123"
+      mqPort: 123
+      mqLookupdHost: "123"
+      mqLookupdPort: 123
+      mqType: nsq
+      auth:
+        username: tetst
+        password: test
+        mechanism: test
+  - obj:
+      resourceType: "opensearch"
+      conf:
+        opensearch:
+          source_type: internal
+          hosts: test.test
+          port: 9200
+          password: test
+          username: test
+          version: 0.0.0.0
+          distribution: "1"
+          protocol: test
+    want:
+      host: "test.test"
+      port: 9200
+      user: test
+      password: test
+      protocol: test
+      version: 0.0.0.0
+      distribution: "1"
+  - obj:
+      resourceType: "mongodb"
+      conf:
+        mongodb:
+          source_type: external
+          hosts: "test"
+          port: 3333
+          username: test
+          password: test
+          replica_set: test
+          ssl: true
+          auth_source: "test"
+          options:
+            test: test
+    want:
+      host: "test"
+      port: 3333
+      user: test
+      password: test
+      replicaSet: test
+      mgmt_port: 0
+      source_type: external
+      ssl: true
+      options:
+        authSource: test
+        test: test
+  - obj:
+      resourceType: "mongodb"
+      conf:
+        mongodb:
+          source_type: external
+          hosts: "test"
+          port: 3333
+          username: test
+          password: test
+          replica_set: test
+          ssl: true
+          auth_source: "test"
+          options:
+            f: 123
+            b: true
+            s: "尊渡假赌"
+    want:
+      host: "test"
+      port: 3333
+      user: test
+      password: test
+      replicaSet: test
+      ssl: true
+      mgmt_port: 0
+      source_type: external
+      options:
+        authSource: test
+        f: 123
+        b: true
+        s: "尊渡假赌"
+
+  - obj:
+      resourceType: "proton-etcd"
+      conf:
+        etcd:
+          hosts: proton-etcd.resource
+          port: 2379
+          secret: etcdssl-secret
+          source_type: internal
+    want:
+      host: proton-etcd.resource
+      port: 2379
+      namespace: resource
+      source_type: internal
+      secret: etcdssl-secret
+      sourceType: internal
+  - obj:
+      resourceType: proton-policy-engine
+      conf:
+        policy_engine:
+          hosts: test
+          port: 9800
+          source_type: internal
+    want:
+      host: "test"
+      hosts: "test"
+      port: 9800
+      source_type: internal
+  - obj:
+      resourceType: deployCore
+    want:
+      namespace: test

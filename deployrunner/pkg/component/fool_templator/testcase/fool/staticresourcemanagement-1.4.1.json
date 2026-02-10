@@ -1,0 +1,90 @@
+{
+    "name": "staticresourcemanagement",
+    "version": "1.4.1",
+    "componentDefineType": "fool",
+    "configSchema": null,
+    "attributeSchema": null,
+    "Dendence": null,
+    "spec": null,
+    "timeout": 0,
+    "deploys": [
+        {
+            "name": "static-resourcemanagement",
+            "replica": {
+                "defaultReplica": 1
+            },
+            "containers": [
+                {
+                    "name": "staticresourcemanagement",
+                    "command": [
+                        "nginx"
+                    ],
+                    "args": [
+                        "-g",
+                        "daemon off;"
+                    ],
+                    "image": {
+                        "registry": "acr.aichu.cn",
+                        "imag": "as/staticresourcemanagement",
+                        "tag": "1.4.1"
+                    },
+                    "ports": [
+                        8090
+                    ],
+                    "livenessProbe": {
+                        "tcpSocket": {
+                            "port": 8090
+                        },
+                        "failureThreshold": 5,
+                        "initialDelaySeconds": 30,
+                        "periodSeconds": 10,
+                        "successThreshold": 1,
+                        "terminationGracePeriodSeconds": 30,
+                        "timeoutSeconds": 5
+                    },
+                    "readinessProbe": {
+                        "tcpSocket": {
+                            "port": 8090
+                        },
+                        "failureThreshold": 5,
+                        "initialDelaySeconds": 30,
+                        "periodSeconds": 10,
+                        "successThreshold": 1,
+                        "timeoutSeconds": 5
+                    },
+                    "startupProbe": {
+                        "tcpSocket": {
+                            "port": 8090
+                        },
+                        "failureThreshold": 5,
+                        "initialDelaySeconds": 30,
+                        "periodSeconds": 10,
+                        "successThreshold": 1,
+                        "terminationGracePeriodSeconds": 30,
+                        "timeoutSeconds": 5
+                    },
+                    "resources": {
+                        "custom": false,
+                        "requests": {
+                            "memory": "60Mi",
+                            "cpu": "0.1"
+                        }
+                    }
+                }
+            ],
+            "service": [
+                {
+                    "name": "staticresourcemanagement-host",
+                    "ports": [
+                        {
+                            "name": "port",
+                            "port": 8090,
+                            "targetPort": 8090,
+                            "protocol": "TCP"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

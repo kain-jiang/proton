@@ -1,0 +1,188 @@
+{
+  "conponentDefineType": "helm/service",
+  "name": "communication-config",
+  "configSchema": {
+    "title": "communication-config",
+    "description": "模块化服务http/https路由配置",
+    "type": "object",
+    "properties": {
+      "rootRedirect": {
+        "type": "string",
+        "description": "根路径重定向的目标产品",
+        "oneOf": [
+          {
+            "const": "anyshare",
+            "title": "AnyShare"
+          },
+          {
+            "const": "studio",
+            "title": "工作站"
+          },
+          {
+            "const": "anyfabric",
+            "title": "AnyFabric"
+          }
+        ]
+      },
+      "ingress": {
+        "type": "object",
+        "title": "ingress路由配置",
+        "properties": {
+          "rule-8080": {
+            "type": "object",
+            "description": "一个ingress实例的配置项",
+            "properties": {
+              "enable": {
+                "type": "boolean",
+                "description": "是否安装该实例"
+              },
+              "annotations": {
+                "type": "object",
+                "description": "inrgess实例特殊注解配置,具体间nginx-ingress官网",
+                "additionalProperties": true
+              },
+              "append_service": {
+                "type": "array",
+                "description": "需要额外挂载的后端服务,该服务必须在组件内已定义,否则无效",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "offline_service": {
+                "type": "array",
+                "description": "需要从默认挂载后端服务中去除的服务",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "rule-8000": {
+            "type": "object",
+            "description": "一个ingress实例的配置项",
+            "properties": {
+              "enable": {
+                "type": "boolean",
+                "description": "是否安装该实例"
+              },
+              "annotations": {
+                "type": "object",
+                "description": "inrgess实例特殊注解配置,具体间nginx-ingress官网",
+                "additionalProperties": true
+              },
+              "append_service": {
+                "type": "array",
+                "description": "需要额外挂载的后端服务,该服务必须在组件内已定义,否则无效",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "offline_service": {
+                "type": "array",
+                "description": "需要从默认挂载后端服务中去除的服务",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "auto-regstry-service-class-443": {
+            "type": "object",
+            "description": "一个ingress实例的配置项",
+            "properties": {
+              "enable": {
+                "type": "boolean",
+                "description": "是否安装该实例"
+              },
+              "annotations": {
+                "type": "object",
+                "description": "inrgess实例特殊注解配置,具体间nginx-ingress官网",
+                "additionalProperties": true
+              },
+              "append_service": {
+                "type": "array",
+                "description": "需要额外挂载的后端服务,该服务必须在组件内已定义,否则无效",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "offline_service": {
+                "type": "array",
+                "description": "需要从默认挂载后端服务中去除的服务",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "rule-443": {
+            "type": "object",
+            "description": "一个ingress实例的配置项",
+            "properties": {
+              "enable": {
+                "type": "boolean",
+                "description": "是否安装该实例"
+              },
+              "annotations": {
+                "type": "object",
+                "description": "inrgess实例特殊注解配置,具体间nginx-ingress官网",
+                "additionalProperties": true
+              },
+              "append_service": {
+                "type": "array",
+                "description": "需要额外挂载的后端服务,该服务必须在组件内已定义,否则无效",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "offline_service": {
+                "type": "array",
+                "description": "需要从默认挂载后端服务中去除的服务",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "rule-8444": {
+            "type": "object",
+            "description": "一个ingress实例的配置项",
+            "properties": {
+              "enable": {
+                "type": "boolean",
+                "description": "是否安装该实例"
+              },
+              "annotations": {
+                "type": "object",
+                "description": "inrgess实例特殊注解配置,具体间nginx-ingress官网",
+                "additionalProperties": true
+              },
+              "append_service": {
+                "type": "array",
+                "description": "需要额外挂载的后端服务,该服务必须在组件内已定义,否则无效",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "offline_service": {
+                "type": "array",
+                "description": "需要从默认挂载后端服务中去除的服务",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "dependence": [
+    {
+      "name": "deploy-service"
+    },
+    {
+      "name": "class-443"
+    }
+  ]
+}

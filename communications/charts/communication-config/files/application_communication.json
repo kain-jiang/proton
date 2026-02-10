@@ -1,0 +1,1612 @@
+{
+  "backend-service": {
+    "ecoindex-public": {
+      "server-name": "ecoindex",
+      "host-name": "publicHost",
+      "port-name": "publicPort",
+      "port": "32129",
+      "type": "container",
+      "protocol": "http",
+      "path": "/api/ecoindex",
+      "belong": "alita"
+    },
+    "ecoindex-private": {
+      "server-name": "ecoindex",
+      "host-name": "privateHost",
+      "port-name": "privatePort",
+      "port": "32130",
+      "type": "container",
+      "protocol": "http",
+      "path": "/api/ecoindex",
+      "belong": "alita"
+    },
+    "ecoconfig-public": {
+      "server-name": "ecoconfig",
+      "host-name": "publicHost",
+      "port-name": "publicPort",
+      "port": "32127",
+      "type": "container",
+      "protocol": "http",
+      "path": "/api/ecoconfig",
+      "belong": "alita"
+    },
+    "ecoconfig-private": {
+      "server-name": "ecoconfig",
+      "host-name": "privateHost",
+      "port-name": "privatePort",
+      "port": "32128",
+      "type": "container",
+      "protocol": "http",
+      "path": "/api/ecoconfig",
+      "belong": "alita"
+    },
+    "ecotag-public": {
+      "server-name": "ecotag",
+      "host-name": "publicHost",
+      "port-name": "publicPort",
+      "port": "32156",
+      "type": "container",
+      "protocol": "http",
+      "path": "/api/ecotag",
+      "belong": "alita"
+    },
+    "ecotag-private": {
+      "server-name": "ecotag",
+      "host-name": "privateHost",
+      "port-name": "privatePort",
+      "port": "32157",
+      "type": "container",
+      "protocol": "http",
+      "path": "/api/ecotag",
+      "belong": "alita"
+    },
+    "infoinsight-stg": {
+      "server-name": "infoinsight",
+      "host-name": "publicHost",
+      "port-name": "publicPort",
+      "type": "container",
+      "protocol": "http",
+      "port": "9898",
+      "path": "/api/infoinsight-strategy/",
+      "belong": "infoinsight"
+    },
+    "infoinsight-quy": {
+      "server-name": "infoinsight",
+      "host-name": "host",
+      "port-name": "port",
+      "type": "container",
+      "protocol": "http",
+      "port": "9898",
+      "path": "/api/infoinsight-enquiry/",
+      "belong": "infoinsight"
+    },
+    "workflow-rest": {
+      "server-name": "workflow-rest",
+      "real-server": "127.0.0.1",
+      "port-name": "public-port",
+      "port": "9800",
+      "ingress-port": "9001",
+      "nginx-port": "443",
+      "type": "container",
+      "protocol": "http",
+      "path": "/api/workflow-rest",
+      "belong": "console"
+    },
+    "doc-audit-rest": {
+      "server-name": "doc-audit-rest",
+      "real-server": "127.0.0.1",
+      "port-name": "public-port",
+      "port": "9800",
+      "ingress-port": "9001",
+      "nginx-port": "443",
+      "type": "container",
+      "protocol": "http",
+      "path": "/api/doc-audit-rest",
+      "belong": "console"
+    },
+    "doc-audit-client": {
+      "server-name": "doc-audit-client",
+      "real-server": "127.0.0.1",
+      "port-name": "public-port",
+      "port": "9800",
+      "ingress-port": "9001",
+      "nginx-port": "443",
+      "type": "container",
+      "protocol": "http",
+      "path": "/doc-audit-client",
+      "belong": "console"
+    },
+    "workflow-manage-front": {
+      "server-name": "workflow-manage-front",
+      "real-server": "127.0.0.1",
+      "port-name": "public-port",
+      "port": "9800",
+      "ingress-port": "9001",
+      "nginx-port": "443",
+      "type": "container",
+      "protocol": "http",
+      "path": "/workflow-manage-front",
+      "belong": "console"
+    },
+    "workflow-manage-client": {
+      "server-name": "workflow-manage-client",
+      "real-server": "127.0.0.1",
+      "port-name": "public-port",
+      "port": "9800",
+      "ingress-port": "9001",
+      "nginx-port": "443",
+      "type": "container",
+      "protocol": "http",
+      "path": "/workflow-manage-client",
+      "belong": "console"
+    },
+    "eftsearch": {
+      "server-name": "eftsearch",
+      "host-name": "host",
+      "port-name": "port",
+      "type": "container",
+      "protocol": "tcp",
+      "port": "32066",
+      "belong": "alita"
+    },
+    "ecosearch": {
+      "server-name": "ecosearch",
+      "host-name": "host",
+      "port-name": "port",
+      "type": "container",
+      "protocol": "http",
+      "port": "32126",
+      "path": "/api/ecosearch,/api/object-detection/v1/ping",
+      "belong": "alita"
+    },
+    "ecosearch-private": {
+      "server-name": "ecosearch",
+      "host-name": "privateHost",
+      "port-name": "privatePort",
+      "type": "container",
+      "protocol": "http",
+      "port": "32127",
+      "path": "/api/ecosearch",
+      "belong": "alita"
+    },
+    "intelli-search-public": {
+      "server-name": "intelli-search",
+      "host-name": "host",
+      "port-name": "port",
+      "type": "container",
+      "protocol": "http",
+      "port": "32126",
+      "path": "/api/intelli-search",
+      "belong": "alita"
+    },
+    "emetadata": {
+      "server-name": "emetadata",
+      "host-name": "host",
+      "port-name": "port",
+      "type": "container",
+      "protocol": "http",
+      "port": "30156",
+      "path": "/api/metadata",
+      "belong": "alita"
+    },
+    "emetadata-private": {
+      "server-name": "emetadata",
+      "host-name": "privateHost",
+      "port-name": "privatePort",
+      "type": "container",
+      "protocol": "http",
+      "port": "30157",
+      "path": "/api/metadata",
+      "belong": "alita"
+    },
+    "metadata-public": {
+      "server-name": "metadata",
+      "host-name": "host",
+      "port-name": "port",
+      "type": "container",
+      "protocol": "http",
+      "port": "30158",
+      "path": "/api/metadata",
+      "belong": "alita"
+    },
+    "ecron-management": {
+      "server-name": "ecron-management",
+      "host-name": "host",
+      "port-name": "port",
+      "type": "container",
+      "protocol": "http",
+      "port": "32345",
+      "path": "/api/ecron-management",
+      "belong": "alita"
+    },
+    "efast-public": {
+      "server-name": "efast",
+      "host-name": "publicHttpHost",
+      "port-name": "publicHttpPort",
+      "type": "container",
+      "protocol": "http",
+      "port": "9123",
+      "path": "/api/efast",
+      "belong": "alita"
+    },
+    "efast-private": {
+      "server-name": "efast",
+      "host-name": "privateHttpHost",
+      "port-name": "privateHttpPort",
+      "type": "container",
+      "protocol": "http",
+      "port": "9123",
+      "path": "/api/efast",
+      "belong": "alita"
+    },
+    "efast-efast": {
+      "server-name": "efast",
+      "host-name": "efastThriftHost",
+      "port-name": "efastThriftPort",
+      "type": "container",
+      "protocol": "tcp",
+      "port": "9121",
+      "belong": "alita"
+    },
+    "efast-evfs": {
+      "server-name": "efast",
+      "host-name": "evfsThriftHost",
+      "port-name": "evfsThriftPort",
+      "type": "container",
+      "protocol": "tcp",
+      "port": "9064",
+      "belong": "alita"
+    },
+    "efast-single-public": {
+      "server-name": "efast-single",
+      "host-name": "publicHttpHost",
+      "port-name": "publicHttpPort",
+      "type": "container",
+      "protocol": "http",
+      "port": "9123",
+      "path": "/api/efast",
+      "belong": "alita"
+    },
+    "log": {
+      "server-name": "log",
+      "host-name": "host",
+      "port-name": "port",
+      "type": "container",
+      "protocol": "tcp",
+      "port": "9993",
+      "belong": "alita"
+    },
+    "eacp-private": {
+      "server-name": "eacp",
+      "host-name": "privateHttpHost",
+      "port-name": "privateHttpPort",
+      "type": "container",
+      "protocol": "http",
+      "port": "9998",
+      "path": "/api/eacp",
+      "belong": "alita"
+    },
+    "eacp-public": {
+      "server-name": "eacp",
+      "host-name": "publicHttpHost",
+      "port-name": "publicHttpPort",
+      "type": "container",
+      "protocol": "http",
+      "port": "9998",
+      "path": "/api/eacp",
+      "belong": "alita"
+    },
+    "eacp-thrift": {
+      "server-name": "eacp",
+      "host-name": "thriftHost",
+      "port-name": "thriftPort",
+      "type": "container",
+      "protocol": "tcp",
+      "port": "9992",
+      "belong": "alita"
+    },
+    "sharemgnt": {
+      "server-name": "sharemgnt",
+      "host-name": "host",
+      "port-name": "port",
+      "real-server": "127.0.0.1",
+      "type": "container",
+      "protocol": "tcp",
+      "port": "9600",
+      "belong": "alita"
+    },
+    "sharemgnt-single": {
+      "server-name": "sharemgnt-single",
+      "host-name": "host",
+      "port-name": "port",
+      "real-server": "127.0.0.1",
+      "type": "container",
+      "protocol": "tcp",
+      "port": "9600",
+      "belong": "alita"
+    },
+    "hydra-public": {
+      "server-name": "hydra",
+      "host-name": "publicHost",
+      "port-name": "publicPort",
+      "port": "4444",
+      "type": "container",
+      "protocol": "http",
+      "path": "/oauth2/auth,/oauth2/revoke,/oauth2/token,/oauth2/sessions/logout",
+      "belong": "alita"
+    },
+    "hydra-admin": {
+      "server-name": "hydra",
+      "host-name": "administrativeHost",
+      "port-name": "administrativePort",
+      "port": "4445",
+      "type": "container",
+      "protocol": "http",
+      "path": "/admin/oauth2/auth,/admin/oauth2/introspect,/admin/oauth2/tokens,/admin/clients",
+      "belong": "alita"
+    },
+    "batch-download": {
+      "server-name": "batch-download",
+      "host-name": "host",
+      "port-name": "port",
+      "type": "container",
+      "protocol": "http",
+      "port": "9065",
+      "path": "/api/batch-download",
+      "belong": "alita"
+    },
+    "news-feed-public": {
+      "server-name": "news-feed",
+      "host-name": "publicHost",
+      "port-name": "publicPort",
+      "type": "container",
+      "protocol": "http",
+      "port": "30930",
+      "path": "/api/news-feed",
+      "belong": "alita"
+    },
+    "news-feed-private": {
+      "server-name": "news-feed",
+      "host-name": "privateHost",
+      "port-name": "privatePort",
+      "type": "container",
+      "protocol": "http",
+      "port": "30930",
+      "path": "/api/news-feed",
+      "belong": "alita"
+    },
+    "docset-public": {
+      "server-name": "docset",
+      "host-name": "publicHost",
+      "port-name": "publicPort",
+      "port": "32596",
+      "type": "container",
+      "protocol": "http",
+      "path": "/api/docset",
+      "belong": "alita"
+    },
+    "docset-private": {
+      "server-name": "docset",
+      "host-name": "privateHost",
+      "port-name": "privatePort",
+      "port": "32597",
+      "type": "container",
+      "protocol": "http",
+      "path": "/api/docset",
+      "belong": "alita"
+    },
+    "transformation": {
+      "server-name": "transformation",
+      "host-name": "publicHost",
+      "port-name": "publicPort",
+      "type": "container",
+      "protocol": "http",
+      "port": "9800",
+      "path": "/api/transformation",
+      "belong": "autosheet"
+    },
+    "sheet-public": {
+      "server-name": "sheet",
+      "real-server": "127.0.0.1",
+      "host-name": "publicHost",
+      "port-name": "publicPort",
+      "port": "9800",
+      "type": "container",
+      "protocol": "http",
+      "path": "/api/sheet",
+      "belong": "autosheet"
+    },
+    "sheet-private": {
+      "server-name": "sheet",
+      "host-name": "privateHost",
+      "port-name": "privatePort",
+      "port": "9801",
+      "type": "container",
+      "protocol": "http",
+      "path": "/api/sheet",
+      "belong": "autosheet"
+    },
+    "sheet-policy": {
+      "server-name": "sheet-policy",
+      "real-server": "127.0.0.1",
+      "host-name": "publicHost",
+      "port-name": "publicPort",
+      "port": "9800",
+      "type": "container",
+      "protocol": "http",
+      "path": "/api/sheet-policy",
+      "belong": "autosheet"
+    },
+    "autosheets": {
+      "server-name": "autosheets",
+      "host-name": "publicHost",
+      "port-name": "publicPort",
+      "type": "container",
+      "protocol": "http",
+      "port": "9800",
+      "path": "/autosheets",
+      "belong": "autosheet"
+    },
+    "collaboration-public": {
+      "server-name": "collaboration",
+      "host-name": "publicHost",
+      "port-name": "publicPort",
+      "type": "container",
+      "protocol": "http",
+      "port": "9800",
+      "path": "/api/collaboration",
+      "belong": "autosheet"
+    },
+    "collaboration-private": {
+      "server-name": "collaboration",
+      "host-name": "privateHost",
+      "port-name": "privatePort",
+      "type": "container",
+      "protocol": "http",
+      "port": "9801",
+      "path": "/api/collaboration",
+      "belong": "autosheet"
+    },
+    "shared-link-public": {
+      "server-name": "shared-link",
+      "host-name": "publicHost",
+      "port-name": "publicPort",
+      "port": "30990",
+      "type": "container",
+      "protocol": "http",
+      "path": "/api/shared-link/v1/links",
+      "belong": "alita"
+    },
+    "shared-link-private": {
+      "server-name": "shared-link",
+      "host-name": "privateHost",
+      "port-name": "privatePort",
+      "port": "30990",
+      "type": "container",
+      "protocol": "http",
+      "path": "/api/shared-link",
+      "belong": "alita"
+    },
+    "authentication-public": {
+      "server-name": "authentication",
+      "host-name": "publicHost",
+      "port-name": "publicPort",
+      "port": "30110",
+      "type": "container",
+      "protocol": "http",
+      "path": "/api/authentication,/oauth2/clients",
+      "belong": "alita"
+    },
+    "authentication-private": {
+      "server-name": "authentication",
+      "host-name": "privateHost",
+      "port-name": "privatePort",
+      "port": "30110",
+      "type": "container",
+      "protocol": "http",
+      "path": "/api/authentication",
+      "belong": "alita"
+    },
+    "doc-sync": {
+      "server-name": "doc-sync",
+      "host-name": "host",
+      "port-name": "port",
+      "type": "container",
+      "protocol": "http",
+      "port": "32260",
+      "path": "/api/doc-sync",
+      "belong": "alita"
+    },
+    "policy-management": {
+      "server-name": "policy-management",
+      "type": "container",
+      "protocol": "http",
+      "port": "9603",
+      "path": "/api/policy-management",
+      "belong": "console"
+    },
+    "document-domain-management": {
+      "server-name": "document-domain-management",
+      "type": "container",
+      "port": "9604",
+      "path": "/api/document-domain-management",
+      "belong": "console",
+      "protocol": "http"
+    },
+    "webconsolestatic": {
+      "server-name": "webconsolestatic",
+      "host-name": "publicHost",
+      "port-name": "publicPort",
+      "type": "container",
+      "protocol": "http",
+      "port": "18801",
+      "path": "/console,/oauthlogin,/oauthlogout,/widget/shareweb-plugins,/console/widget/shareweb-plugins"
+    },
+    "webconsoleinterface": {
+      "server-name": "webconsoleinterface",
+      "host-name": "publicHost",
+      "port-name": "publicPort",
+      "type": "container",
+      "protocol": "http",
+      "port": "18802",
+      "path": "/widget,/console/widget,/console/interface"
+    },
+    "webconsolethrift": {
+      "server-name": "webconsolethrift",
+      "host-name": "publicHost",
+      "port-name": "publicPort",
+      "type": "container",
+      "protocol": "http",
+      "port": "18803",
+      "path": "/console/api"
+    },
+    "webconsole-redirect": {
+      "server-name": "webconsole-redirect",
+      "type": "container",
+      "protocol": "http",
+      "port": "18801",
+      "path": "/"
+    },
+    "document-sync-scheduling": {
+      "server-name": "document-sync-scheduling",
+      "type": "container",
+      "port": "9605",
+      "path": "/api/document-sync-scheduling",
+      "protocol": "http",
+      "belong": "console"
+    },
+    "document-sync-scheduling-private": {
+      "server-name": "document-sync-scheduling",
+      "type": "container",
+      "port": "9605",
+      "host-name": "privateHost",
+      "port-name": "privatePort",
+      "path": "/api/document-sync-scheduling",
+      "protocol": "http",
+      "belong": "console"
+    },
+    "doc-center": {
+      "server-name": "doc-center",
+      "type": "container",
+      "port": "30566",
+      "host-name": "publicHost",
+      "port-name": "publicPort",
+      "path": "/api/doc-center/v1",
+      "protocol": "http",
+      "belong": "console"
+    },
+    "doc-center-public": {
+      "server-name": "doc-center",
+      "type": "container",
+      "port": "30566",
+      "host-name": "host",
+      "port-name": "port",
+      "path": "/api/doc-center,/api/efast/v1/favorites",
+      "protocol": "http",
+      "belong": "console"
+    },
+    "doc-center-private": {
+      "server-name": "doc-center",
+      "type": "container",
+      "port": "30566",
+      "host-name": "privateHost",
+      "port-name": "privatePort",
+      "path": "/api/doc-center/v1",
+      "protocol": "http",
+      "belong": "console"
+    },
+    "aladdin-tika": {
+      "server-name": "aladdin-tika",
+      "port": "9998",
+      "type": "container",
+      "protocol": "http",
+      "path": "/",
+      "belong": "aladdin"
+    },
+    "dl-inference-server": {
+      "server-name": "dl-inference-server",
+      "type": "container",
+      "port": "8500",
+      "belong": "aladdin",
+      "protocol": "tcp"
+    },
+    "milvus-http": {
+      "server-name": "milvus",
+      "host-name": "httpHost",
+      "port-name": "httpPort",
+      "type": "container",
+      "port": "19121",
+      "path": "/",
+      "belong": "aladdin",
+      "protocol": "http"
+    },
+    "milvus-tcp": {
+      "server-name": "milvus",
+      "host-name": "tcpHost",
+      "port-name": "tcpPort",
+      "type": "container",
+      "port": "19530",
+      "belong": "aladdin",
+      "protocol": "tcp"
+    },
+    "translator-server": {
+      "server-name": "translator-server",
+      "type": "container",
+      "port": "50051",
+      "belong": "aladdin",
+      "protocol": "tcp"
+    },
+    "fast-text-analysis": {
+      "server-name": "fast-text-analysis",
+      "type": "container",
+      "port": "9528",
+      "path": "/api/fast-text-analysis",
+      "belong": "aladdin",
+      "protocol": "http"
+    },
+    "auto-text-filter": {
+      "server-name": "auto-text-filter",
+      "type": "container",
+      "port": "9528",
+      "path": "/api/auto-text-filter",
+      "belong": "aladdin",
+      "protocol": "http"
+    },
+    "object-detection": {
+      "server-name": "object-detection",
+      "type": "container",
+      "port": "9528",
+      "path": "/api/object-detection/v1/ping",
+      "belong": "aladdin",
+      "protocol": "http"
+    },
+    "smart-search-frontend": {
+      "server-name": "smart-search-frontend",
+      "type": "container",
+      "port": "19988",
+      "path": "/smart-search",
+      "belong": "smartSearch",
+      "protocol": "http"
+    },
+    "match-image": {
+      "server-name": "match-image",
+      "type": "container",
+      "port": "9528",
+      "path": "/api/match-image",
+      "belong": "aladdin",
+      "protocol": "http"
+    },
+    "clip-server": {
+      "server-name": "clip-server",
+      "type": "container",
+      "port": "9528",
+      "path": "/api/clip-server",
+      "belong": "aladdin",
+      "protocol": "http"
+    },
+    "spreadsheet-extractor": {
+      "server-name": "spreadsheet-extractor",
+      "type": "container",
+      "port": "8002",
+      "path": "/api/spreadsheet-extractor",
+      "belong": "aladdin",
+      "protocol": "http"
+    },
+    "spreadsheet-parser": {
+      "server-name": "spreadsheet-parser",
+      "type": "container",
+      "port": "8001",
+      "path": "/api/spreadsheet-parser",
+      "belong": "aladdin",
+      "protocol": "http"
+    },
+    "aladdin-init": {
+      "server-name": "aladdin-init",
+      "type": "container",
+      "port": "9528",
+      "path": "/api/aladdin-init",
+      "belong": "aladdin",
+      "protocol": "http"
+    },
+    "image-features": {
+      "server-name": "image-features",
+      "type": "container",
+      "port": "9528",
+      "path": "/api/image-features",
+      "belong": "aladdin",
+      "protocol": "http"
+    },
+    "webservice": {
+      "server-name": "webservice",
+      "host-name": "httpHost",
+      "port-name": "httpPort",
+      "real-server": "127.0.0.1",
+      "type": "container",
+      "protocol": "http",
+      "port": "4016",
+      "path": "/anyshare/oauth2,/anyshare/mobile-client,/link,/static,/sso,/api/client",
+      "belong": "client"
+    },
+    "oauth2-ui": {
+      "server-name": "oauth2-ui",
+      "host-name": "httpHost",
+      "port-name": "httpPort",
+      "real-server": "127.0.0.1",
+      "type": "container",
+      "protocol": "http",
+      "port": "4015",
+      "path": "/oauth2/signin,/oauth2/consent,/oauth2/signout,/oauth2/_next,/oauth2/change,/oauth2/reset,/oauth2/error,/oauth2/userverification",
+      "belong": "client"
+    },
+    "webportal": {
+      "server-name": "webportal",
+      "host-name": "httpHost",
+      "port-name": "httpPort",
+      "real-server": "127.0.0.1",
+      "type": "container",
+      "protocol": "http",
+      "port": "4017",
+      "path": "/anyshare/",
+      "belong": "client"
+    },
+    "webmobile": {
+      "server-name": "webmobile",
+      "host-name": "httpHost",
+      "port-name": "httpPort",
+      "real-server": "127.0.0.1",
+      "type": "container",
+      "protocol": "http",
+      "port": "4018",
+      "path": "/anyshare/m/",
+      "belong": "client"
+    },
+    "igress-manager": {
+      "server-name": "igress-manager",
+      "type": "container",
+      "protocol": "http",
+      "port": "9003",
+      "path": "/api/igress-manager",
+      "belong": "proton"
+    },
+    "nginx-ingress-controller": {
+      "server-name": "nginx-ingress-controller",
+      "type": "container",
+      "protocol": "http",
+      "port": "9005",
+      "path": "/api/nginx-ingress-controller",
+      "belong": "proton"
+    },
+    "defalutbackend": {
+      "server-name": "defalutbackend",
+      "type": "container",
+      "protocol": "http",
+      "port": "9008",
+      "path": "/api/defalutbackend",
+      "belong": "proton"
+    },
+    "deploy-service": {
+      "server-name": "deploy-service",
+      "host-name": "HttpHost",
+      "port-name": "HttpPort",
+      "type": "container",
+      "protocol": "http",
+      "port": "9703",
+      "path": "/api/deploy-manager/cert/download-cert/app,/api/deploy-manager/cert/feature,/api/deploy-manager/client,/api/deploy-manager/cert/cert-info,/api/deploy-manager/v1/application/version,/api/instances",
+      "belong": "deploy"
+    },
+    "site-mgmt": {
+      "server-name": "site-mgmt",
+      "host-name": "host",
+      "port-name": "port",
+      "port": "8000",
+      "type": "container",
+      "path": "/api/site-mgmt",
+      "protocol": "http",
+      "belong": "deploy"
+    },
+    "site-agent": {
+      "server-name": "site-agent",
+      "host-name": "host",
+      "port-name": "port",
+      "port": "8000",
+      "type": "container",
+      "path": "/api/site-agent",
+      "protocol": "http",
+      "belong": "deploy"
+    },
+    "user-management-public": {
+      "server-name": "user-management",
+      "host-name": "publicHost",
+      "port-name": "publicPort",
+      "port": "30980",
+      "type": "container",
+      "protocol": "http",
+      "path": "/api/user-management,/api/eacp/v1/contactor/deletegroup",
+      "belong": "alita"
+    },
+    "user-management-private": {
+      "server-name": "user-management",
+      "real-server": "127.0.0.1",
+      "host-name": "privateHost",
+      "port-name": "privatePort",
+      "port": "30980",
+      "type": "container",
+      "protocol": "http",
+      "path": "/api/user-management",
+      "belong": "alita"
+    },
+    "document-private": {
+      "server-name": "document",
+      "real-server": "127.0.0.1",
+      "host-name": "privateHost",
+      "port-name": "privatePort",
+      "port": "30920",
+      "type": "container",
+      "protocol": "http",
+      "path": "/api/document",
+      "belong": "alita"
+    },
+    "document-public": {
+      "server-name": "document",
+      "real-server": "127.0.0.1",
+      "host-name": "publicHost",
+      "port-name": "publicPort",
+      "port": "30920",
+      "type": "container",
+      "protocol": "http",
+      "path": "/api/document,/api/efast/v1/file/setcsflevel",
+      "belong": "alita"
+    },
+    "doc-share-private": {
+      "server-name": "doc-share",
+      "real-server": "127.0.0.1",
+      "host-name": "privateHost",
+      "port-name": "privatePort",
+      "port": "30920",
+      "type": "container",
+      "protocol": "http",
+      "path": "/api/doc-share",
+      "belong": "alita"
+    },
+    "doc-share-public": {
+      "server-name": "doc-share",
+      "real-server": "127.0.0.1",
+      "host-name": "publicHost",
+      "port-name": "publicPort",
+      "port": "30920",
+      "type": "container",
+      "protocol": "http",
+      "path": "/api/doc-share,/api/shared-link/v1/document,/api/eacp/v1/perm2,/api/read-policy/v1/check/doc,/api/read-policy/v2/doc-config,/api/eacp/v1/perm1,/api/eacp/v1/owner,/api/eacp/v1/autolock,/api/doc-policy/v1/doc-lib-access-policy,/api/doc-policy/v1/doc-lib-access-policies",
+      "belong": "alita"
+    },
+    "audit-management": {
+      "server-name": "audit-management",
+      "type": "container",
+      "protocol": "http",
+      "port": "9608",
+      "path": "/api/audit-management",
+      "belong": "console"
+    },
+    "read-policy": {
+      "server-name": "read-policy",
+      "type": "container",
+      "protocol": "http",
+      "port": "9606",
+      "path": "/api/read-policy",
+      "belong": "console"
+    },
+    "doc-policy": {
+      "server-name": "doc-policy",
+      "type": "container",
+      "protocol": "http",
+      "port": "9607",
+      "path": "/api/doc-policy",
+      "belong": "console"
+    },
+    "egress-package-microservice": {
+      "server-name": "egress-package-microservice",
+      "host-name": "host",
+      "port-name": "port",
+      "type": "container",
+      "protocol": "http",
+      "port": "9001",
+      "belong": "alita",
+      "path": "/api/egress-package"
+    },
+    "proton-oss-gateway": {
+      "server-name": "proton-oss-gateway",
+      "port": "9000",
+      "type": "container",
+      "protocol": "http",
+      "path": "/api/ossgateway",
+      "belong": "proton"
+    },
+    "encryption-microservice": {
+      "server-name": "encryption-microservice",
+      "host-name": "host",
+      "port-name": "port",
+      "type": "container",
+      "protocol": "http",
+      "port": "9001",
+      "belong": "alita",
+      "path": "/api/encryption"
+    },
+    "aladdin-scanner-private": {
+      "server-name": "aladdin-scanner",
+      "type": "container",
+      "protocol": "http",
+      "port": "8090",
+      "belong": "aladdin",
+      "path": "/api/aladdin-scanner"
+    },
+    "ocr-parser-private": {
+      "server-name": "ocr-parser",
+      "type": "container",
+      "protocol": "http",
+      "port": "8091",
+      "belong": "aladdin",
+      "path": "/api/ocr-parse"
+    },
+    "deploy-web-redirect": {
+      "server-name": "deploy-web-redirect",
+      "type": "container",
+      "protocol": "http",
+      "port": "18800",
+      "path": "/",
+      "belong": "deploy"
+    },
+    "kc-topic": {
+      "server-name": "kc-topic",
+      "port": "7212",
+      "type": "container",
+      "protocol": "http",
+      "path": "/api/kc-topic,/api/kc-knowledge-lib,/api/kc-manage,/api/kc-search,/api/kc-uc",
+      "belong": "knowledge-center"
+    },
+    "kc-mc": {
+      "server-name": "kc-mc",
+      "port": "7201",
+      "type": "container",
+      "protocol": "http",
+      "path": "/api/kc-mc/",
+      "belong": "knowledge-center"
+    },
+    "kc-web": {
+      "server-name": "kc-web",
+      "port": "7202",
+      "type": "container",
+      "protocol": "http",
+      "path": "/knowledge-center/,/foxit/",
+      "belong": "knowledge-center"
+    },
+    "wopi-proxy": {
+      "server-name": "wopi-proxy",
+      "host-name": "host",
+      "port-name": "port",
+      "port": "7701",
+      "type": "container",
+      "path": "/wopi/",
+      "belong": "client",
+      "protocol": "http"
+    },
+    "yozowo-proxy2": {
+      "server-name": "yozowo-proxy2",
+      "host-name": "host",
+      "port-name": "port",
+      "port": "7702",
+      "type": "container",
+      "path": "/api/yozowo-proxy/",
+      "belong": "client",
+      "protocol": "http"
+    },
+    "wps-proxy2": {
+      "server-name": "wps-proxy2",
+      "host-name": "host",
+      "port-name": "port",
+      "port": "7703",
+      "type": "container",
+      "path": "/api/wps-proxy/",
+      "belong": "client",
+      "protocol": "http"
+    },
+    "yozowo-static": {
+      "server-name": "yozowo-static",
+      "host-name": "host",
+      "port-name": "port",
+      "real-server": "127.0.0.1",
+      "type": "container",
+      "protocol": "http",
+      "port": "9082",
+      "path": "/preview/yozowo",
+      "belong": "client"
+    },
+    "label-recommend": {
+      "server-name": "label-recommend",
+      "type": "container",
+      "port": "9528",
+      "path": "/api/label-recommend",
+      "belong": "aladdin",
+      "protocol": "http"
+    },
+    "appstore-static": {
+      "server-name": "appstore-static",
+      "host-name": "host",
+      "port-name": "port",
+      "port": "8080",
+      "type": "container",
+      "path": "/appstore/static",
+      "protocol": "http",
+      "belong": "workcenter"
+    },
+    "appstore-public": {
+      "server-name": "appstore-public",
+      "host-name": "host",
+      "port-name": "port",
+      "port": "7010",
+      "type": "container",
+      "path": "/api/appstore",
+      "protocol": "http",
+      "belong": "workcenter"
+    },
+    "appstore-private": {
+      "server-name": "appstore-private",
+      "host-name": "privateHost",
+      "port-name": "privatePort",
+      "port": "7011",
+      "type": "container",
+      "path": "/api/appstore",
+      "protocol": "http",
+      "belong": "workcenter"
+    },
+    "recommendation-anyrobot": {
+      "server-name": "recommendation",
+      "host-name": "host",
+      "port-name": "port",
+      "port": "10003",
+      "type": "container"
+    },
+    "ossgatewaymanager-public": {
+      "server-name": "ossgatewaymanager",
+      "host-name": "publicHost",
+      "port-name": "publicPort",
+      "type": "container",
+      "protocol": "http",
+      "port": "9000",
+      "path": "/api/ossgateway",
+      "belong": "alita"
+    },
+    "ossgatewaymanager-private": {
+      "server-name": "ossgatewaymanager",
+      "host-name": "privateHost",
+      "port-name": "privatePort",
+      "type": "container",
+      "protocol": "http",
+      "port": "9002",
+      "path": "/api/ossgateway",
+      "belong": "alita"
+    },
+    "contentpipeline-public": {
+      "server-name": "contentpipeline",
+      "host-name": "publicHost",
+      "port-name": "publicPort",
+      "type": "container",
+      "protocol": "http",
+      "port": "9000",
+      "path": "/api/pipeline",
+      "belong": "alita"
+    },
+    "contentpipeline-private": {
+      "server-name": "contentpipeline",
+      "host-name": "privateHost",
+      "port-name": "privatePort",
+      "type": "container",
+      "protocol": "http",
+      "port": "9002",
+      "path": "/api/pipeline",
+      "belong": "alita"
+    },
+    "pipelinesensitivescan-public": {
+      "server-name": "pipelinesensitivescan",
+      "host-name": "publicHost",
+      "port-name": "publicPort",
+      "type": "container",
+      "protocol": "http",
+      "port": "9000",
+      "path": "/api/pipelinesensitivescan",
+      "belong": "alita"
+    },
+    "pipelinesensitivescan-private": {
+      "server-name": "pipelinesensitivescan",
+      "host-name": "privateHost",
+      "port-name": "privatePort",
+      "type": "container",
+      "protocol": "http",
+      "port": "9002",
+      "path": "/api/pipelinesensitivescan",
+      "belong": "alita"
+    },
+    "eantivirus-public": {
+      "server-name": "eantivirus",
+      "host-name": "publicHost",
+      "port-name": "publicPort",
+      "type": "container",
+      "protocol": "http",
+      "port": "9000",
+      "path": "/api/eantivirus",
+      "belong": "alita"
+    },
+    "eantivirus-private": {
+      "server-name": "eantivirus",
+      "host-name": "privateHost",
+      "port-name": "privatePort",
+      "type": "container",
+      "protocol": "http",
+      "port": "9002",
+      "path": "/api/eantivirus",
+      "belong": "alita"
+    },
+    "capp-archive-proxy": {
+      "server-name": "capp-archive-proxy",
+      "host-name": "publicHost",
+      "port-name": "publicPort",
+      "port": "30985",
+      "type": "container",
+      "path": "/api/archivegw/v1",
+      "protocol": "http",
+      "belong": "sap"
+    },
+    "capp-scs-public": {
+      "server-name": "capp-scs",
+      "host-name": "publicHost",
+      "port-name": "publicPort",
+      "port": "30945",
+      "type": "container",
+      "path": "/api/capp-scs/v1",
+      "protocol": "http",
+      "belong": "sap"
+    },
+    "capp-sap-cert-mgt-public": {
+      "server-name": "capp-sap-cert-mgt",
+      "host-name": "publicHost",
+      "port-name": "publicPort",
+      "port": "30975",
+      "type": "container",
+      "path": "/api/sap-cert-mgt/v1",
+      "protocol": "http",
+      "belong": "sap"
+    },
+    "capp-sap-cert-mgt-private": {
+      "server-name": "capp-sap-cert-mgt",
+      "host-name": "privateHost",
+      "port-name": "privatePort",
+      "port": "30976",
+      "type": "container",
+      "path": "/api/sap-cert-mgt/v1",
+      "protocol": "http",
+      "belong": "sap"
+    },
+    "capp-sap-cert-mgt-ui": {
+      "server-name": "capp-sap-cert-mgt-ui",
+      "host-name": "staticHost",
+      "port-name": "staticPort",
+      "port": "18975",
+      "type": "container",
+      "path": "/sap-cert-mgt/",
+      "protocol": "http",
+      "belong": "sap"
+    },
+    "capp-eetl-public": {
+      "server-name": "capp-eetl",
+      "host-name": "publicHost",
+      "port-name": "publicPort",
+      "port": "30965",
+      "type": "container",
+      "path": "/api/capp-eetl/v1",
+      "protocol": "http",
+      "belong": "sap"
+    },
+    "capp-sap-edgp-public": {
+      "server-name": "capp-sap-edgp",
+      "host-name": "publicHost",
+      "port-name": "publicPort",
+      "port": "30960",
+      "type": "container",
+      "path": "/api/capp-edgp/v1",
+      "protocol": "http",
+      "belong": "sap"
+    },
+    "capp-model-public": {
+      "server-name": "capp-model",
+      "host-name": "publicHost",
+      "port-name": "publicPort",
+      "port": "30950",
+      "type": "container",
+      "path": "/api/capp-model/v1",
+      "protocol": "http",
+      "belong": "sap"
+    },
+    "capp-model-private": {
+      "server-name": "capp-model",
+      "host-name": "privateHost",
+      "port-name": "privatePort",
+      "port": "30951",
+      "type": "container",
+      "path": "/api/capp-model/v1",
+      "protocol": "http",
+      "belong": "sap"
+    },
+    "capp-permission-public": {
+      "server-name": "capp-permission",
+      "host-name": "publicHost",
+      "port-name": "publicPort",
+      "port": "30970",
+      "type": "container",
+      "path": "/api/capp-permission/v1",
+      "protocol": "http",
+      "belong": "sap"
+    },
+    "capp-permission-private": {
+      "server-name": "capp-permission",
+      "host-name": "privateHost",
+      "port-name": "privatePort",
+      "port": "30971",
+      "type": "container",
+      "path": "/api/capp-permission/v1",
+      "protocol": "http",
+      "belong": "sap"
+    },
+    "capp-permission-proxy": {
+      "server-name": "capp-permission",
+      "host-name": "proxyHost",
+      "port-name": "proxyPort",
+      "port": "30972",
+      "type": "container",
+      "path": "/api/capp-permission-proxy/v1",
+      "protocol": "http",
+      "belong": "sap"
+    },
+    "capp-sap-edgp-link-conf-ui": {
+      "server-name": "capp-sap-edgp-link-conf-ui",
+      "host-name": "staticHost",
+      "port-name": "staticPort",
+      "port": "18955",
+      "type": "container",
+      "path": "/sap-edgp/",
+      "protocol": "http",
+      "belong": "sap"
+    },
+    "capp-sap-edgp-ui": {
+      "server-name": "capp-sap-edgp-ui",
+      "host-name": "staticHost",
+      "port-name": "staticPort",
+      "port": "18956",
+      "type": "container",
+      "path": "/coreapp-sap-edgp/",
+      "protocol": "http",
+      "belong": "sap"
+    },
+    "capp-model-ui": {
+      "server-name": "capp-model-ui",
+      "host-name": "staticHost",
+      "port-name": "staticPort",
+      "port": "18958",
+      "type": "container",
+      "path": "/capp-model/",
+      "protocol": "http",
+      "belong": "sap"
+    },
+    "capp-cmis-proxy-public": {
+      "server-name": "capp-cmis-proxy",
+      "host-name": "publicHost",
+      "port-name": "publicPort",
+      "port": "30968",
+      "type": "container",
+      "path": "/api/capp-cmis/v1",
+      "protocol": "http",
+      "belong": "sap"
+    },
+    "applet-static": {
+      "server-name": "applet-static",
+      "host-name": "host",
+      "port-name": "port",
+      "port": "8686",
+      "type": "container",
+      "path": "/applet",
+      "protocol": "http",
+      "belong": "workcenter"
+    },
+    "file-collector": {
+      "server-name": "file-collector",
+      "host-name": "host",
+      "port-name": "port",
+      "port": "8081",
+      "type": "container",
+      "path": "/api/file-collector",
+      "protocol": "http",
+      "belong": "workcenter"
+    },
+    "personal-config": {
+      "server-name": "personal-config",
+      "host-name": "host",
+      "port-name": "port",
+      "port": "8081",
+      "type": "container",
+      "path": "/api/personal-config",
+      "protocol": "http",
+      "belong": "workcenter"
+    },
+    "personal-config-private": {
+      "server-name": "personal-config-private",
+      "host-name": "privateHost",
+      "port-name": "privatePort",
+      "port": "8082",
+      "type": "container",
+      "path": "/api/personal-config",
+      "protocol": "http",
+      "belong": "workcenter"
+    },
+    "proximate-access-private": {
+      "server-name": "proximate-access",
+      "real-server": "127.0.0.1",
+      "host-name": "privateHost",
+      "port-name": "privatePort",
+      "port": "30930",
+      "type": "container",
+      "protocol": "http",
+      "path": "/api/proximate-access",
+      "belong": "alita"
+    },
+    "proximate-access-public": {
+      "server-name": "proximate-access",
+      "real-server": "127.0.0.1",
+      "host-name": "publicHost",
+      "port-name": "publicPort",
+      "port": "30930",
+      "type": "container",
+      "protocol": "http",
+      "path": "/api/proximate-access",
+      "belong": "alita"
+    },
+    "osspolicy-private": {
+      "server-name": "osspolicy",
+      "real-server": "127.0.0.1",
+      "host-name": "privateHost",
+      "port-name": "privatePort",
+      "port": "9901",
+      "type": "container",
+      "protocol": "http",
+      "path": "/api/osspolicy",
+      "belong": "alita"
+    },
+    "osspolicy-public": {
+      "server-name": "osspolicy",
+      "real-server": "127.0.0.1",
+      "host-name": "publicHost",
+      "port-name": "publicPort",
+      "port": "9900",
+      "type": "container",
+      "protocol": "http",
+      "path": "/api/osspolicy",
+      "belong": "alita"
+    },
+    "open-doc-public": {
+      "server-name": "open-doc",
+      "real-server": "127.0.0.1",
+      "host-name": "publicHost",
+      "port-name": "publicPort",
+      "port": "30998",
+      "type": "container",
+      "protocol": "http",
+      "path": "/api/open-doc",
+      "belong": "alita"
+    },
+    "open-doc-private": {
+      "server-name": "open-doc",
+      "real-server": "127.0.0.1",
+      "host-name": "privateHost",
+      "port-name": "privatePort",
+      "port": "30998",
+      "type": "container",
+      "protocol": "http",
+      "path": "/api/open-doc",
+      "belong": "alita"
+    },
+    "recommend": {
+      "server-name": "recommend",
+      "type": "container",
+      "port": "9528",
+      "path": "/api/recommend",
+      "belong": "aladdin",
+      "protocol": "http"
+    },
+    "similar-recommend": {
+      "server-name": "similar-recommend",
+      "type": "container",
+      "port": "9528",
+      "path": "/api/similar-recommend",
+      "belong": "aladdin",
+      "protocol": "http"
+    },
+    "thirdparty-message-plugin": {
+      "server-name": "thirdparty-message-plugin",
+      "type": "container",
+      "protocol": "http",
+      "port": "9610",
+      "path": "/api/thirdparty-message-plugin",
+      "belong": "console"
+    },
+    "proton-openapi": {
+      "server-name": "proton-openapi",
+      "host-name": "host",
+      "port-name": "port",
+      "port": "8080",
+      "type": "container",
+      "protocol": "http",
+      "path": "/api/proton-openapi",
+      "belong": "proton"
+    },
+    "metadata-extract": {
+      "server-name": "metadata-extract",
+      "type": "container",
+      "port": "9528",
+      "path": "/api/catalogdata-extract",
+      "belong": "aladdin",
+      "protocol": "http"
+    },
+    "portal-management": {
+      "server-name": "portal-management",
+      "type": "container",
+      "protocol": "http",
+      "port": "9614",
+      "path": "/api/portal-management",
+      "belong": "console"
+    },
+    "sp-remote-deploy": {
+      "server-name": "sp-remote-deploy",
+      "host-name": "host",
+      "port-name": "port",
+      "port": "31000",
+      "path": "/api/sp-remote-deploy",
+      "type": "container",
+      "protocol": "http",
+      "belong": "deploy"
+    },
+    "sp-deploy-client-disc": {
+      "server-name": "sp-deploy-client-disc",
+      "host-name": "host",
+      "port-name": "port",
+      "port": "31100",
+      "type": "container",
+      "protocol": "tcp",
+      "belong": "deploy"
+    },
+    "sp-certmgm-internal": {
+      "server-name": "sp-certmgm-internal",
+      "host-name": "host",
+      "port-name": "port",
+      "port": "32002",
+      "type": "container",
+      "protocol": "http",
+      "belong": "deploy"
+    },
+    "sp-certmgm-maintain": {
+      "server-name": "sp-certmgm-maintain",
+      "host-name": "host",
+      "port-name": "port",
+      "port": "32003",
+      "type": "container",
+      "protocol": "http",
+      "belong": "deploy"
+    },
+    "sp-certmgm-web": {
+      "server-name": "sp-certmgm-web",
+      "host-name": "host",
+      "port-name": "port",
+      "port": "32000",
+      "path": "/api/sp-certmgm-web",
+      "type": "container",
+      "protocol": "http",
+      "belong": "deploy"
+    },
+    "confidential-public": {
+      "server-name": "confidential",
+      "real-server": "127.0.0.1",
+      "type": "container",
+      "protocol": "http",
+      "host-name": "publicHost",
+      "port-name": "publicPort",
+      "port": "9617",
+      "path": "/api/confidential",
+      "belong": "console"
+    },
+    "confidential-private": {
+      "server-name": "confidential",
+      "real-server": "127.0.0.1",
+      "type": "container",
+      "protocol": "http",
+      "host-name": "privateHost",
+      "port-name": "privatePort",
+      "port": "9618",
+      "path": "/api/confidential",
+      "belong": "console"
+    },
+    "content-automation": {
+      "server-name": "content-automation",
+      "type": "container",
+      "protocol": "http",
+      "port": "8680",
+      "path": "/api/automation",
+      "belong": "workcenter"
+    },
+    "third-app-management-host": {
+      "server-name": "third-app-management",
+      "port": "7777"
+    },
+    "staticresourcemanagement-host": {
+      "server-name": "staticresourcemanagement",
+      "port": "8090"
+    },
+    "nodemgnt-host": {
+      "server-name": "nodemgnt",
+      "port": "8090"
+    },
+    "license-host": {
+      "server-name": "license",
+      "port": "8090"
+    },
+    "deploy-web-service": {
+      "server-name": "deploy-web",
+      "host-name": "serviceHost",
+      "port-name": "servicePort",
+      "port": "18080"
+    },
+    "deploy-web-static": {
+      "server-name": "deploy-web",
+      "host-name": "staticHost",
+      "port-name": "staticPort",
+      "port": "18800"
+    },
+    "cognitive-assistant": {
+      "server-name": "cognitive-assistant",
+      "type": "container",
+      "protocol": "http",
+      "host-name": "host",
+      "port-name": "port",
+      "port": "8888",
+      "path": "/api/cognitive-assistant/",
+      "belong": "client"
+    }
+  },
+  "oauth2": [
+    {
+      "client_name": "ecoindex",
+      "service_access": {
+        "publicHost": "127.0.0.1",
+        "publicPort": 443,
+        "privateHost": "127.0.0.1",
+        "privatePort": 9080
+      },
+      "oauthOn": false
+    }
+  ]
+}

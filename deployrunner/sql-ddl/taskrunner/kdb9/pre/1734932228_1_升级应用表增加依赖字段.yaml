@@ -1,0 +1,6 @@
+- Command: execute
+  args:
+    transaction: false
+    Statements:
+      - >
+        ALTER TABLE  IF EXISTS task_application ADD COLUMN IF NOT EXISTS adependence BYTEA COMMENT 'application dependence application info';

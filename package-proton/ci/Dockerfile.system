@@ -1,0 +1,52 @@
+ARG VERSION="0.0.1-local"
+ARG TARGETARCH="amd64"
+FROM acr.aishu.cn/public/ubuntu:22.04.20251014 AS runtime
+FROM acr.aishu.cn/ict/builder:tools-yq.latest AS yq
+
+FROM yq AS builder
+ARG VERSION TARGETARCH
+
+WORKDIR /work
+
+COPY package-proton/system.yaml /work/application.yaml
+COPY .buildx/charts /work/charts
+COPY .buildx/bin/builder /work/builder
+
+RUN true \
+    && yq -i '.version = "'${VERSION}'"' /work/application.yaml \
+    && yq -i '.components.helm_charts.local.[].version = "'${VERSION}'"' /work/application.yaml \
+    && yq -i '.localRepo.path = "/work/charts"' /work/application.yaml \
+    && yq -o json /work/application.yaml > /work/application.json
+
+RUN cat /work/application.json && ls -al /work/charts
+
+RUN true \
+    && mkdir config_templates \
+    && /work/builder \
+        --app ./application.json \
+        --config_template config_templates \
+        --images ./images.txt \
+        --dst ./Proton-System-${VERSION}-el7.${TARGETARCH}.tgz \
+        --log_level trace \
+    && cat ./images.txt
+
+FROM scratch AS image-result
+ARG VERSION TARGETARCH
+COPY --from=builder /work/images.txt /Proton-System-${VERSION}-el7.${TARGETARCH}.images.txt
+        
+FROM runtime AS package
+ARG VERSION TARGETARCH
+COPY --from=builder /work/ /work
+COPY .buildx/bin/core-installer /work/core-installer
+WORKDIR /work
+RUN true \
+    && mkdir proton-system-deploy-${VERSION} \
+    && mv /work/core-installer proton-system-deploy-${VERSION}/core-installer \
+    && tar zxf Proton-System-${VERSION}-el7.${TARGETARCH}.tgz       -C proton-system-deploy-${VERSION} \
+    && tar zcf Proton-System-${VERSION}-el7.${TARGETARCH}-package.tgz  proton-system-deploy-${VERSION}
+
+
+# result: 构建结果
+FROM scratch AS result
+ARG VERSION TARGETARCH
+COPY --from=package /work/Proton-System-${VERSION}-el7.${TARGETARCH}-package.tgz /

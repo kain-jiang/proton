@@ -1,0 +1,145 @@
+{
+    "title": "图数据库",
+    "description": "图数据库",
+    "type": "object",
+    "oneOf": [
+        {
+            "title": "内置图数据库",
+            "description": "内置图数据库",
+            "type": "object",
+            "required": [
+                "readonlyuser",
+                "readonlypassword",
+                "source_type"
+            ],
+            "properties": {
+                "source_type": {
+                    "type": "string",
+                    "description": "proton内置nebula图数据库,该值必须为Proton_Nebula",
+                    "enum": [
+                        "Proton_Nebula"
+                    ],
+                    "const": "Proton_Nebula"
+                },
+                "readonlyuser": {
+                    "type": "string",
+                    "description": "只读数据库账户"
+                },
+                "readonlypassword": {
+                    "type": "string",
+                    "description": "只读数据库账户密码",
+                    "dpsensitive": true
+                }
+            }
+        },
+        {
+            "title": "外置orientDB图数据库",
+            "description": "外置orientDB图数据库",
+            "type": "object",
+            "required": [
+                "source_type",
+                "type",
+                "host",
+                "port",
+                "user",
+                "password"
+            ],
+            "properties": {
+                "source_type": {
+                    "type": "string",
+                    "enum": [
+                        "External_Database"
+                    ],
+                    "const": "External_Database",
+                    "default": "External_Database"
+                },
+                "type": {
+                    "type": "string",
+                    "enum": [
+                        "orientDB"
+                    ],
+                    "const": "orientDB",
+                    "default": "orientDB"
+                },
+                "host": {
+                    "type": "string",
+                    "description": "数据库连接地址,多个地址以英文字符逗号','分割"
+                },
+                "port": {
+                    "type": "integer",
+                    "description": "数据库连接端口",
+                    "minimum": 1
+                },
+                "user": {
+                    "type": "string",
+                    "description": "数据库账户"
+                },
+                "password": {
+                    "type": "string",
+                    "description": "数据库账户密码",
+                    "dpsensitive": true
+                }
+            }
+        },
+        {
+            "title": "外置nebula图数据库",
+            "description": "外置nebula图数据库",
+            "type": "object",
+            "required": [
+                "source_type",
+                "type",
+                "host",
+                "port",
+                "readonlyuser",
+                "readonlypassword",
+                "user",
+                "password"
+            ],
+            "properties": {
+                "source_type": {
+                    "type": "string",
+                    "enum": [
+                        "External_Database"
+                    ],
+                    "const": "External_Database",
+                    "default": "External_Database"
+                },
+                "type": {
+                    "type": "string",
+                    "enum": [
+                        "nebulaGraph"
+                    ],
+                    "const": "nebulaGraph",
+                    "default": "nebulaGraph"
+                },
+                "host": {
+                    "type": "string",
+                    "description": "数据库连接地址,多个地址以英文字符逗号','分割"
+                },
+                "port": {
+                    "type": "integer",
+                    "description": "数据库连接端口",
+                    "minimum": 1
+                },
+                "user": {
+                    "type": "string",
+                    "description": "数据库账户"
+                },
+                "password": {
+                    "type": "string",
+                    "description": "数据库账户密码",
+                    "dpsensitive": true
+                },
+                "readonlyuser": {
+                    "type": "string",
+                    "description": "只读数据库账户"
+                },
+                "readonlypassword": {
+                    "type": "string",
+                    "description": "只读数据库账户密码",
+                    "dpsensitive": true
+                }
+            }
+        }
+    ]
+}

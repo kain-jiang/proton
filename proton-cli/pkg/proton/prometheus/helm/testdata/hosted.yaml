@@ -1,0 +1,22 @@
+---
+namespace: prometheus
+image:
+  registry: registry.example.org
+replicaCount: 2
+service:
+  enableDualStack: false
+storage:
+  storageClassName: standard
+secret:
+  k8sEtcd:
+    enabled: true
+    secretName: k8s-etcdssl-secret-for-prometheus
+    caName: ca-k8setcd.crt
+    certName: prometheus-metrics-k8setcd.crt
+    keyName: prometheus-metrics-k8setcd.key
+  protonEtcd:
+    enabled: true
+    secretName: etcdssl-secret-for-prometheus
+    caName: ca-protonetcd.crt
+    certName: prometheus-metrics-protonetcd.crt
+    keyName: prometheus-metrics-protonetcd.key

@@ -1,0 +1,2 @@
+Watch all cluster members come up.
+  $ kubectl get pods --namespace={{ .Values.namespace }} -l app={{ template "opensearch.name" . }} -w

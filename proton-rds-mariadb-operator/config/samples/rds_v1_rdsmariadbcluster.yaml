@@ -1,0 +1,85 @@
+apiVersion: rds.proton.aishu.cn/v1
+kind: RDSMariaDBCluster
+metadata:
+  name: proton-rds
+  namespace: default
+#  annotations:
+#    "rdsAlreadyExists": ""
+spec:
+  # TODO(user): Add fields here
+  secretName: rds-secret
+  replicas: 3
+  etcd:
+    image: acr.aishu.cn/proton/etcd:v3.3.19
+    imagePullPolicy: IfNotPresent
+  exporter:
+    image: acr.aishu.cn/proton/rds-exporter:2.0.0-develop
+    imagePullPolicy: IfNotPresent
+  mgmt:
+    image: acr.aishu.cn/proton/rds-mgmt:2.0.0-develop
+    imagePullPolicy: IfNotPresent
+    conf:
+      lang: zh_CN
+      logLevel: error
+    service:
+      enableDualStack: false
+      port: 8888
+    resources:
+      requests:
+        memory: 1G
+        cpu: 600m
+      limits:
+        memory: 1G
+        cpu: "1"
+  haproxy:
+    enabled: false
+    image: acr.aishu.cn/proton/rds-haproxy:2.6.0
+    imagePullPolicy: IfNotPresent
+    service:
+      enableDualStack: false
+      wPort: 6444
+      rPort: 6445
+    resources:
+      requests:
+        memory: 1G
+        cpu: 600m
+      limits:
+        memory: 1G
+        cpu: "1"
+  mariadb:
+    logrotate:
+      schedule: "0 1 * * *"
+    image: acr.aishu.cn/proton/rds-mariadb:2.0.0-develop
+    imagePullPolicy: IfNotPresent
+    service:
+      enableDualStack: false
+      port: 3306
+    conf:
+      wait_timeout: 3600
+      innodb_buffer_pool_size: 8G
+    storage:
+      capacity: 10Gi
+      storageClassName: ""
+      volumeSpec:
+        - host: node-64-184
+          path: /data/pv-0
+        - host: node-64-184
+          path: /data/pv-1
+        - host: node-64-184
+          path: /data/pv-2
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: role
+            operator: In
+            values:
+            - mariadb
+    resources:
+      requests:
+        memory: 1G
+        cpu: 600m
+      limits:
+        memory: 1G
+        cpu: "1"
+

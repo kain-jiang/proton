@@ -1,0 +1,131 @@
+trigger: none
+
+resources:
+  containers:
+    - container: builder
+      image: acr.aishu.cn/library/golang:1.25.6
+      env:
+        GOPROXY: https://goproxy.aishu.cn
+      volumes:
+        # 共享 Go Module Cache，缩短编译时间
+        - /root/go/pkg/mod:/go/pkg/mod
+        # 共享 Go Build Cache，缩短编译时间
+        - /root/.cache/go-build:/root/.cache/go-build
+
+
+stages:
+  - stage: Build
+    jobs:
+      - job: ProtonService
+        strategy:
+          matrix:
+            AMD64:
+              architecture: amd64
+              poolArch: X64
+            ARM64:
+              architecture: arm64
+              poolArch: ARM64
+        pool:
+          name: ASDeployment
+          demands:
+            - Agent.OSArchitecture -equals $(poolArch)
+            - Agent.OS -equals Linux
+            - docker
+        steps:
+          - script: git show --stat
+            displayName: Git Commit
+          - script: printenv
+            displayName: Environment
+          - script: |
+              export DOCKER_BUILDKIT=1
+              mkdir /tmp/empty
+              docker build --output type=local,dest=bin -f - /tmp/empty <<EOF
+                FROM scratch
+                COPY --from=acr.aishu.cn/ict/builder:tools-skopeo.latest /usr/bin/skopeo /
+              EOF
+            displayName: Setup Skopeo
+          - script: |
+              export DOCKER_BUILDKIT=1
+              mkdir /tmp/empty
+              docker build --output type=local,dest=bin -f - /tmp/empty <<< "FROM acr.aishu.cn/ict/builder:tools-buildx.latest"
+            displayName: Setup Buildx
+          - script: DOCKER_BUILDKIT=1 docker build --output type=local,dest=bin build
+            displayName: Setup Build Bin
+          - script: |
+              set -e
+              export VERSION=$(bin/build generate-version --build-number=$(Build.BuildNumber))
+              export TAG=$(echo ${VERSION} | sed 's/+/_/g')
+              export TARGETARCH=$(architecture)
+              ./bin/buildx bake -f docker-bake-ctx.hcl
+              ./bin/buildx bake
+              ./bin/buildx bake -f docker-bake-pkg.hcl
+              # Setup skopeo binary PATH
+              export PATH="$(pwd)/bin:$PATH"
+              ./package-proton/ci/pack-oci.sh ./.buildx/pkgs/Proton-System-${VERSION}-el7.${TARGETARCH}.{images.txt,tar}
+              ./package-proton/ci/pack-oci.sh ./.buildx/pkgs/Proton-Studio-${VERSION}-el7.${TARGETARCH}.{images.txt,tar}
+            displayName: Buildx Bake
+          - script: |
+              ls -al .buildx/*
+            displayName: Show Buildx Output
+          - task: FtpUpload@2
+            displayName: Upload to FTP
+            inputs:
+              credentialsOption: serviceEndpoint
+              serverEndpoint: ftps-ict
+              rootDirectory: .buildx/pkgs
+              remoteDirectory: /proton/proton-opensource/ProtonService/$(architecture)
+              trustSSL: true
+
+      - job: ProtonCLI
+        container: builder
+        steps:
+          - script: build/binaries
+            displayName: Build
+            workingDirectory: proton-cli
+            env:
+              PROTON_BUILD_PLATFORMS: linux/amd64 linux/arm64
+          - task: PublishBuildArtifacts@1
+            inputs:
+              PathtoPublish: proton-cli/_output/local
+              ArtifactName: proton-cli
+
+      - job: ProtonPackage
+        container: builder
+        dependsOn: ProtonCLI
+        strategy:
+          matrix:
+            AMD64:
+              architecture: amd64
+            ARM64:
+              architecture: arm64
+        steps:
+          - script: go version
+            displayName: Golang
+          - script: |
+              OUTPUT=/usr/local/bin/skopeo
+              curl -fSs -o "${OUTPUT}" https://ftp-ict.aishu.cn/proton/tools/skopeo/$(arch)/skopeo
+              chmod +x "${OUTPUT}"
+              skopeo --version
+            displayName: Skopeo
+          - script: |
+              GOOS=$(go env GOOS)
+              GOARCH=$(go env GOARCH)
+              curl "https://ftp-ict.aishu.cn/proton/tools/helm/official/helm-v3.19.3-${GOOS}-${GOARCH}.tar.gz" | tar -xz --directory=/usr/local/bin --strip-components=1 "${GOOS}-${GOARCH}/helm"
+              helm version --short
+            displayName: Helm
+          - script: go install devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/build
+            displayName: Install build tool
+            workingDirectory: build
+          - task: DownloadBuildArtifacts@0
+            inputs:
+              artifactName: proton-cli
+          - script: build proton-package --version=$(build generate-version --build-number=$(Build.BuildNumber)) --architecture=$(architecture) --proton-cli-path="$(System.ArtifactsDirectory)/proton-cli/bin/linux/$(architecture)/proton-cli"
+            displayName: Build
+          - task: FtpUpload@2
+            displayName: Upload to FTP
+            inputs:
+              credentialsOption: serviceEndpoint
+              serverEndpoint: ftps-ict
+              rootDirectory: _output/releases
+              remoteDirectory: /proton/proton-opensource/ProtonPackage
+              trustSSL: true

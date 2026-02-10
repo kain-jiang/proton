@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: {{ template "rds-keepalived.name" . }}
+  namespace: {{ .Values.namespace }}
+spec:
+  selector:
+    matchLabels:
+      name: {{ template "rds-keepalived.name" . }}
+  template:
+    metadata:
+      labels:
+        name: {{ template "rds-keepalived.name" . }}
+    spec:
+      hostNetwork: true
+      serviceAccount: {{ template "rds-keepalived.name" . }}
+      {{- if .Values.nodeSelector }}
+      nodeSelector:
+{{ toYaml .Values.nodeSelector | indent 8 }}
+      {{- end }}
+      containers:
+      - name: rds-keepalived
+        image: {{ template "rds-keepalived.image" . }}
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        securityContext:
+          privileged: true
+        args:
+        - --services-configmap={{ .Values.namespace }}/vip-configmap
+        - --vrid={{ .Values.vip.vrid }}
+        - --iface={{ .Values.vip.iface }}
+        - --http-port={{ .Values.vip.httpPort }}
+        - --only-self-node={{ .Values.vip.onlySelfNode }}
+        # to use unicast
+        # unicast uses the ip of the nodes instead of multicast
+        # this is useful if running in cloud providers (like AWS)
+        - --use-unicast={{ .Values.vip.useUnicast }}
+        - --logtostderr
+        env:
+          - name: TZ
+            value: "{{ .Values.env.timezone }}"
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          - name: POD_NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: {{ .Values.vip.httpPort }}
+          initialDelaySeconds: 15
+          timeoutSeconds: 3
+        # use downward API
+        volumeMounts:
+          - mountPath: /lib/modules
+            name: modules
+            readOnly: true
+          - mountPath: /dev
+            name: dev
+      volumes:
+      - name: modules
+        hostPath:
+          path: /lib/modules
+      - name: dev
+        hostPath:
+          path: /dev

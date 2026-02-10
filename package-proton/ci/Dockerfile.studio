@@ -1,0 +1,42 @@
+ARG VERSION="0.0.1-local"
+ARG TARGETARCH="amd64"
+
+FROM acr.aishu.cn/ict/builder:tools-yq.latest AS yq
+FROM acr.aishu.cn/public/ubuntu:22.04.20251014 AS runtime
+
+FROM yq AS builder
+ARG VERSION TARGETARCH
+
+WORKDIR /work
+
+COPY package-proton/studio.yaml /work/application.yaml
+COPY .buildx/charts /work/charts
+COPY .buildx/bin/builder /work/builder
+
+RUN true \
+    && yq -i '.version = "'${VERSION}'"' /work/application.yaml \
+    && yq -i '.components.helm_charts.local.[].version = "'${VERSION}'"' /work/application.yaml \
+    && yq -i '.localRepo.path = "/work/charts"' /work/application.yaml \
+    && yq -o json /work/application.yaml > /work/application.json
+
+RUN cat /work/application.json && ls -al /work/charts
+
+RUN true \
+    && mkdir config_templates \
+    && /work/builder \
+        --app ./application.json \
+        --config_template config_templates \
+        --images ./images.txt \
+        --dst ./Proton-Studio-${VERSION}-el7.${TARGETARCH}.tgz \
+        --log_level trace \
+    && cat ./images.txt
+
+FROM scratch AS image-result
+ARG VERSION TARGETARCH
+COPY --from=builder /work/images.txt /Proton-Studio-${VERSION}-el7.${TARGETARCH}.images.txt
+
+
+# result: 构建结果
+FROM scratch AS result
+ARG VERSION TARGETARCH
+COPY --from=builder /work/Proton-Studio-${VERSION}-el7.${TARGETARCH}.tgz /

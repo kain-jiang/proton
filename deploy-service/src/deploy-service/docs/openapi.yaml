@@ -1,0 +1,3305 @@
+---
+openapi: "3.0.2"
+info:
+  title: "DeployService 微服务的 API 文档"
+  version: "1.0.0"
+  description: |
+    - 健康检查
+    - 激活升级
+    - 模块服务
+    - 配置管理
+    - 通信框架
+    - 客户端升级
+servers:
+- url: "http://{host}:{port}/api/deploy-manager/v1"
+  variables:
+    host:
+      default: "deploy-service.anyshare.svc.cluster.local"
+      enum:
+      - "deploy-service.anyshare.svc.cluster.local"
+      - "127.0.0.1"
+      description: "集群地址"
+    port:
+      enum:
+      - "9703"
+      default: "9703"
+tags:
+- name: "健康检查"
+- name: "激活升级"
+- name: "模块服务"
+- name: "配置管理"
+- name: "通信框架"
+- name: "客户端"
+components:
+  responses:
+    OKResponse:
+      description: "请求成功"
+    StandardsErrorResponse:
+      description: "标准错误响应"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/StandardsErrorObject"
+    ClientPackageUpgradeResponse:
+      description: "检查客户端是否有更新"
+      content:
+        application/json:
+          schema:
+            description: ""
+            required:
+            - "os_type"
+            - "version"
+            type: "object"
+            properties:
+              name:
+                description: "升级包名称"
+                type: "string"
+              version:
+                description: "版本号"
+                type: "string"
+              terminator:
+                description: "是否强制升级"
+                type: "string"
+              update_type:
+                description: "升级类型"
+                enum:
+                - "custom"
+                - "standard"
+                type: "string"
+              os_type:
+                description: "OS系统"
+                enum:
+                - "android"
+                - "mac"
+                - "ios"
+                - "win32_advanced"
+                - 'win64_advanced'
+                - "linux_x64_rpm"
+                - "linux_arm64_rpm"
+                - "linux_mips64_rpm"
+                - "linux_x64_deb"
+                - "linux_x64_AppImage"
+                - "linux_arm64_deb"
+                - "linux_arm64_AppImage"
+                - "linux_mips64_deb"
+                - "officeplugin_x86"
+                - "officeplugin_x64"
+                - "officeplugin_mac"
+                type: "string"
+              silence:
+                description: "是否静默升级"
+                type: "boolean"
+            example:
+              name: "Anyshare_ALL_......"
+              os_type: "ios"
+              version: "1.0.2.2.222"
+              terminator: "true"
+              update_type: "standard"
+              silence: ture
+        text/xml:
+          schema:
+            description: ""
+            required:
+            - "os_type"
+            - "version"
+            type: "object"
+            properties:
+              name:
+                description: "升级包名称"
+                type: "string"
+              version:
+                description: "版本号"
+                type: "string"
+              terminator:
+                description: "是否强制升级"
+                type: "string"
+              os_type:
+                description: "OS系统"
+                enum:
+                - "android"
+                - "mac"
+                - "ios"
+                - "win32_advanced"
+                - 'win64_advanced'
+                - "linux_x64_rpm"
+                - "linux_arm64_rpm"
+                - "linux_mips64_rpm"
+                - "linux_x64_deb"
+                - "linux_x64_AppImage"
+                - "linux_arm64_deb"
+                - "linux_arm64_AppImage"
+                - "linux_mips64_deb"
+                - "officeplugin_x86"
+                - "officeplugin_x64"
+                - "officeplugin_mac"
+                type: "string"
+            example:
+              name: ""
+              os_type: "ios"
+              version: "-1"
+              terminator: ""
+  requestBodies:
+    ThirdAppRequestBody:
+      description: "第三方需要修改的配置信息"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ThirdAppDepServicesInfo"
+
+  schemas:
+    UpgradeStatus:
+      description: 升级状态
+      type: object
+      properties:
+        status:
+          type: string
+          description: 升级状态
+          enum:
+            - upgrade_start
+            - upgrade_running
+            - upgrade_failed
+            - upgrade_success
+        start:
+          type: string
+          description: 升级开始时间
+        name:
+          type: string
+          description: 服务名
+        type:
+          type: string
+          description: 服务类型
+        messages:
+          type: array
+          description: 所有的升级信息
+          items:
+            type: object
+            description: 一条升级消息
+            properties:
+              index:
+                type: number
+                description: 消息序号
+              time:
+                type: string
+                description: 消息产生时间
+              message:
+                type: string
+                description: 消息具体内容
+    ActivationJsonObject:
+      type: "object"
+      description: "激活AnyShare时使用的参数对象"
+      required:
+      - "activation_ip"
+      properties:
+        activation_ip:
+          type: "string"
+          default: "127.0.0.1"
+          description: "激活时使用的IP"
+    StandardsErrorObject:
+      type: "object"
+      description: "标准错误对象"
+      required:
+      - "code"
+      - "message"
+      - "cause"
+      properties:
+        code:
+          type: "string"
+          default: "400000001"
+          description: "错误码"
+        message:
+          type: "string"
+          description: "错误信息"
+        cause:
+          type: "string"
+          default: "NCT_XXXXXXXXXXXX"
+          description: "错误原因"
+    UploadModulePackageObject:
+      type: "object"
+      description: "上传模块化服务包需要的参数对象"
+      required:
+      - "package_path"
+      properties:
+        package_path:
+          type: "string"
+          description: "模块化服务包在服务器上的路径"
+        service:
+          type: "string"
+          description: "模块化服务名"
+    ModuleServiceInformation:
+      type: "object"
+      description: "模块化服务信息"
+      required:
+      - "service_name"
+      - "installed_version"
+      - "available_version"
+      - "available_package"
+      - "replicas"
+      properties:
+        service_name:
+          type: "string"
+          description: "模块化服务名"
+        installed_version:
+          type: "string"
+          description: "安装的服务包版本信息"
+        available_version:
+          type: "string"
+          description: "可用的服务包版本信息"
+        available_package:
+          type: "string"
+          description: "可用的包服务包信息"
+        replicas:
+          type: "integer"
+          default: 0
+          description: "模块服务安装的副本数"
+        nodes:
+          type: "array"
+          description: "服务安装的节点"
+          items:
+            type: "string"
+            example: "1.1.1.1"
+        third_app_service:
+          type: "array"
+          items:
+            type: "object"
+            properties:
+              third_app_service:
+                type: "string"
+                description: "第三方服务名"
+                example: "hehe"
+              components:
+                type: "array"
+                description: "组件列表"
+                items:
+                  type: "string"
+                  example: "document"
+        require:
+          type: "boolean"
+          description: "是否强依赖第三方服务"
+          example: "true"
+        micro_services:
+          type: "array"
+          description: "模块服务包含的微服务列表"
+          items:
+            type: "string"
+            example: "svc1"
+        installed_micro_services:
+          type: "array"
+          description: "已经安装的微服务列表"
+          items:
+            type: "string"
+            example: "svc1"
+    ThirdAppDepServicesInfo:
+      type: "object"
+      description: "第三方依赖服务配置信息"
+      required:
+      - "data"
+      properties:
+        data:
+          $ref: "#/components/schemas/ThirdAppDepServicesInfoData"
+    ThirdAppDepServicesInfoData:
+      type: "object"
+      description: "第三方依赖服务配置信息"
+      required:
+      - "id"
+      - "service_name"
+      - "micro_service"
+      - "belong"
+      - "components_name"
+      - "third_app_depservice_id"
+      properties:
+        id:
+          type: "string"
+        service_name:
+          type: "string"
+        micro_service:
+          type: "string"
+        belong:
+          type: "string"
+        components_name:
+          type: "string"
+        third_app_depservice_id:
+          type: "string"
+    MicroServiceConfigObject:
+      description: "微服务配置参数对象"
+      type: "object"
+      properties:
+        os-language:
+          description: "系统语言\n选项：\nlanguage"
+          type: "string"
+        dep-services:
+          description: "依赖服务选项\nrds mysql数据库\nservices 其他依赖服务"
+          enum:
+          - "rds"
+          - "services"
+          type: "string"
+        os-timezone:
+          description: "系统时区\n选项：timezone"
+          type: "string"
+        micro-service-language:
+          description: "微服务全球化语言配置\n选项：language"
+          type: "string"
+      example:
+        os-timezone: "timezone"
+    ClientPackageInfoObject:
+      description: "客户端安装包信息"
+      required:
+      - "open_download"
+      - "update_type"
+      - "mode"
+      - "os_type"
+      - "size"
+      - "time"
+      - "version"
+      type: "object"
+      properties:
+        name:
+          description: "升级包名称"
+          type: "string"
+        url:
+          description: "下载地址"
+          type: "string"
+        version:
+          description: "版本号"
+          type: "string"
+        mode:
+          description: "是否强制更新"
+          type: "boolean"
+        time:
+          description: "上传时间"
+          type: "string"
+        size:
+          format: "int32"
+          description: "大小"
+          type: "integer"
+        open_download:
+          description: "是否开放下载"
+          type: "boolean"
+        update_type:
+          description: "升级包类型(standard/custom)"
+          enum:
+            - "standard"
+            - "custom"
+          type: "string"
+        os_type:
+          description: "OS系统"
+          enum:
+          - "android"
+          - "mac"
+          - "ios"
+          - "win32_advanced"
+          - 'win64_advanced'
+          - "linux_x64_rpm"
+          - "linux_arm64_rpm"
+          - "linux_mips64_rpm"
+          - "linux_x64_deb"
+          - "linux_x64_AppImage"
+          - "linux_arm64_deb"
+          - "linux_arm64_AppImage"
+          - "linux_mips64_deb"
+          - "officeplugin_x86"
+          - "officeplugin_x64"
+          - "officeplugin_mac"
+          type: "string"
+      example:
+        update_type: "standard"
+        name: "AnyShare_All_Linux_arm64-7.0.1.2-20200221-Terminator-520.deb"
+        url: ""
+        version: "7.0.1.2(520)"
+        mode: true
+        time: "2020/11/13 14:15:13"
+        os_type: "linux_arm64_deb"
+        open_download: true
+        size: 39102199
+    SetDownloadInfoData:
+      description: "设置客户端下载地址信息"
+      required:
+      - "url"
+      - "os_type"
+      type: "object"
+      properties:
+        name:
+          description: "升级包名称"
+          type: "string"
+        open_download:
+          description: "是否开放下载，默认true"
+          type: "boolean"
+        url:
+          description: "下载地址"
+          type: "string"
+        os_type:
+          description: "OS系统"
+          enum:
+          - "android"
+          - "mac"
+          - "ios"
+          - "win32_advanced"
+          - 'win64_advanced'
+          - "linux_x64_rpm"
+          - "linux_arm64_rpm"
+          - "linux_mips64_rpm"
+          - "linux_x64_deb"
+          - "linux_x64_AppImage"
+          - "linux_arm64_deb"
+          - "linux_arm64_AppImage"
+          - "linux_mips64_deb"
+          - "officeplugin_x86"
+          - "officeplugin_x64"
+          - "officeplugin_mac"
+          type: "string"
+        version_description:
+          description: "安装包描述"
+          type: "string"
+      example:
+        name: "some text"
+        version_description: "ios 7.0.5.5 更新包"
+        open_download: true
+        url: "http://......"
+        os_type: "ios"
+    DownloadUrlData:
+      description: "获取下载地址参数"
+      required:
+      - "os_type"
+      - "req_host"
+      type: "object"
+      properties:
+        os_type:
+          description: "系统类型"
+          enum:
+          - "android"
+          - "mac"
+          - "ios"
+          - "win32_advanced"
+          - 'win64_advanced'
+          - "linux_x64_rpm"
+          - "linux_arm64_rpm"
+          - "linux_mips64_rpm"
+          - "linux_x64_deb"
+          - "linux_x64_AppImage"
+          - "linux_arm64_deb"
+          - "linux_arm64_AppImage"
+          - "linux_mips64_deb"
+          - "officeplugin_x86"
+          - "officeplugin_x64"
+          - "officeplugin_mac"
+          type: "string"
+        req_host:
+          description: "请求主机"
+          type: "string"
+        user_oss_id:
+          description: "用户对应的ossid，不传该参数，走默认下载地址"
+          type: "string"          
+      example:
+        os_type: "linux_arm64_rpm"
+        req_host: "10.5.161.1"
+        user_oss_id: "789FF7EABE1F455B870FCCCE4F21693D"
+    CertInfoData:
+      description: "证书信息"
+      type: "object"
+      properties:
+        startDate:
+          format: "date"
+          description: "有效期开始日期"
+          type: "string"
+        expireDate:
+          format: "date"
+          description: "有效期过期日期"
+          type: "string"
+        hasExpired:
+          format: "int32"
+          description: "是否过期"
+          type: "integer"
+        accepter:
+          description: "证书接受者"
+          type: "string"
+        certType:
+          description: "证书类型"
+          type: "string"
+        issuer:
+          description: "证书颁发者"
+          type: "string"
+        certSource:
+          description: "证书来源"
+          enum:
+            - "self-signed" # 自签名
+            - "customer-upload" # 客户上传
+            - "unknown" # 未知
+          type: "string"
+      example:
+        startDate: "2020/07/14"
+        expireDate: "2021/07/14"
+        hasExpired: 0
+        accepter: "10.5.161.3"
+        certType: "app"
+        issuer: "AnyShare"
+    AccessAddrObject:
+      description: "访问地址数据对象"
+      type: "object"
+      properties:
+        host:
+          description: "访问地址的host，域名或ip"
+          type: "string"
+        port:
+          description: "访问地址的port"
+          type: "string"
+        type:
+          description: "访问地址的类型"
+          type: "string"
+          enum:
+            - "internal"
+            - "external"
+        scheme:
+          description: "访问地址的协议"
+          type: "string"
+          enum:
+            - "https"
+            - "http"
+        path:
+          description: "访问地址的前缀信息"
+          type: "string"
+      example:
+        host: "10.2.64.150"
+        port: "10443"
+        type: "internal"
+        scheme: "https"
+        path: "/"
+    ThirdPatryServiceObject:
+      description: "第三方服务配置"
+      type: object
+      required:
+      - protocol
+      - host
+      properties:
+        protocol:
+          description: "第三方服务配置协议"
+          type: "string"
+        host:
+          description: "第三方服务配置host"
+          type: "string"
+        port:
+          description: "第三方服务配置port, 默认443(https), 80(http)"
+          type: "integer"
+paths:
+  /health/alive:
+    get:
+      tags:
+      - "健康检查"
+      summary: "存活检查"
+      description: "检查存活状态的探针接口"
+      responses:
+        "200":
+          description: "OK"
+  /health/ready:
+    get:
+      tags:
+      - "健康检查"
+      summary: "就绪检查"
+      description: "检查就绪状态的探针接口"
+      responses:
+        "200":
+          description: "OK"
+  /containerized/anyshare/active:
+    put:
+      summary: "激活AnyShare"
+      description: "初次部署时激活AnyShare集群"
+      tags:
+      - "激活升级"
+      requestBody:
+        description: "激活集群时需要提供的参数信息"
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ActivationJsonObject"
+            examples:
+              activation_object:
+                summary: "激活参数示例"
+                value:
+                  activation_ip: "127.0.0.1"
+      responses:
+        "200":
+          description: "激活成功"
+        "400":
+          description: "激活失败"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+        "500":
+          description: "激活失败"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+              examples:
+                default:
+                  value:
+                    code: 500
+                    message: "active deploy failed."
+                    cause: "xxxxxxxxx"
+  /containerized/anyshare/app/upgradation:
+    put:
+      summary: "升级应用服务"
+      description: "AnyShare升级时升级应用服务"
+      tags:
+      - "激活升级"
+      responses:
+        "200":
+          description: "OK"
+        "500":
+          description: "升级失败"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+              examples:
+                default:
+                  value:
+                    code: "500017000"
+                    message: "upgrade service package failed."
+                    cause: "xxxxxxxxx"
+        "423":
+          description: "任务处理中"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+              examples:
+                forbidden:
+                  value:
+                    code: "423017002"
+                    message: "Refuse to process duplicate requests "
+                    cause: "NCT_FORBIDDEN_DUPLICATE_REQUEST"
+  /containerized/anyshare/basic/upgradation:
+    put:
+      summary: "升级基础服务"
+      description: "AnyShare升级时升级基础服务"
+      tags:
+      - "激活升级"
+      responses:
+        "200":
+          description: "OK"
+        "500":
+          description: "升级失败"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+              examples:
+                default:
+                  value:
+                    code: "500017000"
+                    message: "upgrade service package failed."
+                    cause: "xxxxxxxxx"
+                forbidden:
+                  value:
+                    code: "423017002"
+                    message: "Refuse to process duplicate requests "
+                    cause: "NCT_FORBIDDEN_DUPLICATE_REQUEST"
+  /containerized/service/{service}/{node}:
+    parameters:
+    - name: "service"
+      description: "模块化服务名"
+      in: "path"
+      required: true
+      schema:
+        type: "string"
+    - name: "node"
+      description: "操作的节点列表"
+      in: "path"
+      required: true
+      schema:
+        type: "string"
+    put:
+      summary: "安装模块服务"
+      tags:
+      - "模块服务"
+      description: "安装，增加模块服务节点"
+      parameters:
+      - name: "micro_service"
+        description: "需要安装的微服务"
+        in: "query"
+        style: form
+        required: false
+        schema:
+          type: "array"
+          items:
+            type: "string"
+      - name: "optional_install_micro_service"
+        description: "是否可选的安装部分微服务"
+        in: "query"
+        style: form
+        required: false
+        schema:
+          type: "boolean"
+      responses:
+        "200":
+          description: "OK"
+        "404":
+          description: "Not found"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+              examples:
+                "模块服务未包含该微服务":
+                  value:
+                    code: 404017100
+                    message: "install micro service failed"
+                    cause: "NCT_MICRO_SERVICE_NOT_FOUND_IN_MODULE_SERVICE"
+        "409":
+          description: "Conflict"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+              examples:
+                "微服务已被其他模块服务安装":
+                  value:
+                    code: 409017001
+                    message: "install micro service failed"
+                    cause: "NCT_MICRO_SERVICE_ALREADY_INSTALLED_BY_OTHER_MODULE_SERVICE"
+        "500":
+          description: "安装，增加模块服务节点失败"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+              examples:
+                default:
+                  value:
+                    code: "500017000"
+                    message: "add service node faild."
+                    cause: "xxxxxxxxx"
+    delete:
+      summary: "卸载模块服务"
+      tags:
+      - "模块服务"
+      description: "移除，卸载模块服务节点"
+      responses:
+        "200":
+          description: "OK"
+        "500":
+          description: "移除，卸载模块服务节点失败"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+              examples:
+                default:
+                  value:
+                    code: "500017000"
+                    message: "remove service node failed."
+                    cause: "xxxxxxxxx"
+  /containerized/service/{service}/micro-services:
+    post:
+      summary: "安装微服务"
+      description: "安装模块服务的微服务"
+      tags:
+      - "模块服务"
+      requestBody:
+        description: "请求体"
+        content:
+          application/json:
+            schema:
+              type: "object"
+              properties:
+                micro_services:
+                  type: "array"
+                  description: "微服务列表"
+                  items:
+                    type: "string"
+                    example: "svc1"
+      parameters:
+        - name: service
+          in: path
+          description: 指定需要安装微服务的服务名称
+          required: true
+          example: Observability
+          schema:
+            type: string
+      responses:
+        "201":
+          description: "OK"
+        "400":
+          description: "Forbidden"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+              examples:
+                "模块服务未安装":
+                  value:
+                    code: 400017240
+                    message: "install micro service failed"
+                    cause: "NCT_SERVICE_NOT_INSTALLED"
+        "404":
+          description: "Not found"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+              examples:
+                "模块服务未包含该微服务":
+                  value:
+                    code: 404017100
+                    message: "install micro service failed"
+                    cause: "NCT_MICRO_SERVICE_NOT_FOUND_IN_MODULE_SERVICE"
+        "409":
+          description: "Conflict"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+              examples:
+                "微服务已被其他模块服务安装":
+                  value:
+                    code: 409017001
+                    message: "install micro service failed"
+                    cause: "NCT_MICRO_SERVICE_ALREADY_INSTALLED_BY_OTHER_MODULE_SERVICE"
+        "500":
+          description: "Internal Error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+              examples:
+                default:
+                  value:
+                    code: "500xxxxxx"
+                    message: "install micro service failed"
+                    cause: "NCT_XXXXXXXXXXXX"
+
+  /containerized/service/{service}/micro-services/{micro-services}:
+    delete:
+      summary: "卸载微服务"
+      description: "卸载模块服务的微服务"
+      tags:
+      - "模块服务"
+      parameters:
+      - name: "micro-services"
+        in: "path"
+        required: true
+        description: "需要卸载的微服务列表"
+        schema:
+          type: "string"
+          example: "svc1,svc2,svc3"
+      - name: service
+        in: path
+        description: 指定需要卸载微服务的模块化服务名称
+        required: true
+        schema:
+          type: string
+          example: Observability
+      responses:
+        "204":
+          description: "OK"
+        "404":
+          description: "Not found"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+              examples:
+                "模块服务未包含该微服务":
+                  value:
+                    code: 404017100
+                    message: "install micro service failed"
+                    cause: "NCT_MICRO_SERVICE_NOT_FOUND_IN_MODULE_SERVICE"
+        "500":
+          description: "Internal Error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+              examples:
+                default:
+                  value:
+                    code: "500xxxxxx"
+                    message: "install micro service failed"
+                    cause: "NCT_XXXXXXXXXXXX"
+
+  /containerized/package/{service}:
+    parameters:
+    - name: "service"
+      in: "path"
+      required: true
+      description: "模块服务名"
+      schema:
+        type: "string"
+    post:
+      summary: "上传服务包"
+      description: "上传模块服务服务包"
+      deprecated: true
+      tags:
+      - "模块服务"
+      requestBody:
+        description: "上传模块化服务包的参数信息"
+        content:
+          multipart/form-data:
+            schema:
+              properties:
+                package:
+                  description: 服务包文件
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          description: "OK"
+        "500":
+          description: "上传失败"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+              examples:
+                default:
+                  value:
+                    code: "500xxxxxx"
+                    message: "upload service package faild"
+                    cause: "NCT_XXXXXXXXXXXX"
+    delete:
+      summary: "删除服务包"
+      description: "删除模块服务服务包"
+      tags:
+      - "模块服务"
+      responses:
+        "200":
+          description: "OK"
+        "500":
+          description: "删除失败"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+              examples:
+                default:
+                  value:
+                    code: "500xxxxxx"
+                    message: "upload service package faild"
+                    cause: "NCT_XXXXXXXXXXXX"
+  /containerized/information/{service}:
+    parameters:
+    - name: "service"
+      in: "path"
+      description: "模块服务名，或主模块名"
+      required: true
+      schema:
+        type: "string"
+    get:
+      summary: "获取模块化服务节点信息"
+      description: "获取模块化服务，主模块节点信息"
+      tags:
+      - "模块服务"
+      responses:
+        "400":
+          description: "获取模块服务，主模块信息失败"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+              examples:
+                default:
+                  value:
+                    code: "400xxxxxx"
+                    message: "get service info failed."
+                    cause: "NCT_XXXXXXXXXXXX"
+        "200":
+          description: "获取模块化服务信息成功"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ModuleServiceInformation"
+
+  /containerized/information:
+    get:
+      summary: "获取所有模块化服务信息"
+      description: "获取所有模块化服务信息"
+      tags:
+      - "模块服务"
+      responses:
+        "400":
+          description: "获取模块服务信息失败"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+              examples:
+                default:
+                  value:
+                    code: "400xxxxxx"
+                    message: "get service info failed."
+                    cause: "NCT_XXXXXXXXXXXX"
+        "200":
+          description: "获取所有模块化服务信息成功"
+          content:
+            application/json:
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/ModuleServiceInformation"
+  /containerized/upgradation/{service}:
+    parameters:
+    - name: "service"
+      in: "path"
+      description: "模块服务名，或主模块名"
+      required: true
+      schema:
+        type: "string"
+    put:
+      deprecated: true
+      summary: "升级模块服务"
+      description: "升级模块服务"
+      tags:
+      - "模块服务"
+      responses:
+        "400":
+          description: "升级模块服务失败"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+              examples:
+                default:
+                  value:
+                    code: "400xxxxxx"
+                    message: "upgrade service package failed"
+                    cause: "NCT_XXXXXXXXXXXX"
+        "500":
+          description: "升级模块服务异常"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+              examples:
+                default:
+                  value:
+                    code: "500017000"
+                    message: "xxxxxxxxx"
+                    cause: "upgrade service package failed."
+        "200":
+          description: "升级模块服务成功"
+  /containerized/micro-service/{service}/{attr}:
+    put:
+      summary: "更新微服务副本数"
+      description: "更新微服务副本数"
+      tags:
+      - "配置管理"
+      parameters:
+      - name: "service"
+        in: "path"
+        description: "微服务名"
+        required: true
+        schema:
+          type: "string"
+      - name: "attr"
+        in: "path"
+        description: "更新配置类型"
+        required: true
+        schema:
+          type: "string"
+          enum:
+          - "replicas"
+      requestBody:
+        description: "更新配置需要的参数"
+        content:
+          application/json:
+            schema:
+              type: "object"
+              required:
+                - "replicas"
+              properties:
+                "replicas":
+                  type: "integer"
+                  description: "副本数"
+      responses:
+        "200":
+          description: "OK"
+        "400":
+          description: "参数校验失败"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+              examples:
+                param_empty:
+                  value:
+                    code: "400017036"
+                    message: "Request body is not allowed to be empty"
+                    cause: "NCT_XXXXXXXXXXXX"
+                attr_error:
+                  value:
+                    code: "404017002"
+                    message: "Micro service attr not found"
+                    cause: "NCT_XXXXXXXXXXXX"
+  /communication/ingress:
+    put:
+      summary: "初始化ingress"
+      description: "初始化ingress"
+      tags:
+      - "通信框架"
+      responses:
+        "200":
+          description: "OK"
+        "400":
+          description: "初始化ingress失败"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+              examples:
+                default:
+                  value:
+                    code: "xxxxxxxxx"
+                    message: "init app ingress failed."
+                    cause: "NCT_XXXXXXXXXXXX"
+        "500":
+          description: "初始化ingress失败"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+              examples:
+                default:
+                  value:
+                    code: "500017000"
+                    message: "init app ingress failed."
+                    cause: "xxxxxxxx"
+  /communication/ingress/{access_port}:
+    parameters:
+    - name: "access_port"
+      in: "path"
+      description: "应用访问端口"
+      required: true
+      schema:
+        type: "integer"
+        default: 443
+    put:
+      summary: "修改访问端口"
+      description: "修改访问端口"
+      tags:
+      - "通信框架"
+      responses:
+        "200":
+          description: "修改访问端口成功"
+        "500":
+          description: "修改访问端口失败"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+              examples:
+                failed:
+                  value:
+                    code: "xxxxxxxxx"
+                    message: "update access port[{0}] failed."
+                    cause: "NCT_XXXXXXXXXXXX"
+                error:
+                  value:
+                    code: "500017000"
+                    message: "update access port[{0}] failed."
+                    cause: "xxxxxxxx"
+  /containerized/third-app-depservice:
+    post:
+      summary: "配置第三方依赖配置信息"
+      description: "配置第三方依赖配置信息"
+      tags:
+      - "配置管理"
+      requestBody:
+        $ref: "#/components/requestBodies/ThirdAppRequestBody"
+      responses:
+        "200":
+          description: "配置第三方依赖配置信息成功"
+        "500":
+          description: "配置第三方依赖配置信息失败"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+              examples:
+                failed:
+                  value:
+                    code: "xxxxxxxxx"
+                    message: "set third depservice failed."
+                    cause: "NCT_XXXXXXXXXXXX"
+                error:
+                  value:
+                    code: "500017000"
+                    message: "set third depservice failed."
+                    cause: "xxxxxxxx"
+    get:
+      summary: "获取第三方依赖配置信息"
+      description: "获取第三方依赖配置信息"
+      tags:
+      - "配置管理"
+      parameters:
+      - name: "service-name"
+        in: "query"
+        description: "查询的模块服务名"
+        required: true
+        schema:
+          type: "string"
+          description: "模块化服务名"
+      responses:
+        "200":
+          description: "查询成功"
+          content:
+            application/json:
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/ThirdAppDepServicesInfoData"
+        "400":
+          description: "配置第三方依赖配置信息失败"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+              examples:
+                default:
+                  value:
+                    code: "xxxxxxxxx"
+                    message: "get third depservice failed."
+                    cause: "NCT_XXXXXXXXXXXX"
+        "500":
+          description: "配置第三方依赖配置信息异常"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+              examples:
+                default:
+                  value:
+                    code: "500017000"
+                    message: "xxxxxxxxxxx"
+                    cause: "get third depservice failed."
+    delete:
+      summary: "创建第三方依赖配置信息"
+      description: "创建第三方依赖配置信息"
+      tags:
+      - "配置管理"
+      parameters:
+      - name: "ids"
+        in: "query"
+        description: "要删除的配置id，多个用逗号分隔"
+        required: true
+        schema:
+          type: "string"
+          description: "要删除的配置id，多个用逗号分隔"
+      responses:
+        "200":
+          description: "删除成功"
+        "400":
+          description: "删除第三方依赖配置信息失败"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+              examples:
+                default:
+                  value:
+                    code: "xxxxxxxxx"
+                    message: "delete third depservice failed."
+                    cause: "NCT_XXXXXXXXXXXX"
+        "500":
+          description: "删除第三方依赖配置信息异常"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+              examples:
+                default:
+                  value:
+                    code: "500017000"
+                    message: "xxxxxxxxxxx"
+                    cause: "delete third depservice failed."
+  /containerized/service/{config_option}:
+    summary: "微服务配置更新"
+    description: "微服务配置更新"
+    put:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MicroServiceConfigObject"
+        required: true
+      tags:
+      - "配置管理"
+      parameters:
+      - name: "config_option"
+        description: "- os-timezone 系统时区\n- os-language 系统语言\n- micro-service-language\
+          \ 微服务全球化语言\n- dep-services 依赖服务\n"
+        schema:
+          enum:
+          - "os-timezone"
+          - "os-language"
+          - "micro-service-language"
+          - "dep-services"
+          type: "string"
+        in: "path"
+        required: true
+      responses:
+        "200":
+          description: "微服务配置更新成功"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+              examples:
+                无效的微服务配置项:
+                  value:
+                    code: 400017034
+                    message: "XXXXXX"
+                    cause: "NCT_INVALID_MICRO_SERVICE_CONFIG"
+                无效的微服务配置值:
+                  value:
+                    code: 400017035
+                    message: "xxxxxxx"
+                    cause: "NCT_INVALID_MICRO_SERVICE_VALUE"
+                body中缺少参数:
+                  value:
+                    code: 400017036
+                    message: "xxxxxxx"
+                    cause: "NCT_INVALID_PARAMS_OF_BODY"
+                获取微服务values.yaml失败:
+                  value:
+                    code: 400018001
+                    message: "xxxxxxx"
+                    cause: "NCT_GET_VALUES_YAML_FAILED"
+                更新微服务rds失败:
+                  value:
+                    code: 400018002
+                    message: "xxxxxxx"
+                    cause: "NCT_UPGRADE_MICRO_SERVICE_RDS_FAILED"
+                更新微服务系统时区失败:
+                  value:
+                    code: 400018003
+                    message: "xxxxxxx"
+                    cause: "NCT_UPGRADE_MICRO_SERVICE_ENV_TIMEZONE_FAILED"
+                更新微服务系统语言失败:
+                  value:
+                    code: 400018004
+                    message: "xxxxxxx"
+                    cause: "NCT_UPGRADE_MICRO_SERVICE_ENV_LANGUAGE_FAILED"
+                更新微服务全球化语言失败:
+                  value:
+                    code: 400018005
+                    message: "xxxxxxx"
+                    cause: "NCT_UPGRADE_MICRO_SERVICE_SERVICE_LANGUAGE_FAILED"
+                更新微服务依赖失败:
+                  value:
+                    code: 400018006
+                    message: "xxxxxxx"
+                    cause: "NCT_UPGRADE_MICRO_SERVICE_DEP_SERVICE_FAILED"
+          description: "请求失败"
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+              examples:
+                获取时区失败:
+                  value:
+                    code: 500017010
+                    message: "xxxxxxx"
+                    cause: "NCT_GET_TIME_ZONE_FAILED"
+                获取系统语言失败:
+                  value:
+                    code: 500017011
+                    message: "xxxxxxx"
+                    cause: "NCT_GET_OS_LANGUAGE_FAILED"
+                获取AS语言失败:
+                  value:
+                    code: 500017012
+                    message: "xxxxxxx"
+                    cause: "NCT_GET_AS_LANGUAGE_FAILED"
+                未知错误:
+                  value:
+                    code: 500017000
+                    message: "xxxxxxx"
+                    cause: "NCT_UNKNOWN_ERROR"
+                服务器内部错误:
+                  value:
+                    code: 500017000
+                    message: "xxxxxxx"
+                    cause: "NCT_UNKNOWN_ERROR"
+          description: "请求失败"
+      summary: "微服务配置更新"
+      description: "微服务配置更新"
+  /client/package-info:
+    get:
+      tags:
+      - "客户端"
+      deprecated: true
+      summary: "获取客户端安装包信息"
+      responses:
+        "200":
+          description: ""
+  /client/package:
+    summary: "获取升级包信息"
+    description: "获取升级包信息"
+    get:
+      tags:
+      - "客户端"
+      parameters:
+      - name: "os_type"
+        description: "OS系统"
+        schema:
+          enum:
+          - "android"
+          - "mac"
+          - "ios"
+          - "win32_advanced"
+          - 'win64_advanced'
+          - "linux_x64_rpm"
+          - "linux_arm64_rpm"
+          - "linux_mips64_rpm"
+          - "linux_x64_deb"
+          - "linux_x64_AppImage"
+          - "linux_arm64_deb"
+          - "linux_arm64_AppImage"
+          - "linux_mips64_deb"
+          - "officeplugin_x86"
+          - "officeplugin_x64"
+          - "officeplugin_mac"
+          type: "string"
+        in: "query"
+      responses:
+        "200":
+          description: "请求成功"
+          content:
+            application/json:
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/ClientPackageInfoObject"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+              examples:
+                无效的OS系统参数:
+                  value:
+                    code: 400017009
+                    message: "xxxxxxx"
+                    cause: "NCT_INVALID_OS_PARAMETER"
+                无升级包上传:
+                  value:
+                    code: 400017015
+                    message: "xxxxxxx"
+                    cause: "NCT_NO_CLIENT_PACKAGE_UPLOAD"
+          description: "请求失败"
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+              examples:
+                未知错误:
+                  value:
+                    code: 500017000
+                    message: "xxxxxxx"
+                    cause: "NCT_UNKNOWN_ERROR"
+                服务器内部错误:
+                  value:
+                    code: 500017000
+                    message: "xxxxxxx"
+                    cause: "NCT_UNKNOWN_ERROR"
+          description: "请求失败"
+      summary: "获取升级包信息"
+      description: "获取升级包信息"
+  /v1/client/package/upload:
+    summary: "上传升级包"
+    description: "上传升级包"
+    get:
+      description: 获取上传任务信息
+      tags:
+        - "客户端"
+      parameters:
+        - name: "package_name"
+          in: "query"
+          description: "上传的客户端包名"
+          required: true
+          schema:
+            type: "string"
+            description: "上传的客户端包名"
+      responses:
+        "200":
+          description: "创建上传任务成功"
+          content:
+            application/json:
+              schema:
+                description: "上传任务信息"
+                required:
+                  - "methord"
+                  - "url"
+                  - "headers"
+                type: "object"
+                properties:
+                  method:
+                    description: "上传方法"
+                    type: "string"
+                  url:
+                    description: "上传地址"
+                    type: "string"
+                  headers:
+                    description: "上传的headers"
+                    type: "object"
+    post:
+      description: 完成客户端包上传
+      tags:
+        - "客户端"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - package_name
+                - url
+                - filesize
+              properties:
+                package_name:
+                  description: 客户端包名
+                  type: string
+                url:
+                  description: 上传地址
+                  type: string
+                filesize:
+                  description: 上传的文件大小
+                  type: number
+                version_description:
+                  description: 描述安装包信息
+                  type: string
+                  default: ''
+      responses:
+        200:
+          description: "上传完成"
+
+  /client/delete-package/{os_type}:
+    summary: "删除升级包"
+    description: "删除升级包"
+    delete:
+      tags:
+      - "客户端"
+      responses:
+        "200":
+          description: "删除升级包成功"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+              examples:
+                参数错误:
+                  value:
+                    code: 400017005
+                    message: "XXXXXX"
+                    cause: "NCT_PARAMS_ERROR"
+                无效的OS系统参数:
+                  value:
+                    code: 400017009
+                    message: "xxxxxxx"
+                    cause: "NCT_INVALID_OS_PARAMETER"
+                无效的升级类型:
+                  value:
+                    code: 500017030
+                    message: "xxxxxxx"
+                    cause: "NCT_UPDATE_TYPE_ERROR"
+                删除升级包信息失败:
+                  value:
+                    code: 400017007
+                    message: "xxxxxxx"
+                    cause: "NCT_DEL_PKG_INFO_FAILED"
+                无升级包上传:
+                  value:
+                    code: 400017015
+                    message: "xxxxxxx"
+                    cause: "NCT_NO_CLIENT_PACKAGE_UPLOAD"
+          description: "请求失败"
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+              examples:
+                未知错误:
+                  value:
+                    code: 500017000
+                    message: "xxxxxxx"
+                    cause: "NCT_UNKNOWN_ERROR"
+                服务器内部错误:
+                  value:
+                    code: 500017000
+                    message: "xxxxxxx"
+                    cause: "NCT_UNKNOWN_ERROR"
+          description: "请求失败"
+      summary: "删除升级包"
+      description: "删除升级包"
+    parameters:
+    - name: "os_type"
+      description: "OS系统"
+      schema:
+        enum:
+        - "android"
+        - "mac"
+        - "ios"
+        - "win32_advanced"
+        - 'win64_advanced'
+        - "linux_x64_rpm"
+        - "linux_arm64_rpm"
+        - "linux_mips64_rpm"
+        - "linux_x64_deb"
+        - "linux_x64_AppImage"
+        - "linux_arm64_deb"
+        - "linux_arm64_AppImage"
+        - "linux_mips64_deb"
+        - "officeplugin_x86"
+        - "officeplugin_x64"
+        - "officeplugin_mac"
+        type: "string"
+      in: "path"
+      required: true
+    - name: "update_type"
+      description: "上传类型"
+      schema:
+        enum:
+        - "standard"
+        - "custom"
+        type: "string"
+      in: "query"
+      required: true
+  /client/get-config:
+    get:
+      tags:
+      - "客户端"
+      deprecated: true
+      summary: "获取客户端配置"
+      responses:
+        "200":
+          description: ""
+  /client/downloadable:
+    summary: "获取开放下载"
+    description: "获取开放下载"
+    get:
+      tags:
+      - "客户端"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                example:
+                - "android"
+                - "mac"
+                - "win32_advanced"
+                items:
+                  type: string
+          description: "获取成功"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+              examples:
+                参数错误:
+                  value:
+                    code: 400017005
+                    message: "XXXXXX"
+                    cause: "NCT_PARAMS_ERROR"
+                无效的OS系统参数:
+                  value:
+                    code: 400017009
+                    message: "xxxxxxx"
+                    cause: "NCT_INVALID_OS_PARAMETER"
+          description: "请求失败"
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+              examples:
+                未知错误:
+                  value:
+                    code: 500017000
+                    message: "xxxxxxx"
+                    cause: "NCT_UNKNOWN_ERROR"
+                服务器内部错误:
+                  value:
+                    code: 500017000
+                    message: "xxxxxxx"
+                    cause: "NCT_UNKNOWN_ERROR"
+          description: "请求失败"
+      summary: "获取开放下载"
+      description: "获取开放下载"
+    parameters:
+    - name: "os_type"
+      description: "OS系统类型"
+      schema:
+        enum:
+        - "android"
+        - "mac"
+        - "ios"
+        - "win32_advanced"
+        - 'win64_advanced'
+        - "linux_x64_rpm"
+        - "linux_arm64_rpm"
+        - "linux_mips64_rpm"
+        - "linux_x64_deb"
+        - "linux_x64_AppImage"
+        - "linux_arm64_deb"
+        - "linux_arm64_AppImage"
+        - "linux_mips64_deb"
+        - "officeplugin_x86"
+        - "officeplugin_x64"
+        - "officeplugin_mac"
+        type: "string"
+      in: "query"
+      required: false
+  /client/check-storage:
+    summary: "检查是否有swift或oss存储"
+    description: "检查是否有swift或oss存储"
+    get:
+      tags:
+      - "客户端"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: "object"
+                required:
+                - "result"
+                properties:
+                  result:
+                    type: "boolean"
+                    default: true
+          description: "检查成功"
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+              examples:
+                未知错误:
+                  value:
+                    code: 500017000
+                    message: "xxxxxxx"
+                    cause: "NCT_UNKNOWN_ERROR"
+                服务器内部错误:
+                  value:
+                    code: 500017000
+                    message: "xxxxxxx"
+                    cause: "NCT_UNKNOWN_ERROR"
+          description: "请求失败"
+      summary: "获取存储状态"
+      description: "获取存储状态"
+  /client/set-download-info:
+    summary: "自定义设置升级包下载地址（仅支持android ios）"
+    description: "自定义设置升级包下载地址（仅支持android ios）"
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetDownloadInfoData"
+        required: false
+      tags:
+      - "客户端"
+      responses:
+        "200":
+          $ref: "#/components/responses/OKResponse"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+              examples:
+                参数错误:
+                  value:
+                    code: 400017005
+                    message: "XXXXXX"
+                    cause: "NCT_PARAMS_ERROR"
+                无效的OS系统参数:
+                  value:
+                    code: 400017009
+                    message: "xxxxxxx"
+                    cause: "NCT_INVALID_OS_PARAMETER"
+                无效的OS系统设置下载地址:
+                  value:
+                    code: 400017018
+                    message: "xxxxxxx"
+                    cause: "NCT_INVALID_OS_SET_DOWNLOAD_URL"
+                未知的文件后缀名:
+                  value:
+                    code: 400017012
+                    message: "xxxxxxx"
+                    cause: "NCT_FILE_SUFFIX_ERROR"
+                非法的文件名:
+                  value:
+                    code: 400017006
+                    message: "xxxxxxx"
+                    cause: "NCT_INVALID_FILENAME"
+                OS系统和后缀名不匹配:
+                  value:
+                    code: 400017014
+                    message: "xxxxxxx"
+                    cause: "NCT_OS_CANT_MATCH_SURFIX"
+          description: "请求失败"
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+              examples:
+                未知错误:
+                  value:
+                    code: 500017000
+                    message: "xxxxxxx"
+                    cause: "NCT_UNKNOWN_ERROR"
+                服务器内部错误:
+                  value:
+                    code: 500017000
+                    message: "xxxxxxx"
+                    cause: "NCT_UNKNOWN_ERROR"
+          description: "请求失败"
+      summary: "自定义移动端升级包下载地址"
+      description: "自定义移动端升级包下载地址"
+  /client/get-download-url:
+    get:
+      summary: "获取包下载地址"
+      description: "获取包下载地址"
+      deprecated: true
+      tags:
+      - "客户端"
+      responses:
+        "200":
+          description: "OK"
+  /client/download-url:
+    summary: "获取升级包下载地址"
+    description: "获取升级包下载地址"
+    get:
+      tags:
+      - "客户端"
+      parameters:
+      - name: "os_type"
+        description: "OS系统"
+        schema:
+          enum:
+          - "android"
+          - "mac"
+          - "ios"
+          - "win32_advanced"
+          - 'win64_advanced'
+          - "linux_x64_rpm"
+          - "linux_arm64_rpm"
+          - "linux_mips64_rpm"
+          - "linux_x64_deb"
+          - "linux_x64_AppImage"
+          - "linux_arm64_deb"
+          - "linux_arm64_AppImage"
+          - "linux_mips64_deb"
+          - "officeplugin_x86"
+          - "officeplugin_x64"
+          - "officeplugin_mac"
+          type: "string"
+        in: "query"
+        required: true
+      - name: "req_host"
+        description: "请求主机"
+        schema:
+          type: "string"
+        in: "query"
+        required: true
+      - name: "user_oss_id"
+        description: "用户对应的ossid，不传该参数，走默认下载地址"
+        schema:
+          type: "string"
+        in: "query"
+        required: false
+      responses:
+        "200":
+          description: "获取下载地址成功"
+          content:
+            application/json:
+              schema:
+                description: "下载地址"
+                required:
+                - "url"
+                type: "object"
+                properties:
+                  url:
+                    description: "下载地址"
+                    type: "string"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+              examples:
+                无效的OS系统参数:
+                  value:
+                    code: 400017009
+                    message: "xxxxxxx"
+                    cause: "NCT_INVALID_OS_PARAMETER"
+                无升级包上传:
+                  value:
+                    code: 400017015
+                    message: "xxxxxxx"
+                    cause: "NCT_NO_CLIENT_PACKAGE_UPLOAD"
+          description: "请求失败"
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+              examples:
+                未知错误:
+                  value:
+                    code: 500017000
+                    message: "xxxxxxx"
+                    cause: "NCT_UNKNOWN_ERROR"
+                服务器内部错误:
+                  value:
+                    code: 500017000
+                    message: "xxxxxxx"
+                    cause: "NCT_UNKNOWN_ERROR"
+          description: "请求失败"
+      summary: "获取升级包下载地址(旧)"
+      description: "获取升级包下载地址(旧)"
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DownloadUrlData"
+        required: true
+      tags:
+      - "客户端"
+      responses:
+        "200":
+          description: "获取下载地址成功"
+          content:
+            application/json:
+              schema:
+                description: "下载地址"
+                required:
+                - "url"
+                type: "object"
+                properties:
+                  url:
+                    description: "下载地址"
+                    type: "string"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+              examples:
+                无效的OS系统参数:
+                  value:
+                    code: 400017009
+                    message: "xxxxxxx"
+                    cause: "NCT_INVALID_OS_PARAMETER"
+                无升级包上传:
+                  value:
+                    code: 400017015
+                    message: "xxxxxxx"
+                    cause: "NCT_NO_CLIENT_PACKAGE_UPLOAD"
+          description: "请求失败"
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+              examples:
+                未知错误:
+                  value:
+                    code: 500017000
+                    message: "xxxxxxx"
+                    cause: "NCT_UNKNOWN_ERROR"
+                服务器内部错误:
+                  value:
+                    code: 500017000
+                    message: "xxxxxxx"
+                    cause: "NCT_UNKNOWN_ERROR"
+          description: "请求失败"
+      summary: "获取升级包下载地址(新)"
+      description: "获取升级包下载地址(新)"
+  /client/version/{os_type}/{version}:
+    summary: "获取是否有升级版本"
+    description: "获取是否有升级版本"
+    get:
+      tags:
+      - "客户端"
+      responses:
+        "200":
+          $ref: "#/components/responses/ClientPackageUpgradeResponse"
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+              examples:
+                未知错误:
+                  value:
+                    code: 500017000
+                    message: "xxxxxxx"
+                    cause: "NCT_UNKNOWN_ERROR"
+                服务器内部错误:
+                  value:
+                    code: 500017000
+                    message: "xxxxxxx"
+                    cause: "NCT_UNKNOWN_ERROR"
+          description: "请求失败"
+      summary: "获取是否有升级版本"
+      description: "获取是否有升级版本"
+    parameters:
+    - name: "os_type"
+      description: "OS系统"
+      schema:
+        enum:
+        - "android"
+        - "mac"
+        - "ios"
+        - "win32_advanced"
+        - 'win64_advanced'
+        - "linux_x64_rpm"
+        - "linux_arm64_rpm"
+        - "linux_mips64_rpm"
+        - "linux_x64_deb"
+        - "linux_x64_AppImage"
+        - "linux_arm64_deb"
+        - "linux_arm64_AppImage"
+        - "linux_mips64_deb"
+        - "officeplugin_x86"
+        - "officeplugin_x64"
+        - "officeplugin_mac"
+        type: "string"
+      in: "path"
+      required: true
+    - name: "version"
+      description: "版本号"
+      schema:
+        type: "string"
+      in: "path"
+      required: true
+    - name: "result"
+      description: "是否允许更新"
+      schema:
+        type: "string"      
+      in: "query"
+      required: ture
+    - name: "mode"
+      description: "是否强制更新"
+      schema:
+        type: "string"      
+      in: "query"
+      required: ture   
+    - name: "silence"
+      description: "是否静默更新"
+      schema:
+        type: "string"      
+      in: "query"
+      required: ture          
+  /client/package-config:
+    summary: "设置是否(强制升级,开放下载)"
+    description: "设置是否(强制升级,开放下载)"
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              description: "自定义下载地址"
+              required:
+              - "os_type"
+              - "update_type"
+              type: "object"
+              properties:
+                open_download:
+                  description: "开放下载"
+                version_description:
+                  description: "描述安装包信息"
+                  type: string
+                os_type:
+                  description: "OS系统"
+                  enum:
+                  - "android"
+                  - "mac"
+                  - "ios"
+                  - "win32_advanced"
+                  - 'win64_advanced'
+                  - "linux_x64_rpm"
+                  - "linux_arm64_rpm"
+                  - "linux_mips64_rpm"
+                  - "linux_x64_deb"
+                  - "linux_x64_AppImage"
+                  - "linux_arm64_deb"
+                  - "linux_arm64_AppImage"
+                  - "linux_mips64_deb"
+                  - "officeplugin_x86"
+                  - "officeplugin_x64"
+                  - "officeplugin_mac"
+                  type: "string"
+                update_type:
+                  description: "升级模式"
+                  enum:
+                  - "standard"
+                  - "custom"
+                  type: "string"
+              example:
+                open_download: true
+                version_description: 'ios 版本 7.0.5.5'
+                os_type: "ios"
+                update_type: "standard"
+        required: false
+      tags:
+      - "客户端"
+      responses:
+        "200":
+          $ref: "#/components/responses/OKResponse"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+              examples:
+                参数错误:
+                  value:
+                    code: 400017005
+                    message: "XXXXXX"
+                    cause: "NCT_PARAMS_ERROR"
+                无效的OS系统参数:
+                  value:
+                    code: 400017009
+                    message: "xxxxxxx"
+                    cause: "NCT_INVALID_OS_PARAMETER"
+                无效的升级类型:
+                  value:
+                    code: 500017030
+                    message: "xxxxxxx"
+                    cause: "NCT_UPDATE_TYPE_ERROR"
+                无升级包上传:
+                  value:
+                    code: 400017015
+                    message: "xxxxxxx"
+                    cause: "NCT_NO_CLIENT_PACKAGE_UPLOAD"
+          description: "请求失败"
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+              examples:
+                未知错误:
+                  value:
+                    code: 500017000
+                    message: "xxxxxxx"
+                    cause: "NCT_UNKNOWN_ERROR"
+                服务器内部错误:
+                  value:
+                    code: 500017000
+                    message: "xxxxxxx"
+                    cause: "NCT_UNKNOWN_ERROR"
+          description: "请求失败"
+      summary: "设置是否(强制升级,开放下载)"
+      description: "设置是否(强制升级,开放下载)"
+  /client/update-type:
+    summary: "升级包类型"
+    description: "处理升级包类型"
+    put:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              description: "自定义下载地址"
+              required:
+              - "os_type"
+              - "update_type"
+              type: "object"
+              properties:
+                os_type:
+                  description: "OS系统"
+                  enum:
+                  - "android"
+                  - "mac"
+                  - "ios"
+                  - "win32_advanced"
+                  - 'win64_advanced'
+                  - "linux_x64_rpm"
+                  - "linux_arm64_rpm"
+                  - "linux_mips64_rpm"
+                  - "linux_x64_deb"
+                  - "linux_x64_AppImage"
+                  - "linux_arm64_deb"
+                  - "linux_arm64_AppImage"
+                  - "linux_mips64_deb"
+                  - "officeplugin_x86"
+                  - "officeplugin_x64"
+                  - "officeplugin_mac"
+                  type: "string"
+                update_type:
+                  description: "升级模式"
+                  enum:
+                  - "standard"
+                  - "custom"
+                  type: "string"
+              example:
+                os_type: "ios"
+                update_type: "standard"
+        required: true
+      tags:
+      - "客户端"
+      responses:
+        "200":
+          $ref: "#/components/responses/OKResponse"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+              examples:
+                参数错误:
+                  value:
+                    code: 400017005
+                    message: "XXXXXX"
+                    cause: "NCT_PARAMS_ERROR"
+                无效的OS系统参数:
+                  value:
+                    code: 400017009
+                    message: "xxxxxxx"
+                    cause: "NCT_INVALID_OS_PARAMETER"
+                无效的升级类型:
+                  value:
+                    code: 500017030
+                    message: "xxxxxxx"
+                    cause: "NCT_UPDATE_TYPE_ERROR"
+          description: "请求失败"
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+              examples:
+                未知错误:
+                  value:
+                    code: 500017000
+                    message: "xxxxxxx"
+                    cause: "NCT_UNKNOWN_ERROR"
+                服务器内部错误:
+                  value:
+                    code: 500017000
+                    message: "xxxxxxx"
+                    cause: "NCT_UNKNOWN_ERROR"
+          description: "请求失败"
+      summary: "设置当前使用的升级包类型"
+      description: "设置当前使用的升级包类型"
+    get:
+      parameters:
+      - name: "os_type"
+        description: "OS系统"
+        schema:
+          enum:
+          - "android"
+          - "mac"
+          - "ios"
+          - "win32_advanced"
+          - 'win64_advanced'
+          - "linux_x64_rpm"
+          - "linux_arm64_rpm"
+          - "linux_mips64_rpm"
+          - "linux_x64_deb"
+          - "linux_x64_AppImage"
+          - "linux_arm64_deb"
+          - "linux_arm64_AppImage"
+          - "linux_mips64_deb"
+          - "officeplugin_x86"
+          - "officeplugin_x64"
+          - "officeplugin_mac"
+          type: "string"
+        in: "query"
+        required: false
+      tags:
+      - "客户端"
+      responses:
+        "200":
+          $ref: "#/components/responses/OKResponse"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+              examples:
+                参数错误:
+                  value:
+                    code: 400017005
+                    message: "XXXXXX"
+                    cause: "NCT_PARAMS_ERROR"
+                无效的OS系统参数:
+                  value:
+                    code: 400017009
+                    message: "xxxxxxx"
+                    cause: "NCT_INVALID_OS_PARAMETER"
+                无效的升级类型:
+                  value:
+                    code: 500017030
+                    message: "xxxxxxx"
+                    cause: "NCT_UPDATE_TYPE_ERROR"
+          description: "请求失败"
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+              examples:
+                未知错误:
+                  value:
+                    code: 500017000
+                    message: "xxxxxxx"
+                    cause: "NCT_UNKNOWN_ERROR"
+                服务器内部错误:
+                  value:
+                    code: 500017000
+                    message: "xxxxxxx"
+                    cause: "NCT_UNKNOWN_ERROR"
+          description: "请求失败"
+      summary: "获取当前使用的升级包类型"
+      description: "获取当前使用的升级包类型"
+  /oauth2/register-clients:
+    summary: "向hydra注册所有服务"
+    description: "向hydra注册所有服务"
+    post:
+      tags:
+      - "通信框架"
+      responses:
+        "200":
+          $ref: "#/components/responses/OKResponse"
+        "400":
+          $ref: "#/components/responses/StandardsErrorResponse"
+        "500":
+          $ref: "#/components/responses/StandardsErrorResponse"
+      summary: "向hydra注册所有服务"
+      description: "向hydra注册所有服务"
+  /oauth2/update-clients/{update_type}:
+    summary: "更新客户端"
+    description: "更新客户端"
+    put:
+      tags:
+      - "通信框架"
+      parameters:
+      - name: "update_type"
+        schema:
+          enum:
+          - "redirect_uris"
+          type: "string"
+        in: "path"
+        required: true
+      responses:
+        "200":
+          $ref: "#/components/responses/OKResponse"
+        "400":
+          $ref: "#/components/responses/StandardsErrorResponse"
+        "500":
+          $ref: "#/components/responses/StandardsErrorResponse"
+      summary: "更新客户端"
+      description: "更新客户端"
+    parameters:
+    - name: "update_type"
+      in: "path"
+      required: true
+      schema:
+        type: string
+        description: "更新类型"
+  /oauth2/delete-clients/{client_name}:
+    summary: "删除客户端"
+    description: "删除客户端"
+    delete:
+      tags:
+      - "通信框架"
+      responses:
+        "200":
+          $ref: "#/components/responses/OKResponse"
+        "400":
+          $ref: "#/components/responses/StandardsErrorResponse"
+        "500":
+          $ref: "#/components/responses/StandardsErrorResponse"
+      summary: "删除客户端"
+      description: "删除客户端"
+    parameters:
+    - name: "client_name"
+      schema:
+        type: "string"
+      in: "path"
+      required: true
+  /cert/set-global-cert/app/{ip}:
+    summary: "生成Anyshare自签全局应用证书"
+    description: "生成Anyshare自签全局应用证书"
+    get:
+      tags:
+      - "通信框架"
+      responses:
+        "200":
+          $ref: "#/components/responses/OKResponse"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+              examples:
+                无效的证书类型:
+                  value:
+                    code: 400017028
+                    message: "无效的证书类型"
+                    cause: "NCT_INVALID_CERT_TYPE"
+          description: "请求失败"
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+              examples:
+                执行命令失败:
+                  value:
+                    code: 500017003
+                    message: "xxxxxxx"
+                    cause: "NCT_EXCE_COMMAND_FAILED"
+                未知错误:
+                  value:
+                    code: 500017000
+                    message: "xxxxxxx"
+                    cause: "NCT_UNKNOWN_ERROR"
+                服务器内部错误:
+                  value:
+                    code: 500017000
+                    message: "xxxxxxx"
+                    cause: "NCT_UNKNOWN_ERROR"
+          description: "请求失败"
+      summary: "生成Anyshare自签全局应用证书"
+      description: "生成Anyshare自签全局应用证书"
+    parameters:
+    - name: "ip"
+      description: "VIP"
+      schema:
+        type: "string"
+      in: "path"
+      required: true
+  /cert/cert-info:
+    summary: "获取证书信息"
+    description: "获取证书信息"
+    get:
+      tags:
+      - "通信框架"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/CertInfoData"
+          description: ""
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+              examples:
+                无效的证书类型:
+                  value:
+                    code: 400017028
+                    message: "无效的证书类型"
+                    cause: "NCT_INVALID_CERT_TYPE"
+          description: "请求失败"
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+              examples:
+                未知错误:
+                  value:
+                    code: 500017000
+                    message: "xxxxxxx"
+                    cause: "NCT_UNKNOWN_ERROR"
+                服务器内部错误:
+                  value:
+                    code: 500017000
+                    message: "xxxxxxx"
+                    cause: "NCT_UNKNOWN_ERROR"
+          description: "请求失败"
+      summary: "获取证书信息"
+      description: "获取证书信息"
+    parameters:
+    - name: "cert_type"
+      description: "证书类型, 当前只管理 应用证书"
+      schema:
+        enum:
+        - "app"
+        type: "string"
+      in: "query"
+  /cert/download-cert/app:
+    summary: "下载证书"
+    description: "下载证书"
+    get:
+      tags:
+      - "通信框架"
+      responses:
+        "200":
+          $ref: "#/components/responses/OKResponse"
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+              examples:
+                下载的证书文件不存在:
+                  value:
+                    code: 404017001
+                    message: "下载的证书文件不存在"
+                    cause: "NCT_CERT_FILE_NOT_EXISTS"
+          description: "请求失败"
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+              examples:
+                未知错误:
+                  value:
+                    code: 500017000
+                    message: "xxxxxxx"
+                    cause: "NCT_UNKNOWN_ERROR"
+                服务器内部错误:
+                  value:
+                    code: 500017000
+                    message: "xxxxxxx"
+                    cause: "NCT_UNKNOWN_ERROR"
+          description: "请求失败"
+      summary: "下载证书"
+      description: "下载证书"
+  /cert/upload-cert/app:
+    summary: "上传证书"
+    description: "上传证书"
+    put:
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              description: "证书上传"
+              required:
+              - "cert_crt"
+              - "cert_key"
+              type: "object"
+              properties:
+                cert_crt:
+                  description: "证书"
+                  type: "string"
+                cert_key:
+                  description: "私钥"
+                  type: "string"
+              example:
+                cert_crt: "/tmp/OUZrIIcsw4vSqlRkziJhNi2T.crt"
+                cert_key: "/tmp/qF3LztQD8z-qW1Pc5kh39i_u.key"
+        required: true
+      tags:
+      - "通信框架"
+      responses:
+        "200":
+          $ref: "#/components/responses/OKResponse"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+              examples:
+                文件不存在:
+                  value:
+                    code: 400017010
+                    message: "xxxxxxx"
+                    cause: "NCT_PACKAGE_NOT_EXIST"
+                参数错误:
+                  value:
+                    code: 400017005
+                    message: "xxxxxxx"
+                    cause: "NCT_PARAMS_ERROR"
+                证书不匹配:
+                  value:
+                    code: 400017029
+                    message: "xxxxxxx"
+                    cause: "NCT_CERT_NOT_MATCH"
+          description: "请求失败"
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+              examples:
+                获取节点信息失败:
+                  value:
+                    code: 500017009
+                    message: "xxxxxxx"
+                    cause: "NCT_GET_NODE_INFO_FAILED"
+                未知错误:
+                  value:
+                    code: 500017000
+                    message: "xxxxxxx"
+                    cause: "NCT_UNKNOWN_ERROR"
+                服务器内部错误:
+                  value:
+                    code: 500017000
+                    message: "xxxxxxx"
+                    cause: "NCT_UNKNOWN_ERROR"
+          description: "请求失败"
+      summary: "上传证书"
+      description: "上传证书"
+  /cert/feature/download:
+    summary: "配置证书下载功能"
+    description: "配置证书下载功能"
+    post:
+      summary: "启用证书下载"
+      description: "启用证书下载"
+      tags:
+      - "证书管理"
+      responses:
+        "200":
+          description: "启用成功"
+        "500":
+          description: "启用失败"
+    delete:
+      summary: "禁用证书下载"
+      description: "禁用证书下载"
+      tags:
+      - "证书管理"
+      responses:
+        "200":
+          description: "禁用成功"
+        "500":
+          description: "禁用失败"
+    get:
+      tags:
+      - "证书管理"
+      responses:
+        "200":
+          description: "成功查询证书下载功能的状态"
+          content:
+            application/json:
+              schema:
+                description: "证书下载功能状态"
+                type: "object"
+                properties:
+                  status:
+                    description: "证书下载功能状态"
+                    type: "boolean"
+
+  /access-addr/app:
+    summary: "设置应用访问地址"
+    description: "设置应用访问地址"
+    get:
+      tags:
+      - "通信框架"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccessAddrObject"
+          description: ""
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/responses/StandardsErrorResponse"
+              examples:
+                访问地址类型错误:
+                  value:
+                    code: 400017101
+                    message: "Path parameters[addr_type] error, addr_type must be\
+                      \ app/storage"
+                    cause: ""
+          description: "客户端错误"
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/responses/StandardsErrorResponse"
+              examples:
+                内部错误:
+                  value:
+                    code: 500017000
+                    message: "xxx"
+                    cause: ""
+          description: "内部错误"
+      summary: "获取访问地址"
+      description: "获取访问地址"
+    put:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AccessAddrObject"
+        required: false
+      tags:
+      - "通信框架"
+      responses:
+        "200":
+          $ref: "#/components/responses/OKResponse"
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/responses/StandardsErrorResponse"
+              examples:
+                访问地址类型错误:
+                  value:
+                    code: 400017101
+                    message: "Path parameters[addr_type] error, addr_type must be\
+                      \ app/storage"
+                    cause: ""
+                body参数错误:
+                  value:
+                    code: 400017036
+                    message: "Request body is not allowed to be empty"
+                    cause: ""
+                host参数错误:
+                  value:
+                    code: 400017103
+                    message: "Host must be a available domain name or a valid IP"
+                    cause: ""
+                port参数错误:
+                  value:
+                    code: 400017104
+                    message: "Port should be between 0 and 65535"
+                    cause: ""
+          description: "客户端错误"
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/responses/StandardsErrorResponse"
+              examples:
+                SLB服务不可用:
+                  value:
+                    code: 500017100
+                    message: "Service[slb] on node[%s] not available"
+                    cause: ""
+                hydra服务不可用:
+                  value:
+                    code: 500017020
+                    message: "Service[hydra] not available"
+                    cause: ""
+                内部错误:
+                  value:
+                    code: 500017000
+                    message: "xxx"
+                    cause: ""
+          description: "服务端错误"
+      summary: "设置应用/存储访问地址"
+      description: "Body中的host和port至少填一个，若只修改host则只传host，只修改port则只传port，两个都修改则两个都传\
+        。"
+  /package/upload/{file_type}:
+    summary: "文件上传"
+    description: "主模块，模块服务分片上传"
+    parameters:
+    - name: "file_type"
+      in: "path"
+      description: "文件上传类型"
+      required: true
+      schema:
+        type: "string"
+    put:
+      parameters:
+      - name: "file_name"
+        in: "query"
+        description: "文件名"
+        schema:
+          type: "string"
+      - name: "task"
+        in: "query"
+        description: "任务ID"
+        schema:
+          type: "string"
+      - name: "chunk"
+        in: "query"
+        description: "分片ID"
+        schema:
+          type: "string"
+      requestBody:
+        description: "文件二进制数据"
+        content:
+          '*/*':
+            schema:
+              type: "string"
+      summary: "分片上传"
+      description: "分片上传接口"
+      tags:
+      - "模块服务"
+      responses:
+        "200":
+          description: "上传成功"
+        "500":
+          description: "上传失败"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+    post:
+      tags:
+      - "模块服务"
+      summary: "分片上传完成"
+      description: "分片上传完成"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: "object"
+              properties:
+                file_name:
+                  type: "string"
+                  description: "文件名"
+                service_name:
+                  type: "string"
+                  description: "服务名"
+                chunk_num:
+                  type: "integer"
+                  description: "分片号"
+                task:
+                  type: "string"
+                  description: "任务ID"
+      responses:
+        "200":
+          description: ""
+        "400":
+          description: "分片上传失败"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+              examples:
+                分片数不全:
+                  value:
+                    code: 400017207
+                    message: "get package info failed"
+                    cause: "NCT_FILE_PART_NOT_COMPLETE"
+                上传失败:
+                  value:
+                    code: "xxxxxxxxx"
+                    message: "upload service package faild"
+                    cause: "NCT_XXXXXXXXXXXX"
+        "500":
+          description: "分片上传异常"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+              examples:
+                default:
+                  value:
+                    code: 500017000
+                    message: "xxxxxxxxxxx"
+                    cause: "upload file failed."
+  /containerized/depservice/oss/{service}:
+    summary: "设置对象存储依赖"
+    description: "设置对象存储依赖"
+    post:
+      tags:
+      - "模块服务"
+      summary: "设置模块服务的OSS依赖"
+      description: "设置WPS的OSS依赖"
+      parameters:
+      - name: "service"
+        in: "path"
+        description: "模块服务名"
+        required: true
+        schema:
+          type: string
+          description: "模块服务名"
+      requestBody:
+        description: "OSS配置参数信息"
+        content:
+          application/json:
+            schema:
+              type: "object"
+              required:
+                - oss_name
+              properties:
+                "service_mame":
+                  type: "string"
+                  description: "模块服务名"
+                "oss_name":
+                  type: "string"
+                  description: "OSS名称"
+      responses:
+        "200":
+          $ref: "#/components/responses/OKResponse"
+        "400":
+          description: "设置失败"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+              examples:
+                default:
+                  value:
+                    code: "xxxxxxxxx"
+                    message: "set depservice oss failed."
+                    cause: "NCT_XXXXXXXXXXXX"
+        "500":
+          description: "设置异常"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+              examples:
+                default:
+                  value:
+                    code: 500017000
+                    message: "xxxxxxxxxxx"
+                    cause: "set depservice oss failed."
+
+  /third-party-service/services/{service}:
+    summary: "第三方服务配置"
+    description: "第三方服务配置"
+    put:
+      tags:
+      - "模块服务"
+      summary: "设置第三方服务配置"
+      description: "设置第三方服务配置"
+      parameters:
+      - name: "service"
+        in: "path"
+        description: "第三方模块服务名"
+        required: true
+        schema:
+          type: string
+          description: "第三方模块服务名"
+      requestBody:
+        description: "设置第三方服务配置请求体"
+        content:
+          application/json:
+            schema:
+              properties:
+                server:
+                  $ref: "#/components/schemas/ThirdPatryServiceObject"
+      responses:
+        "200":
+          $ref: "#/components/responses/OKResponse"
+        "400":
+          description: "设置失败"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+              examples:
+                "参数错误":
+                  value:
+                    code: "400017036"
+                    message: "params error"
+                    cause: "NCT_INVALID_PARAMS_OF_BODY"
+        "500":
+          description: "设置异常"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+              examples:
+                "地址不可达":
+                  value:
+                    code: "500017300"
+                    message: "address INACCESSIBLE"
+                    cause: "NCT_ADDRESS_INACCESSIBLE"
+                default:
+                  value:
+                    code: "500017000"
+                    message: "xxxxxxxxxxx"
+                    cause: "set third party service failed."
+    delete:
+      description: "删除第三方服务配置"
+      summary: "删除第三方服务配置"
+      tags:
+      - "模块服务"
+      parameters:
+      - name: "service"
+        in: "path"
+        description: "第三方模块服务名"
+        required: true
+        schema:
+          type: string
+          description: "第三方模块服务名"
+      responses:
+        "204":
+          $ref: "#/components/responses/OKResponse"
+        "404":
+          description: "删除失败"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+              examples:
+                "参数错误":
+                  value:
+                    code: "404017300"
+                    message: "third party service not found"
+                    cause: "NCT_THIRD_PARTY_SERVICE_NOT_FOUND"
+        "500":
+          description: "删除异常"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+              examples:
+                default:
+                  value:
+                    code: "500017000"
+                    message: "xxxxxxxxxxx"
+                    cause: "remove third party service failed."
+    get:
+      description: "获取指定的第三方服务配置"
+      summary: "获取指定的第三方服务配置"
+      tags:
+      - "模块服务"
+      parameters:
+      - name: "service"
+        in: "path"
+        description: "第三方模块服务名"
+        required: true
+        schema:
+          type: string
+          description: "第三方模块服务名"
+      responses:
+        "200":
+          description: "成功"
+          content:
+            application/json:
+              schema:
+                properties:
+                  server:
+                    $ref: "#/components/schemas/ThirdPatryServiceObject"
+        "404":
+          description: "获取失败"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+              examples:
+                "参数错误":
+                  value:
+                    code: "404017300"
+                    message: "third party service not found"
+                    cause: "NCT_THIRD_PARTY_SERVICE_NOT_FOUND"
+        "500":
+          description: "内部异常"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+              examples:
+                default:
+                  value:
+                    code: "500017000"
+                    message: "xxxxxxxxxxx"
+                    cause: "get third party service failed."
+  /third-party-service/test:
+    summary: "测试第三方服务配置"
+    description: "测试第三方服务配置"
+    post:
+      summary: "测试第三方服务配置"
+      description: "测试第三方服务配置"
+      tags:
+      - "模块服务"
+      requestBody:
+        description: "设置第三方服务配置请求体"
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ThirdPatryServiceObject"
+      responses:
+        "204":
+          $ref: "#/components/responses/OKResponse"
+        "400":
+          description: "删除失败"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+        "500":
+          description: "删除异常"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+              examples:
+                "地址不可达":
+                  value:
+                    code: "500017300"
+                    message: "address INACCESSIBLE"
+                    cause: "NCT_ADDRESS_INACCESSIBLE"
+                default:
+                  value:
+                    code: "500017000"
+                    message: "xxxxxxxxxxx"
+                    cause: "test third party service failed."
+  /third-party-service/services:
+    summary: "获取第三方服务配置"
+    description: "获取第三方服务配置"
+    get:
+      summary: "获取第三方服务配置"
+      description: "获取第三方服务配置"
+      tags:
+      - "模块服务"
+      responses:
+        "200":
+          description: "成功"
+          content:
+            application/json:
+              schema:
+                properties:
+                  service:
+                    type: "object"
+                    properties:
+                      server:
+                        $ref: "#/components/schemas/ThirdPatryServiceObject"
+        "500":
+          description: "内部异常"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardsErrorObject"
+              examples:
+                default:
+                  value:
+                    code: "500017000"
+                    message: "xxxxxxxxxxx"
+                    cause: "get third party service failed."
+
+  /v1/upgradation/{service_type}/{service}:
+    parameters:
+      - name: service
+        in: path
+        description: "模块服务名"
+        required: true
+        schema:
+          type: string
+      - name: service_type
+        in: path
+        description: "升级类型"
+        required: true
+        schema:
+          type: string
+          enum:
+            - modular-service
+          # - micro-service
+
+    put:
+      summary: 开始升级模块服务
+      description: 开始升级模块服务
+      responses:
+        200:
+          description: 任务创建成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  upgrade_id:
+                    type: string
+                    description: 升级任务ID
+              examples:
+                创建成功:
+                  value:
+                    upgrade_id: 4ec8cc4e-fbcc-4882-8436-8e7ce7683c72
+
+        400:
+          description: 升级模块服务失败
+          content:
+            applcation/json:
+              schema:
+                type: "object"
+                description: "标准错误对象"
+                required:
+                  - "code"
+                  - "message"
+                  - "cause"
+                properties:
+                  code:
+                    type: "string"
+                    default: "400000001"
+                    description: "错误码"
+                  message:
+                    type: "string"
+                    description: "错误信息"
+                  cause:
+                    type: "string"
+                    default: "NCT_XXXXXXXXXXXX"
+                    description: "错误原因"
+              examples:
+                服务正在升级:
+                  value:
+                    code: "400018007"
+                    message: "service is upgrading"
+                    cause: "NCT_UPGRADE_SERVICE_RUNNING"
+    get:
+      summary: 获取升级状态
+      description: 获取升级状态，或者查询升级历史记录
+      parameters:
+        - name: history
+          in: query
+          description: 是否获取历史升级记录
+          schema:
+            type: string
+        - name: upgrade_id
+          in: query
+          description: 升级任务ID, 不填写将会查询最后一个升级任务
+          schema:
+            type: string
+      responses:
+        200:
+          description: 获取升级状态成功
+          content:
+            applcation/json:
+              schema:
+                $ref: "#/components/schemas/UpgradeStatus"
+              examples:
+                获取升级状态:
+                  value:
+                    start: 2022-05-10 14-43
+                    status: upgrade_running
+                    name: ManagementConsole
+                    type: modular-service
+                    messages:
+                      - index: 1
+                        time: 2022-05-10 14:43
+                        message: 开始升级
+                      - index: 2
+                        time: 2022-05-10 14:44
+                        message: 正在升级webconsole服务
+                      - index: 3
+                        time: 2022-05-10 14:45
+                        message: 正在升级xxx服务
+  /v1/application/version:
+    get:
+      summary: 获取AS版本
+      description: 获取AS版本
+      responses:
+        500:
+          description: 获取AS版本失败
+        200:
+          description: 获取AS版本成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  version:
+                    type: string
+                  build_date:
+                    type: string
+                  build_number:
+                    type: number
+                  arch:
+                    type: string
+              example:
+                version: "7.0.3.4"
+                build_date: "20220505"
+                build_number: 14
+                arch: x86_64

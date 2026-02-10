@@ -1,0 +1,99 @@
+{{- $ins := index .Values.depServices "deploy-installer" }}
+{{- if semverCompare ">=1.16-0" .Capabilities.KubeVersion.GitVersion -}}
+apiVersion: apps/v1
+{{- else -}}
+apiVersion: extensions/v1beta1
+{{- end }}
+kind: StatefulSet
+metadata:
+  name: {{ template "deploy-installer.name" . }}
+  namespace: {{ template "deploy-installer.namespace" . }}
+  labels:
+    {{ include "deploy-installer.labels" . | nindent 4 }}
+spec:
+  replicas: {{.Values.replicacount}}
+  serviceName: {{ template "deploy-installer.name" . }}
+  selector:
+    matchLabels:
+      {{- include "deploy-installer.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "deploy-installer.labels" . | nindent 8 }}
+    spec:
+      volumes:
+      - name: {{ template "deploy-installer.name" . }}
+        secret:
+          secretName: {{ template "deploy-installer.name" . }}
+    {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      serviceAccountName: {{ template "deploy-installer.serviceAccountName" . }}
+      initContainers:
+      - name: data
+        command: 
+        - server
+        args:
+        - data
+        - -v
+        - {{ $ins.log_level}}
+        - -a
+        - "/etc/deploy-installer/config.yaml"
+        - --all
+        - /sql-ddl
+        - --stage
+        - mix
+        - --skip={{ .Release.IsInstall }}
+        securityContext:
+          {{- toYaml .Values.securityContext | nindent 12 }}
+        image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        volumeMounts:
+        - name: {{ template "deploy-installer.name" . }}
+          readOnly: true
+          mountPath: "/etc/deploy-installer"
+      containers:
+        - name: {{ .Chart.Name }}
+          command:
+          - server
+          args:
+          - -v
+          - {{ $ins.log_level}}
+          - -a
+          - "/etc/deploy-installer/config.yaml"
+          - --force={{ $ins.force }}
+          - --create={{ $ins.createnamespace }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+          - name: {{ template "deploy-installer.name" . }}
+            readOnly: true
+            mountPath: "/etc/deploy-installer"
+          readinessProbe:
+            tcpSocket:
+              port: 9090
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: 9090
+            initialDelaySeconds: 15
+            periodSeconds: 100
+          env:
+            - name: GIN_MODE
+              value: release
+            - name: K8S_NODE_IP
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: status.hostIP
+            - name: DEPLOY_POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+      dnsPolicy: ClusterFirstWithHostNet

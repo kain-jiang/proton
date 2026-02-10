@@ -1,0 +1,77 @@
+@import "../../../../../global.less";
+
+.text-tip {
+    color: @fontColorAlpha2;
+}
+
+.filter-input-container {
+    display: flex;
+    flex-direction: row;
+    margin-bottom: 10px;
+    width: 300px;
+    height: 32px;
+    box-sizing: border-box;
+    background-color: #fff;
+    border: 1px solid #3A8FF0;
+    border-radius: 4px;
+    text-align: left;
+    padding-left: 5px;
+    overflow: hidden;
+
+    & .tag {
+        padding-top: 4px;
+        max-width: 200px;
+        overflow: hidden;
+        text-wrap: nowrap;
+
+        & .tag-item{
+            margin-bottom: 4px;
+        }
+    }
+
+    & .inputTag {
+        background-color: transparent;
+        margin-left: 10px;
+        padding: 0;
+        flex: 1;
+        vertical-align: top;
+        height: 32px;
+        line-height: 32px;
+    }
+}
+
+.confirm-btn {
+    float: right;
+}
+
+.header-text {
+    line-height: 32px;
+}
+
+.tag-tooltip-container {
+    padding: 8px 0 0 8px;
+
+    & .tag-tooltip {
+        margin-bottom: 8px;
+    }
+}
+
+.spin-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.table-empty-text {
+    color: @fontColorAlpha;
+}
+
+.modal-content {
+    padding: 10px 0;
+}
+
+.modal-content-tip {
+    margin-bottom: 15px;
+    color: @fontColorAlpha2;
+}

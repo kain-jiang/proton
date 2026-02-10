@@ -1,0 +1,18 @@
+- Command: execute
+  args:
+    transaction: false
+    Statements:
+      - >
+        CREATE TABLE IF NOT EXISTS task_proton_component (
+        id INT AUTO_INCREMENT COMMENT 'primary key id',
+        cname VARCHAR(100) COMMENT 'component connect object name',
+        ctype VARCHAR(100) COMMENT 'component type',
+        sid INT COMMENT 'system id, index system',
+        coptions MEDIUMBLOB ,
+        cattribute MEDIUMBLOB,
+        INDEX ctype (ctype),
+        INDEX cname (cname),
+        INDEX sid (sid),
+        UNIQUE KEY (sid,ctype,cname),
+        PRIMARY KEY (id)
+        ) COMMENT 'proton component multil info'

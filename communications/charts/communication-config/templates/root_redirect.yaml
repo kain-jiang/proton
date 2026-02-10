@@ -1,0 +1,45 @@
+{{ $className := index $.Values "depServices" "class-443" "ingressClass" | default "class-443" }}
+---
+{{- if semverCompare ">=1.19-0" .Capabilities.KubeVersion.GitVersion }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Release.Name }}-root-redirect
+  namespace: {{ $.Release.Namespace }}
+  annotations:
+    nginx.ingress.kubernetes.io/server-snippet: |-
+      {{- include (printf "root-redirect.%s" $.Values.rootRedirect ) . | nindent 6 }}
+spec:
+  ingressClassName: {{ $className }}
+  rules:
+  - http:
+      paths:
+      - path: /root-redirect
+        pathType: Prefix
+        backend:
+          service:
+            name: deploy-service
+            port:
+              number: 9703
+{{ end }}
+---
+{{- if semverCompare "<1.19-0" .Capabilities.KubeVersion.GitVersion }}
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: {{ .Release.Name }}-root-redirect
+  namespace: {{ $.Release.Namespace }}
+  annotations:
+    kubernetes.io/ingress.class: {{ $className }}
+    nginx.ingress.kubernetes.io/server-snippet: |-
+      {{- include (printf "root-redirect.%s" $.Values.rootRedirect ) . | nindent 6 }}
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /root-redirect
+        backend:
+          serviceName: deploy-service
+          servicePort: 9703
+
+{{ end }}

@@ -1,0 +1,246 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "etcd.fullname" . }}
+  labels: {{- include "etcd.labels" . | nindent 4 }}
+  namespace: {{ $.Values.namespace }}
+spec:
+  selector:
+    matchLabels: {{- include "etcd.matchLabels" . | nindent 6 }}
+  serviceName: {{ include "etcd.fullname" . }}-headless
+  podManagementPolicy: {{ .Values.statefulset.podManagementPolicy }}
+  replicas: {{ .Values.replicaCount }}
+  updateStrategy:
+    type: {{ .Values.statefulset.updateStrategy }}
+    {{- if (eq "Recreate" .Values.statefulset.updateStrategy) }}
+    rollingUpdate: null
+    {{- else if .Values.statefulset.rollingUpdatePartition }}
+    rollingUpdate:
+      partition: {{ .Values.statefulset.rollingUpdatePartition }}
+    {{- end }}
+  template:
+    metadata:
+      labels: {{- include "etcd.labels" . | nindent 8 }}
+    spec:
+      {{- if $.Values.storage.storageClassName }}
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app.kubernetes.io/instance
+                    operator: In
+                    values:
+                      - {{ .Release.Name }}
+              topologyKey: "kubernetes.io/hostname"
+      {{- end }}
+      {{- if .Values.nodeSelector }}
+      nodeSelector: {{- include "etcd.tplValue" (dict "value" .Values.nodeSelector "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.tolerations }}
+      tolerations: {{- include "etcd.tplValue" (dict "value" .Values.tolerations "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.priorityClassName }}
+      priorityClassName: {{ .Values.priorityClassName }}
+      {{- end }}
+      {{- if .Values.securityContext.enabled }}
+      securityContext:
+        fsGroup: {{ .Values.securityContext.fsGroup }}
+        runAsUser: {{ .Values.securityContext.runAsUser }}
+      {{- end }}
+      containers:
+        # Variables to populate static cluster
+        {{- $replicaCount := int .Values.replicaCount }}
+        {{- $clientPort := int .Values.service.port }}
+        {{- $peerPort := int .Values.service.peerPort }}
+        {{- $etcdFullname := include "etcd.fullname" . }}
+        {{- $releaseNamespace := .Values.namespace }}
+        {{- $etcdHeadlessServiceName := printf "%s-%s" $etcdFullname "headless" }}
+        {{- $clusterDomain := .Values.clusterDomain }}
+        {{- $etcdPeerProtocol := include "etcd.peerProtocol" . }}
+        {{- $etcdClientProtocol := include "etcd.clientProtocol" . }}
+        - name: etcd
+          image: {{ include "etcd.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
+          command:
+            - /setup.sh
+          {{- if .Values.resources }}
+          resources: {{- toYaml .Values.resources | nindent 12 }}
+          {{- end }}
+          {{- if .Values.envVarsConfigMap }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "etcd.envVarsCM" . }}
+          {{- end }}
+          env:
+            - name: BITNAMI_DEBUG
+              value: {{ ternary "true" "false" .Values.image.debug | quote }}
+            - name: MY_POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: MY_POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: ETCDCTL_API
+              value: "3"
+            - name: ETCD_NAME
+              value: "$(MY_POD_NAME)"
+            - name: ETCD_DATA_DIR
+              value: {{ include "etcd.dataDir" . }}
+            - name: ETCD_ADVERTISE_CLIENT_URLS
+              value: "{{ $etcdClientProtocol }}://$(MY_POD_NAME).{{ $etcdHeadlessServiceName }}.{{ .Values.namespace }}.svc.{{ $clusterDomain }}:{{ .Values.service.port }}"
+            - name: ETCD_LISTEN_CLIENT_URLS
+              value: "{{ $etcdClientProtocol }}://0.0.0.0:{{ .Values.service.port }}"
+            - name: ETCD_INITIAL_ADVERTISE_PEER_URLS
+              value: "{{ $etcdPeerProtocol }}://$(MY_POD_NAME).{{ $etcdHeadlessServiceName }}.{{ .Values.namespace }}.svc.{{ $clusterDomain }}:{{ .Values.service.peerPort }}"
+            - name: ETCD_LISTEN_PEER_URLS
+              value: "{{ $etcdPeerProtocol }}://0.0.0.0:{{ .Values.service.peerPort }}"
+            - name: ETCD_HEARTBEAT_INTERVAL
+              value: "{{ .Values.config.heartbeatInterval }}"
+            - name: ETCD_ELECTION_TIMEOUT
+              value: "{{ .Values.config.electionTimeout }}"
+            - name: ETCD_MAX_REQUEST_BYTES
+              value: "{{ .Values.config.maxrequestbytes }}"
+            {{- if .Values.maxProcs }}
+            - name: GOMAXPROCS
+              value: {{ .Values.maxProcs }}
+            {{- end }}
+            {{- if gt $replicaCount 1 }}
+            - name: ETCD_INITIAL_CLUSTER_TOKEN
+              value: "etcd-cluster-k8s"
+            - name: ETCD_INITIAL_CLUSTER_STATE
+            {{- if not (empty .Values.etcd.initialClusterState) }}
+              value: {{ .Values.etcd.initialClusterState | quote }}
+            {{- else if .Release.IsInstall }}
+              value: "new"
+            {{- else }}
+              value: "existing"
+            {{- end }}
+            {{- $initialCluster := list }}
+            {{- range $e, $i := until $replicaCount }}
+            {{- $initialCluster = append $initialCluster (printf "%s-%d=%s://%s-%d.%s.%s.svc.%s:%d" $etcdFullname $i $etcdPeerProtocol $etcdFullname $i $etcdHeadlessServiceName $releaseNamespace $clusterDomain $peerPort) }}
+            {{- end }}
+            - name: ETCD_INITIAL_CLUSTER
+              value: {{ join "," $initialCluster | quote }}
+            {{- end }}
+            {{- $AllEndpoints := list }}
+            {{- range $e, $i := until $replicaCount }}
+            {{- $AllEndpoints = append $AllEndpoints (printf "%s-%d=%s://%s-%d.%s.%s.svc.%s:%d" $etcdFullname $i $etcdPeerProtocol $etcdFullname $i $etcdHeadlessServiceName $releaseNamespace $clusterDomain $clientPort) }}
+            {{- end }}
+            - name: ETCD_ALL_ENDPOINTS
+              value: {{ join "," $AllEndpoints | quote }}
+            - name: REPLICAS
+              value: {{ .Values.replicaCount | quote }}
+            - name: ETCD_PEER_PROTOCOL
+              value: {{ $etcdPeerProtocol | quote }}
+            - name: ETCD_HEADLESS_SERVICENAME
+              value: {{ $etcdHeadlessServiceName | quote }}
+            - name: NAMESPACE
+              value: {{ $releaseNamespace | quote }}
+            - name: ALLOW_NONE_AUTHENTICATION
+              value: {{ ternary "yes" "no" (or .Values.auth.rbac.enabled .Values.allowNoneAuthentication) | quote }}
+            {{- if .Values.auth.rbac.enabled }}
+            - name: ETCD_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ if .Values.auth.rbac.existingSecret }}{{ .Values.auth.rbac.existingSecret }}{{ else }}{{ include "etcd.fullname" . }}{{ end }}
+                  key: etcd-root-password
+            {{- end }}
+            {{- if .Values.auth.client.enableAuthentication }}
+            - name: ETCD_CERT_FILE
+              value: "/var/etcd/client/{{ .Values.auth.client.certFilename }}"
+            - name: ETCD_KEY_FILE
+              value: "/var/etcd/client/{{ .Values.auth.client.certKeyFilename }}"
+            - name: ETCD_CLIENT_CERT_AUTH
+              value: "true"
+            - name: ETCD_TRUSTED_CA_FILE
+              value: "/var/etcd/client/{{ .Values.auth.client.caFilename | default "ca.crt"}}"
+            - name: ETCDCTL_ENDPOINTS
+              value: "https://127.0.0.1:{{ .Values.service.port }}"
+            {{- end }}
+            {{- if .Values.auth.peer.enableAuthentication }}
+            - name: ETCD_PEER_CERT_FILE
+              value: "/var/etcd/peer/{{ .Values.auth.peer.certFilename }}"
+            - name: ETCD_PEER_KEY_FILE
+              value: "/var/etcd/peer/{{ .Values.auth.peer.certKeyFilename }}"
+            - name: ETCD_PEER_CLIENT_CERT_AUTH
+              value: "true"
+            - name: ETCD_PEER_TRUSTED_CA_FILE
+              value: "/var/etcd/peer/{{ .Values.auth.peer.caFilename | default "ca.crt"}}"
+            {{- end }}
+          ports:
+            - name: client
+              containerPort: 2379
+            - name: peer
+              containerPort: 2380
+          {{- if .Values.livenessProbe.enabled }}
+          livenessProbe:
+            exec:
+              command:
+                - /probes.sh
+            initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.livenessProbe.timeoutSeconds }}
+            successThreshold: {{ .Values.livenessProbe.successThreshold }}
+            failureThreshold: {{ .Values.livenessProbe.failureThreshold }}
+          {{- end }}
+          {{- if .Values.readinessProbe.enabled }}
+          readinessProbe:
+            exec:
+              command:
+                - /probes.sh
+            initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.readinessProbe.timeoutSeconds }}
+            successThreshold: {{ .Values.readinessProbe.successThreshold }}
+            failureThreshold: {{ .Values.readinessProbe.failureThreshold }}
+          {{- end }}
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/etcd
+            {{- if .Values.configFileConfigMap }}
+            - name: etcd-config
+              mountPath: /var/etcd/conf/
+            {{- end }}
+            {{- if .Values.auth.client.enableAuthentication }}
+            - name: etcd-client-certs
+              mountPath: /var/etcd/client/
+              readOnly: true
+            {{- end }}
+            {{- if .Values.auth.peer.enableAuthentication }}
+            - name: etcd-peer-certs
+              mountPath: /var/etcd/peer/
+              readOnly: true
+            {{- end }}
+      volumes:
+        {{- if .Values.configFileConfigMap }}
+        - name: etcd-config
+          configMap:
+            name: {{ include "etcd.configFileCM" . }}
+        {{- end }}
+        {{- if .Values.auth.client.enableAuthentication }}
+        - name: etcd-client-certs
+          secret:
+            secretName: {{ required "A secret containinig the client certificates is required" .Values.auth.client.existingSecret }}
+            defaultMode: 256
+        {{- end }}
+        {{- if .Values.auth.peer.enableAuthentication }}
+        - name: etcd-peer-certs
+          secret:
+            secretName: {{ required "A secret containinig the peer certificates is required" .Values.auth.peer.existingSecret }}
+            defaultMode: 256
+        {{- end }}
+  volumeClaimTemplates:
+  - metadata:
+        name: data
+    spec:
+      {{- if .Values.storage.storageClassName }}
+      storageClassName: "{{ .Values.storage.storageClassName }}"
+      {{- end}}
+      accessModes: [ ReadWriteOnce ]
+      resources:
+        requests:
+          storage: {{ .Values.storage.capacity }}
+

@@ -1,0 +1,103 @@
+opensearch:
+  ## OpenSearch 的原生参数
+  ## Detail: "https://opensearch.org/docs/latest/security/configuration/yaml/#opensearchyml"
+  # settings:
+  #   cluster.routing.allocation.disk.watermark.flood_stage: 70%
+  #   cluster.routing.allocation.disk.watermark.high: 65%
+  #   cluster.routing.allocation.disk.watermark.low: 60%
+  ## OpenSearch 需求的资源
+  ## reference: https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#resources
+  # resources:
+  #   limits:
+  #     cpu: 40
+  #     memory: 64Gi
+  #   requests:
+  #     cpu: 40
+  #     memory: 64Gi
+
+kafka:
+  resources:
+  # arch: arm, node:   6, cpu:  96, memory: 128
+  # env:
+  #   KAFKA_HEAP_OPTS: -Xms12G -Xmx12G
+  # resources:
+  #   limits:
+  #     cpu: "4"
+  #     memory: 13Gi
+  #   requests:
+  #     cpu: "4"
+  #     memory: 13Gi
+  # arch: arm, node:  12, cpu:  96, memory: 128
+  # env:
+  #   KAFKA_HEAP_OPTS: -Xms12G -Xmx12G
+  # resources:
+  #   limits:
+  #     cpu: "4"
+  #     memory: 13Gi
+  #   requests:
+  #     cpu: "4"
+  #     memory: 13Gi
+  # arch: arm, node:   1, cpu:  48, memory: 128
+  # env:
+  #   KAFKA_HEAP_OPTS: -Xms6G -Xmx6G
+  # resources:
+  #   limits:
+  #     cpu: "2"
+  #     memory: 7Gi
+  #   requests:
+  #     cpu: "2"
+  #     memory: 7Gi
+  # arch: x86, node:   1, cpu:  32, memory:  64
+  # env:
+  #   KAFKA_HEAP_OPTS: -Xms4G -Xmx4G
+  # resources:
+  #   limits:
+  #     cpu: "1"
+  #     memory: 5Gi
+  #   requests:
+  #     cpu: "1"
+  #     memory: 5Gi
+  # arch: x86, node:  12, cpu:  32, memory:  64
+  # env:
+  #   KAFKA_HEAP_OPTS: -Xms6G -Xmx6G
+  # resources:
+  #   limits:
+  #     cpu: "2"
+  #     memory: 7Gi
+  #   requests:
+  #     cpu: "2"
+  #     memory: 7Gi
+  # arch: x86, node:   6, cpu:  32, memory:  64
+  # env:
+  #   KAFKA_HEAP_OPTS: -Xms6G -Xmx6G
+  # resources:
+  #   limits:
+  #     cpu: "2"
+  #     memory: 7Gi
+  #   requests:
+  #     cpu: "2"
+  #     memory: 7Gi
+
+zookeeper:
+  # env:
+  #   JVMFLAGS: -Xms500m -Xmx500m
+  # resources:
+  #   limits:
+  #     cpu: 1
+  #     memory: 2Gi
+  #   requests:
+  #     cpu: 100m
+  #     memory: 270Mi
+
+各个组件所需的绝对最低内存request:
+  kafka-exporter: 12MB
+  opensearch-exporter: 12MB
+  grafana: 128MB
+  mongodb: 158MB
+  prometheus: 1024MB
+  nsqd: 15MB
+  nsqlookupd: 50MB
+  policy-engine: 40MB
+  redis: 30MB
+  zookeeper: 270MB
+

@@ -1,0 +1,117 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: "proton-monitor-ds"
+  labels:
+    app: "proton-monitor-ds"
+  namespace: {{ .Values.namespace }}
+spec:
+  updateStrategy:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app: "proton-monitor-ds"
+  template:
+    metadata:
+      labels:
+        app: "proton-monitor-ds"
+    spec:
+      serviceAccountName: proton-monitor
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      securityContext:
+        runAsNonRoot: false
+        runAsUser: 0
+      containers:
+      - name: fluentbit
+        image: {{ .Values.image.registry }}/{{ .Values.image.fluentbit.repository }}:{{ .Values.image.fluentbit.tag }}
+        imagePullPolicy: IfNotPresent
+        command: ["/fluent-bit/bin/fluent-bit", "-c", "/fluent-bit/config/fluent-bit.conf", "-R", "/fluent-bit/config/parsers.conf"]
+        ports:
+          - name: metrics
+            containerPort: {{ .Values.config.fluentbit.port }}
+        {{- if .Values.resources.fluentbit}}
+        resources:
+            {{- toYaml .Values.resources.fluentbit | nindent 12 }}
+        {{- end}}
+        volumeMounts:
+        - name: varlog
+          mountPath: /var/log
+          readOnly: true
+        - name: sysvolcontainerlog
+          mountPath: /sysvol/proton_data/cs_docker_data/containers
+          readOnly: true
+        - name: config-volume
+          mountPath: /fluent-bit/config/
+        - name: fluentbit-state
+          mountPath: /var/lib/fluent-bit
+      - name: node-exporter
+        image: {{ .Values.image.registry }}/{{ .Values.image.monitor.repository }}:{{ .Values.image.monitor.tag}}
+        imagePullPolicy: IfNotPresent
+        command: ["node_exporter"]
+        args:
+          - --path.rootfs=/host
+          - --web.listen-address=:{{ .Values.config.nodeExporter.port }}
+        ports:
+          - name: metrics
+            containerPort: {{ .Values.config.nodeExporter.port }}
+        {{- if .Values.resources.nodeExporter}}
+        resources:
+            {{- toYaml .Values.resources.nodeExporter | nindent 12 }}
+        {{- end}}
+        securityContext:
+          privileged: true
+        volumeMounts:
+          - name: root
+            mountPath: /host
+            readOnly: true
+          - name: containerd-socket
+            mountPath: /run/containerd/containerd.sock
+            readOnly: true
+      - name: dcgm-exporter
+        image: {{ .Values.image.registry }}/{{ .Values.image.monitor.repository }}:{{ .Values.image.monitor.tag}}
+        command: ["dcgm-exporter"]
+        env:
+        - name: DCGM_EXPORTER_LISTEN
+          value: ":{{ .Values.config.dcgmExporter.port }}"
+        - name: DCGM_EXPORTER_KUBERNETES
+          value: "true"
+        ports:
+        - name: metrics
+          containerPort: {{ .Values.config.dcgmExporter.port }}
+        securityContext:
+          capabilities:
+            add: ["SYS_ADMIN"]
+        {{- if .Values.resources.dcgmExporter}}
+        resources:
+            {{- toYaml .Values.resources.dcgmExporter | nindent 12 }}
+        {{- end}}
+        volumeMounts:
+        - name: pod-gpu-resources
+          readOnly: true
+          mountPath: "/var/lib/kubelet/pod-resources"
+      hostNetwork: true
+      hostPID: true
+      volumes:
+      - name: varlog
+        hostPath:
+          path: /var/log
+      - name: sysvolcontainerlog
+        hostPath:
+          path: /sysvol/proton_data/cs_docker_data/containers
+      - name: config-volume
+        configMap:
+          name: fluentbit-config
+      - name: fluentbit-state
+        hostPath:
+          path: /var/lib/fluent-bit
+          type: DirectoryOrCreate
+      - name: root
+        hostPath:
+          path: /
+      - name: containerd-socket
+        hostPath:
+          path: /run/containerd/containerd.sock
+      - name: pod-gpu-resources
+        hostPath:
+          path: "/var/lib/kubelet/pod-resources"

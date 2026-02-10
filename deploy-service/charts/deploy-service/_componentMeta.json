@@ -1,0 +1,72 @@
+{
+    "conponentDefineType": "helm/service",
+    "name": "deploy-service",
+    "configSchema": {
+        "title": "deploy-service",
+        "description": "deploy-service组件配置项",
+        "type": "object",
+        "properties": {
+            "resources": {
+                "type": "object",
+                "title": "容器资源控制",
+                "description": "目前支持仅设置cpu和内存的下限和上限,同一资源下限和上限的值还会影响其程序运行时优先级。低优先级服务在内存不足时可能会被触发oom,以及高计算负载时cpu使用限制",
+                "properties": {
+                    "requests": {
+                        "type": "object",
+                        "description": "容器运行需要的最小资源分配,该配置将会影响服务调度",
+                        "properties": {
+                            "memory": {
+                                "type": "string",
+                                "description": "内存资源的基本单位是字节(byte)。你可以使用这些后缀之一，将内存表示为 纯整数或定点整数:E、P、T、G、M、K、Ei、Pi、Ti、Gi、Mi、Ki。",
+                                "title": "最低内存"
+                            },
+                            "cpu": {
+                                "type": "string",
+                                "description": "CPU 资源以 CPU 单位度量,小数值是可以使用的。一个请求 0.5 CPU 的容器保证会获得请求 1 个 CPU 的容器的 CPU 的一半。 你可以使用后缀 m 表示毫。例如 100m CPU、100 milliCPU 和 0.1 CPU 都相同。 精度不能超过 1m。",
+                                "title": "cpu"
+                            }
+                        }
+                    },
+                    "limits": {
+                        "type": "object",
+                        "description": "容器运行最大资源限制,该配置将会影响服务运行时的资源的可使用最大值",
+                        "properties": {
+                            "memory": {
+                                "type": "string",
+                                "description": "程序使用内存超出该值将会发生oom。内存资源的基本单位是字节(byte)。你可以使用这些后缀之一，将内存表示为 纯整数或定点整数:E、P、T、G、M、K、Ei、Pi、Ti、Gi、Mi、Ki。",
+                                "title": "内存"
+                            },
+                            "cpu": {
+                                "type": "string",
+                                "description": "将会影响程序cpu使用上限与程序运算优先级。CPU 资源以 CPU 单位度量,小数值是可以使用的。一个请求 0.5 CPU 的容器保证会获得请求 1 个 CPU 的容器的 CPU 的一半。 你可以使用后缀 m 表示毫。例如 100m CPU、100 milliCPU 和 0.1 CPU 都相同。 精度不能超过 1m。",
+                                "title": "cpu"
+                            }
+                        }
+                    }
+                }
+            },
+            "replicaCount": {
+                "type": "number",
+                "title": "服务副本数"
+            },
+            "pnamespace": {
+                "type": "string",
+                "title": "资源层配置命名空间",
+                "description": "proton-cli 配置文件存储的命名空间，默认应该为 proton"
+            },
+            "rnamespace": {
+                "type": "string",
+                "title": "资源层服务如数据库等运行的命名空间",
+                "description": "资源层服务如数据库等运行的命名空间"
+            }
+        }
+    },
+    "dependence": [
+        {
+            "name": "deploymentstudio-dm-pre"
+        },
+        {
+            "name": "rds"
+        }
+    ]
+}

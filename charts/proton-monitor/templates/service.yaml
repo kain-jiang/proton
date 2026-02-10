@@ -1,0 +1,195 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: proton-monitor-dcgm-exporter
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: "proton-monitor-ds"
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/path: "/metrics"
+    prometheus.io/port: "{{ .Values.config.dcgmExporter.port }}"
+spec:
+  selector:
+    app: "proton-monitor-ds"
+  ports:
+    - name: metrics
+      port: {{ .Values.config.dcgmExporter.port }}
+      targetPort: {{ .Values.config.dcgmExporter.port }}
+      protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: proton-monitor-node-exporter
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: "proton-monitor-ds"
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/path: "/metrics"
+    prometheus.io/port: "{{ .Values.config.nodeExporter.port }}"
+spec:
+  type: ClusterIP
+  selector:
+    app: "proton-monitor-ds"
+  ports:
+    - name: metrics
+      port: {{ .Values.config.nodeExporter.port }}
+      targetPort: {{ .Values.config.nodeExporter.port }}
+      protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: proton-monitor-fluentbit
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: "proton-monitor-ds"
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/path: "/api/v1/metrics/prometheus"
+    prometheus.io/port: "{{ .Values.config.fluentbit.port }}"
+spec:
+  type: ClusterIP
+  selector:
+    app: "proton-monitor-ds"
+  ports:
+    - name: metrics
+      port: {{ .Values.config.fluentbit.port }}
+      targetPort: {{ .Values.config.fluentbit.port }}
+      protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: proton-monitor-vmagent
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: proton-monitor
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/path: "/metrics"
+    prometheus.io/port: "{{ .Values.config.vmagent.port }}"
+spec:
+  type: ClusterIP
+  selector:
+    app: proton-monitor
+  ports:
+    - name: vmagent
+      port: {{ .Values.config.vmagent.port }}
+      targetPort: {{ .Values.config.vmagent.port }}
+      protocol: TCP
+---
+# 内部 Grafana 服务 (ClusterIP)，用于内部访问和监控抓取
+apiVersion: v1
+kind: Service
+metadata:
+  name: proton-monitor-grafana-internal
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: proton-monitor
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/path: "/metrics"
+    prometheus.io/port: "{{ .Values.config.grafana.port }}"
+spec:
+  type: ClusterIP
+  selector:
+    app: proton-monitor
+  ports:
+    - name: metrics
+      port: {{ .Values.config.grafana.port }}
+      targetPort: {{ .Values.config.grafana.port }}
+      protocol: TCP
+---
+# 为每个 StatefulSet Pod 创建单独的 NodePort 服务
+{{- $replicas := int .Values.replicaCount }}
+{{- $last := sub $replicas 1 }}
+{{- range $i := until $replicas }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: proton-monitor-grafana-{{ $i }}
+  namespace: {{ $.Values.namespace }}
+  labels:
+    app: proton-monitor
+    pod-specific: "true"
+spec:
+  type: NodePort
+  selector:
+    app: proton-monitor
+    statefulset.kubernetes.io/pod-name: proton-monitor-{{ $i }}
+  ports:
+    - name: metrics
+      port: {{ $.Values.config.grafana.port }}
+      targetPort: {{ $.Values.config.grafana.port }}
+      {{- if eq $i 0 }}
+      nodePort: {{ $.Values.config.grafana.nodePort }}
+      {{- else }}
+      nodePort: {{ add $.Values.config.grafana.nodePort $i }}
+      {{- end }}
+      protocol: TCP
+{{- if ne $i $last }}
+---
+{{- end }}
+{{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: proton-monitor-vmetrics
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: proton-monitor
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/path: "/metrics"
+    prometheus.io/port: "{{ .Values.config.vmetrics.port }}"
+spec:
+  type: ClusterIP
+  selector:
+    app: proton-monitor
+  ports:
+    - name: vmetrics
+      port: {{ .Values.config.vmetrics.port }}
+      targetPort: {{ .Values.config.vmetrics.port }}
+      protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: proton-monitor-vlogs
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: proton-monitor
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/path: "/metrics"
+    prometheus.io/port: "{{ .Values.config.vlogs.port }}"
+spec:
+  type: ClusterIP
+  selector:
+    app: proton-monitor
+  ports:
+    - name: vlogs
+      port: {{ .Values.config.vlogs.port }}
+      targetPort: {{ .Values.config.vlogs.port }}
+      protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: proton-monitor
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: proton-monitor
+spec:
+  clusterIP: None
+  selector:
+    app: proton-monitor
+  ports:
+    - name: vlogs
+      port: {{ .Values.config.vlogs.port }}
+      targetPort: {{ .Values.config.vlogs.port }}
+      protocol: TCP

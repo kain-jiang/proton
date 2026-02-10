@@ -1,0 +1,67 @@
+depServices:
+  class-443:
+    ingressClass: class-443
+
+config:
+  enable: true
+  nginxData:
+    compute-full-forwarded-for: 'true'
+    disable-access-log: 'false'
+    keep-alive: '300'
+    keep-alive-requests: '1000000'
+    log-format-upstream: $remote_addr [$time_local] "$request" $status $body_bytes_sent
+      "$http_referer" "$http_user_agent" $request_length $request_time $namespace
+      $service_name $service_port $upstream_addr $upstream_response_length $upstream_response_time
+      $upstream_status $req_id
+    max-worker-connections: '1024'
+    max-worker-open-files: '204800'
+    proxy-body-size: '0'
+    proxy-buffer-size: 8k
+    proxy-headers-hash-bucket-size: 128
+    proxy-next-upstream: error timeout http_502
+    proxy-next-upstream-tries: '3'
+    proxy-read-timeout: '7200'
+    proxy-request-buffering: 'off'
+    server-tokens: 'false'
+    upstream-keepalive-connections: '512'
+    upstream-keepalive-requests: '10000000'
+    upstream-keepalive-timeout: '300'
+    use-forwarded-headers: 'true'
+    use-gzip: 'true'
+    worker-cpu-affinity: auto
+    worker-processes: '8'
+    allow-snippet-annotations: "true"
+    annotations-risk-level: Critical
+default_ssl_certificate_same_namspece: anyshare-ingress-tls
+env:
+  language: en_US.UTF-8
+  timezone: Asia/Shanghai
+image:
+  ingressController:
+    repository: proton/nginx-ingress-controller
+    tag: v1.12.3-1
+  ingressController118:
+    repository: proton/nginx-ingress-controller
+    tag: 0.32.0
+  ingressController120:
+    repository: proton/nginx-ingress-controller
+    tag: v1.3.1-1
+  pullPolicy: IfNotPresent
+  registry: acr.aishu.cn
+namespace: default
+nodeSelector: {}
+resources:
+  requests:
+    cpu: 80m
+    memory: 64Mi
+service:
+  defaultServerPort: 10902
+  enableDualStack: false
+  healthzPort: 10901
+  httpPort: 80
+  httpsPort: 443
+  network: hostport
+  statusPort: 10903
+  streamPort: 10904
+workload:
+  kind: DaemonSet

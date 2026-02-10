@@ -1,0 +1,26 @@
+# Default values for prometheus-k8s.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+namespace: "proton"
+
+env:
+  timezone: Asia/Shanghai
+
+image:
+  registry: acr.aishu.cn
+  pullPolicy: IfNotPresent
+  NodeExporter:
+    repository: proton/node-exporter
+    tag: v1.5.0
+
+service:
+  port: 9102
+
+resources:
+  limits:
+    cpu: 100m
+    memory: 500Mi
+  requests:
+    cpu: 5m
+    memory: 5Mi

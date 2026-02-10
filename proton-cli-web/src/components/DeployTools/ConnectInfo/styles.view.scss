@@ -1,0 +1,28 @@
+@import "../../../global.scss";
+
+.service-contain {
+  width: $content-width;
+  margin: 50px;
+  position: relative;
+  bottom: 70px;
+  display: block;
+}
+
+.delete {
+  text-align: right;
+}
+
+.split {
+  display: inline-block;
+  width: 3px;
+  height: 17px;
+  background: #0091ff;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+.service-box {
+  margin-bottom: 24px;
+  padding: 30px;
+  background: #fff;
+}

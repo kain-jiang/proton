@@ -1,0 +1,6 @@
+- Command: execute
+  args:
+    transaction: false
+    Statements: []
+
+# tidb 不支持修改列为主键和自增属性

@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "policy-engine.name" . }}-cm
+  namespace: {{ .Values.namespace }}
+data:
+  policy-engine.yaml: |
+    lang: {{ .Values.config.lang }}
+    port: 8180
+    opaPort: 8181
+    oplogPort: 8182
+    logLevel: {{ .Values.config.logLevel }}
+    archiveInterval: {{ .Values.config.archiveInterval }}
+    certFile: /etc/tls/server-cert.pem
+    keyFile: /etc/tls/server-key.pem
+    caFile: /etc/tls/ca.pem
+    etcdEndpoints: {{ .Values.depServices.etcd.endpoints }}
+    etcdRequireSSL: {{ .Values.depServices.etcd.tlsConfig.requireSSL }}
+    version: {{.Chart.Version}}

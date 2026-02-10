@@ -1,0 +1,13 @@
+{
+  "name": "rds",
+  "use": "default",
+  "data": {
+    "default": {
+      "host": "1.4.17.93",
+      "password": "fake_password",
+      "port": 3330,
+      "user": "fake_username"
+    }
+  },
+  "encrypt_field": []
+}

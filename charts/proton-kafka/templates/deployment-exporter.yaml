@@ -1,0 +1,118 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "kafka-exporter.name" . }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ template "kafka-exporter.name" . }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ template "kafka-exporter.name" . }}
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: {{ template "kafka-exporter.name" . }}
+    spec:
+      restartPolicy: Always
+{{- with .Values.nodeSelector }}
+      nodeSelector:
+{{ toYaml . | indent 8 }}
+{{- end }}
+      dnsConfig:
+        options:
+          - name: single-request-reopen
+          - name: use-vc
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+      {{- if .Values.antiAffinity.enabled }}
+      affinity:
+        {{- if eq .Values.antiAffinity.rule "soft" }}
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                topologyKey: kubernetes.io/hostname
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - {{ template "kafka-exporter.name" . }}
+        {{- else if eq .Values.antiAffinity.rule "hard" }}
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - topologyKey: kubernetes.io/hostname
+              labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - {{ template "kafka-exporter.name" . }}
+        {{- end }}
+      {{- end }}
+      containers:
+      - name: kafka-exporter
+        image: {{ template "kafka-exporter.image" . }}
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        command:
+        - "/bin/kafka_exporter"
+        - "--kafka.server={{ template "kafka.name" . }}-headless:{{ .Values.service.kafka.port }}"
+        - "--web.listen-address=:{{ .Values.service.exporter.port }}"
+        - "--verbosity={{ .Values.config.exporter.verbosity }}"
+        {{- if .Values.config.exporter.enableSaramaLog }}
+        - "--log.enable-sarama"
+        {{- end }}
+        {{- if .Values.config.sasl.enabled }}
+        - "--sasl.enabled"
+          {{- if eq (upper .Values.config.sasl.mechanism) "PLAIN"}}
+        - "--sasl.mechanism=plain"
+          {{- else if eq (upper .Values.config.sasl.mechanism) "SCRAM-SHA-256" }}
+        - "--sasl.mechanism=scram-sha256"
+          {{- else }}
+        - "--sasl.mechanism=scram-sha512"
+          {{- end }}
+        - "--sasl.username=kafka-exporter"
+        - "--sasl.password={{ index (index .Values.config.sasl.user 0) "password" }}"
+        {{- end }}
+        ports:
+        - name: metrics
+          containerPort: {{ .Values.service.exporter.port }}
+          protocol: TCP
+        env:
+        - name: TZ
+          value: "{{ .Values.env.timezone }}"
+        startupProbe:
+          httpGet:
+            path: /healthz
+            port: metrics
+            scheme: HTTP
+          initialDelaySeconds: 10
+          timeoutSeconds: 10
+          periodSeconds: 10
+          failureThreshold: 30
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: metrics
+            scheme: HTTP
+          initialDelaySeconds: 10
+          timeoutSeconds: 10
+          periodSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: metrics
+            scheme: HTTP
+          initialDelaySeconds: 10
+          timeoutSeconds: 10
+          periodSeconds: 5
+        resources:
+{{ toYaml .Values.resources.exporter | indent 10 }}

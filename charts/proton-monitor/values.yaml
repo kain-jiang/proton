@@ -1,0 +1,121 @@
+namespace: kube-system
+replicaCount: 1
+image:
+  registry: acr.aishu.cn
+  pullPolicy: IfNotPresent
+  monitor:
+    repository: proton/monitor
+    tag: VERSION
+  fluentbit:
+    repository: public/fluent-bit
+    tag: 4.0.0
+
+config:
+  dcgmExporter:
+    port: 9400
+  nodeExporter:
+    port: 9101
+  fluentbit:
+    port: 2020
+    # 指定要采集的命名空间，留空则采集所有命名空间
+    namespaces: ["default", "kube-system", "resource", "proton-mongodb-operator-system", "proton-rds-mariadb-operator-system"]
+    # 外部日志服务器配置，配置后自动启用，可配置多个
+    remoteLogServers: []
+    # 示例配置:
+    # remoteLogServers:
+    # - host: "log-server-1"
+    #   port: 8080
+    #   uri: "/insert/jsonline?_stream_fields=stream&_msg_field=log&_time_field=time"
+    # - host: "log-server-2"
+    #   port: 9090
+    #   uri: "/api/logs"
+  vmagent:
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    k8sEtcdCerts: k8s-etcd-certs
+    remoteWrite:
+      host: 127.0.0.1
+      port: 8428
+      path: /api/v1/write
+      extraServers: [] # 例如: [{url: "http://third-party1:8428/api/v1/write"}, {url: "http://third-party2:8428/api/v1/write"} ]
+    port: 8429
+  vmetrics:
+    retention: 10d
+    port: 8428
+  vlogs:
+    retention: 10d
+    port: 8425
+  grafana:
+    smtp:
+      enabled: true
+      host: smtp.office365.com:587
+      user: ""  # REQUIRED: set at deploy time
+      password: ""  # REQUIRED: set at deploy time
+      skip_verify: false
+      from: noreply@example.com
+      from_name: Grafana
+      startTLS_policy: Mandatory
+      enable_tracing: false
+    adminPassword: ""  # REQUIRED: set at deploy time
+    secretKey: ""  # auto-generated if empty
+    port: 3000
+    nodePort: 30003
+
+storage:
+  capacity: 10Gi
+  storageClassName: ""
+  local:
+    0:
+      host: node0
+      path: /sysvol/prometheus
+
+resources:
+  fluentbit:
+    requests:
+      cpu: 10m
+      memory: 30Mi
+    limits:
+      cpu: 1
+      memory: 500Mi
+  dcgmExporter:
+    requests:
+      cpu: 10m
+      memory: 30Mi
+    limits:
+      cpu: 1
+      memory: 500Mi
+  nodeExporter:
+    requests:
+      cpu: 10m
+      memory: 30Mi
+    limits:
+      cpu: 1
+      memory: 500Mi
+  grafana:
+    requests:
+      cpu: 100m
+      memory: 100Mi
+    limits:
+      cpu: 1
+      memory: 2Gi
+  vmetrics:
+    requests:
+      cpu: 500m
+      memory: 500Mi
+    limits:
+      cpu: 1000m
+      memory: 2Gi
+  vlogs:
+    requests:
+      cpu: 500m
+      memory: 100Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+  vmagent:
+    requests:
+      cpu: 100m
+      memory: 100Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi

@@ -1,0 +1,27 @@
+log:
+  level: debug
+  format: json
+
+server:
+  host: "0.0.0.0"
+  port: 8888
+
+config:
+  enableDualStack: false
+  chartmuseum:
+    enable: true
+    password: ""
+    url: http://chartmuseum.aishu.cn:15001
+    username: ""
+  oci:
+    enable: false
+    password: ""
+    plain_http: true
+    registry: registry.aishu.cn:15000
+    username: ""
+  registry: "acr.aishu.cn"
+
+persist:
+  secret_components_name: persist-component-manage-components
+  secret_plugins_name: persist-component-manage-plugins
+  secret_namespace: resource

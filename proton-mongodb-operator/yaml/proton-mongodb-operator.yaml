@@ -1,0 +1,498 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  labels:
+    control-plane: controller-manager
+  name: proton-mongodb-operator-system
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.15.0
+  creationTimestamp: null
+  name: mongodboperators.mongodb.proton.aishu.cn
+spec:
+  group: mongodb.proton.aishu.cn
+  names:
+    kind: MongodbOperator
+    listKind: MongodbOperatorList
+    plural: mongodboperators
+    singular: mongodboperator
+  scope: Namespaced
+  versions:
+  - name: v1
+    schema:
+      openAPIV3Schema:
+        description: MongodbOperator is the Schema for the mongodboperators API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: MongodbOperatorSpec defines the desired state of MongodbOperator
+            properties:
+              exporter:
+                description: ExporterSpec defines the desired state of Exporter
+                properties:
+                  image:
+                    type: string
+                  imagePullPolicy:
+                    description: PullPolicy describes a policy for if/when to pull a container image
+                    type: string
+                type: object
+              logrotate:
+                description: LogrotateSpec defines the desired state of Logrotate
+                properties:
+                  image:
+                    type: string
+                  imagePullPolicy:
+                    description: PullPolicy describes a policy for if/when to pull a container image
+                    type: string
+                  logcount:
+                    format: int32
+                    type: integer
+                  logsize:
+                    type: string
+                  schedule:
+                    type: string
+                type: object
+              mgmt:
+                description: MgmtSpec defines the desired state of Mgmt
+                properties:
+                  image:
+                    type: string
+                  imagePullPolicy:
+                    description: PullPolicy describes a policy for if/when to pull a container image
+                    type: string
+                  logLevel:
+                    type: string
+                  service:
+                    properties:
+                      enableDualStack:
+                        type: boolean
+                      port:
+                        format: int32
+                        type: integer
+                      type:
+                        description: Service Type string describes ingress methods for a service
+                        type: string
+                    required:
+                    - enableDualStack
+                    type: object
+                  useEncryption:
+                    type: boolean
+                type: object
+              mongodb:
+                description: 'INSERT ADDITIONAL SPEC FIELDS - desired state of cluster Important: Run "make" to regenerate code after modifying this file'
+                properties:
+                  conf:
+                    properties:
+                      auditLog:
+                        additionalProperties:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          x-kubernetes-int-or-string: true
+                        type: object
+                      tls:
+                        description: TLS is the configuration used to set up TLS encryption
+                        properties:
+                          enabled:
+                            type: boolean
+                          tlssecretname:
+                            type: string
+                        required:
+                        - enabled
+                        type: object
+                      wiredTigerCacheSizeGB:
+                        format: int32
+                        type: integer
+                    type: object
+                  debug:
+                    type: string
+                  image:
+                    description: 'INSERT ADDITIONAL SPEC FIELDS - desired state of cluster Important: Run "make" to regenerate code after modifying this file Selector *metav1.LabelSelector `json:"selector,omitempty"`'
+                    type: string
+                  imagePullPolicy:
+                    description: PullPolicy describes a policy for if/when to pull a container image
+                    type: string
+                  replicas:
+                    format: int32
+                    type: integer
+                  replset:
+                    properties:
+                      name:
+                        type: string
+                    type: object
+                  resources:
+                    description: ResourceRequirements describes the compute resource requirements.
+                    properties:
+                      limits:
+                        additionalProperties:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        description: 'Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                        type: object
+                      requests:
+                        additionalProperties:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        description: 'Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                        type: object
+                    type: object
+                  service:
+                    properties:
+                      enableDualStack:
+                        type: boolean
+                      port:
+                        format: int32
+                        type: integer
+                      type:
+                        description: Service Type string describes ingress methods for a service
+                        type: string
+                    required:
+                    - enableDualStack
+                    type: object
+                  storage:
+                    properties:
+                      capacity:
+                        type: string
+                      storageClassName:
+                        type: string
+                      volume:
+                        items:
+                          properties:
+                            host:
+                              type: string
+                            path:
+                              type: string
+                          required:
+                          - host
+                          - path
+                          type: object
+                        type: array
+                    required:
+                    - storageClassName
+                    type: object
+                type: object
+              secretname:
+                type: string
+            type: object
+          status:
+            description: MongodbOperatorStatus defines the observed state of MongodbOperator
+            properties:
+              replsets:
+                additionalProperties:
+                  properties:
+                    size:
+                      format: int32
+                      type: integer
+                  required:
+                  - size
+                  type: object
+                description: 'INSERT ADDITIONAL STATUS FIELD - define observed state of cluster Important: Run "make" to regenerate code after modifying this file'
+                type: object
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: proton-mongodb-operator-controller-manager
+  namespace: proton-mongodb-operator-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: proton-mongodb-operator-leader-election-role
+  namespace: proton-mongodb-operator-system
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - patch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: proton-mongodb-operator-manager-role
+rules:
+- apiGroups:
+  - ""
+  - apps
+  - batch
+  - rbac.authorization.k8s.io
+  resources:
+  - clusterrolebindings
+  - clusterroles
+  - configmaps
+  - cronjobs
+  - deployments
+  - jobs
+  - persistentvolumeclaims
+  - persistentvolumes
+  - pods
+  - pods/exec
+  - secrets
+  - serviceaccounts
+  - services
+  - statefulsets
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - mongodb.proton.aishu.cn
+  resources:
+  - mongodboperators
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - mongodb.proton.aishu.cn
+  resources:
+  - mongodboperators/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - mongodb.proton.aishu.cn
+  resources:
+  - mongodboperators/status
+  verbs:
+  - get
+  - patch
+  - update
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: proton-mongodb-operator-metrics-reader
+rules:
+- nonResourceURLs:
+  - /metrics
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: proton-mongodb-operator-proxy-role
+rules:
+- apiGroups:
+  - authentication.k8s.io
+  resources:
+  - tokenreviews
+  verbs:
+  - create
+- apiGroups:
+  - authorization.k8s.io
+  resources:
+  - subjectaccessreviews
+  verbs:
+  - create
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: proton-mongodb-operator-leader-election-rolebinding
+  namespace: proton-mongodb-operator-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: proton-mongodb-operator-leader-election-role
+subjects:
+- kind: ServiceAccount
+  name: proton-mongodb-operator-controller-manager
+  namespace: proton-mongodb-operator-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: proton-mongodb-operator-manager-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: proton-mongodb-operator-manager-role
+subjects:
+- kind: ServiceAccount
+  name: proton-mongodb-operator-controller-manager
+  namespace: proton-mongodb-operator-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: proton-mongodb-operator-proxy-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: proton-mongodb-operator-proxy-role
+subjects:
+- kind: ServiceAccount
+  name: proton-mongodb-operator-controller-manager
+  namespace: proton-mongodb-operator-system
+---
+apiVersion: v1
+data:
+  controller_manager_config.yaml: |
+    apiVersion: controller-runtime.sigs.k8s.io/v1alpha1
+    kind: ControllerManagerConfig
+    health:
+      healthProbeBindAddress: :8081
+    metrics:
+      bindAddress: 127.0.0.1:8080
+    webhook:
+      port: 9443
+    leaderElection:
+      leaderElect: true
+      resourceName: 44a55b9d.proton.aishu.cn
+kind: ConfigMap
+metadata:
+  name: proton-mongodb-operator-manager-config
+  namespace: proton-mongodb-operator-system
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    control-plane: controller-manager
+  name: proton-mongodb-operator-controller-manager-metrics-service
+  namespace: proton-mongodb-operator-system
+spec:
+  ports:
+  - name: https
+    port: 8443
+    protocol: TCP
+    targetPort: https
+  selector:
+    control-plane: controller-manager
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    control-plane: controller-manager
+  name: proton-mongodb-operator-controller-manager
+  namespace: proton-mongodb-operator-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      control-plane: controller-manager
+  template:
+    metadata:
+      annotations:
+        kubectl.kubernetes.io/default-container: manager
+      labels:
+        control-plane: controller-manager
+    spec:
+      containers:
+      - args:
+        - --secure-listen-address=0.0.0.0:8443
+        - --upstream=http://127.0.0.1:8080/
+        - --logtostderr=true
+        - --v=0
+        image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+        name: kube-rbac-proxy
+        ports:
+        - containerPort: 8443
+          name: https
+          protocol: TCP
+        resources:
+          limits:
+            cpu: 500m
+            memory: 128Mi
+          requests:
+            cpu: 5m
+            memory: 64Mi
+      - args:
+        - --health-probe-bind-address=:8081
+        - --metrics-bind-address=127.0.0.1:8080
+        - --leader-elect
+        command:
+        - /manager
+        image: controller:latest
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8081
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        name: manager
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: 8081
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        resources:
+          limits:
+            cpu: 500m
+            memory: 512Mi
+          requests:
+            cpu: 10m
+            memory: 64Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+      securityContext:
+        runAsNonRoot: true
+      serviceAccountName: proton-mongodb-operator-controller-manager
+      terminationGracePeriodSeconds: 10

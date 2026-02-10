@@ -1,0 +1,298 @@
+trigger:
+  branches:
+    include:
+      - master
+      - feature/*
+  paths:
+    exclude:
+      - azure-pipelines.yml
+      - cmd/download-proton-cli-web
+      - cmd/run-pipeline
+      - doc/*
+  tags:
+    include:
+      - v*
+
+pool:
+  name: ASDeployment
+  demands:
+    - Agent.OSArchitecture -equals X64
+    - Agent.OS -equals Linux
+    - docker
+
+variables:
+  - group: proton-global-config
+  - name: build-image.repository
+    value: proton/proton-cli-build-image
+  - name: build-image.tag
+    value: 99471b69
+  - name: harbor
+    value: acr.aishu.cn
+  - name: LintReportName
+    value: golangci-lint-report.xml
+  - name: UTReportName
+    value: unit-tests.xml
+  - name: CoverageReportName
+    value: cover.xml
+    # 从此处获取 trivy，文件格式与官方 github 发布的一致
+  # 数字化线提供的 trivy server
+  - name: TrivyServer
+    value: http://trivy.aishu.cn:8080
+
+parameters:
+- name: GoProxy
+  type: string
+  default: http://repo.proton.aishu.cn:3000,https://mirrors.aliyun.com/goproxy/
+- name: ProtonWebCLIAddr
+  type: string
+  default: https://ftp-ict.aishu.cn/proton/proton-cli-web/v3.5.0-alpha.5/proton-cli-web.latest.tar.gz
+
+resources:
+  containers:
+    - container: x86-builder
+      endpoint: ${{variables.harbor}}
+      image: $(build-image.repository):$(build-image.tag)
+    - container: dotnet
+      endpoint: acr.aishu.cn
+      image: wing-biz/euop/dotnet-runtime:3.1
+
+stages:
+  - stage: lint
+    displayName: Linting
+    jobs:
+      - job: git
+        displayName: Git Repository
+        container: x86-builder
+        steps:
+          - script: |
+              if [[ "${BUILD_REASON}" == "PullRequest" ]]; then
+                A="${SYSTEM_PULLREQUEST_SOURCEBRANCH/heads/remotes/origin}"
+                B="${SYSTEM_PULLREQUEST_TARGETBRANCH/heads/remotes/origin}"
+              else
+                A=HEAD
+                B=refs/remotes/origin/master
+              fi
+              devops/check-large-file "${A}" "^${B}"
+            displayName: Large File
+          - script: devops/check-build-image $(build-image.tag)
+            displayName: Build Image
+          - script: |
+              if [[ "${BUILD_SOURCEBRANCH}" =~ ^refs/tags/ ]]; then
+                echo "##[debug]BUILD_SOURCEBRANCH is a git tag"
+                exit 0
+              fi
+
+              if [[ "${BUILD_SOURCEBRANCH}" =~ ^refs/pull/ ]]; then
+                echo "##[debug]BUILD_SOURCEBRANCH is a pull request"
+                exit 0
+              fi
+
+              branch="${BUILD_SOURCEBRANCH/refs\/heads\//}"
+              echo "##[debug]branch is ${branch}"
+
+              if [[ "${branch}" =~ ^Feature-[0-9]+$ ]]; then
+                echo "##[debug]BUILD_SOURCEBRANCH is in deprecated style"
+                exit 0
+              fi
+
+              prefix="${branch%%/*}"
+              subpath="${branch#*/}"
+              echo "##[debug]branch prefix is ${prefix}, subpath is ${subpath}"
+
+              isValid=true
+              case "${prefix}" in
+                main|master) ;;
+                release)
+                  if [[ ! "${subpath}" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
+                    isValid=false
+                    echo "##[error]invalid releaes branch name ${subpath}, should be major.minor"
+                  fi
+                  ;;
+                feature|bugfix)
+                  work_item_id="${subpath%%-*}"
+                  description="${subpath#*-}"
+                  if [[ ! "${work_item_id}" =~ ^[0-9]+$ ]]; then
+                    isValid=false
+                    echo "##[error]invalid work item id ${work_item_id}, should be number"
+                  fi
+                  if [[ ! "${description}" =~ ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$ ]]; then
+                    isValid=false
+                    echo "##[error]invalid description ${description}, description contain only lowercase alphanumeric characters or '-', start with an alphanumeric character and end with an alphanumeric character"
+                  fi
+                  ;;
+                pipeline)
+                  description="${subpath#*-}"
+                  if [[ ! "${description}" =~ ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$ ]]; then
+                    isValid=false
+                    echo "##[error]invalid description ${description}, description contain only lowercase alphanumeric characters or '-', start with an alphanumeric character and end with an alphanumeric character"
+                  fi
+                  ;;
+                *) ;;
+              esac
+
+              if [[ ${isValid} = false ]]; then
+                echo "##[error]branch be main, master, {feature,bugfix}/id-description, pipeline/description or release/major.minor"
+                exit 1
+              fi
+            displayName: CheckBranchName
+  - stage: test
+    displayName: Test
+    jobs:
+      - job: Lint
+        container: x86-builder
+        steps:
+          - script: go env -w GOPROXY=${{parameters.GoProxy}}
+            displayName: Set GOPROXY
+          - script: "REPORT_JUNIT_XML_PATH=$(Build.ArtifactStagingDirectory)/$(LintReportName) build/golangci-lint-report-as-junit-xml"
+            displayName: Run golangci-lint
+            continueOnError: True
+          - task: PublishBuildArtifacts@1
+            inputs:
+              ArtifactName: lint-report
+          - task: PublishTestResults@2
+            inputs:
+              testResultsFormat: JUnit
+              testResultsFiles: $(Build.ArtifactStagingDirectory)/$(LintReportName)
+              testRunTitle: golangci-lint-report
+      - job: UT
+        container: x86-builder
+        steps:
+          - script: go env -w GOPROXY=${{parameters.GoProxy}}
+            displayName: Set GOPROXY
+          - script: UNIT_TESTING_REPORT_JUNIT_XML_PATH=$(Build.ArtifactStagingDirectory)/$(UTReportName) build/unit-testing
+            displayName: Testing
+            continueOnError: True
+          - script: COVERAGE_REPORT_COBERTURA_XML_PATH=$(Build.ArtifactStagingDirectory)/$(CoverageReportName) build/coverage-report
+            displayName: Coverage Report
+          - task: PublishBuildArtifacts@1
+            inputs:
+              ArtifactName: ut-report
+      - job: Security
+        displayName: Security Scanning
+        continueOnError: True
+        variables:
+          # severities of security issues to be displayed (comma separated)
+          - name: serverity
+            ${{ if startsWith(variables['Build.SourceBranch'], 'refs/tags/') }}:
+              value: HIGH,CRITICAL
+            ${{ if not(startsWith(variables['Build.SourceBranch'], 'refs/tags/')) }}:
+              value: UNKNOWN,HIGH,CRITICAL
+        container: x86-builder
+        steps:
+          # - script: trivy fs --exit-code 1 --severity $(serverity) --security-checks vuln,config,secret --server $(TrivyServer) go.mod
+          - script: trivy fs --severity $(serverity) --security-checks vuln,config,secret --server $(TrivyServer) go.mod
+            displayName: Scan go.mod
+  - stage: build
+    condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
+    jobs:
+      - job: build
+        displayName: Build
+        container: x86-builder
+        steps:
+          # - template: devops/pre_go_build.yml
+          - script: build/print-workspace-status
+            displayName: Print workspace status
+          - script: go env -w GOPROXY=${{parameters.GoProxy}}
+            displayName: Set GOPROXY
+          - script: curl -kfsSL ${{parameters.ProtonWebCLIAddr}} | tar -xzvC cmd/proton-cli/cmd/web
+            displayName: Download Proton CLI Web For Release
+          - script: find cmd/proton-cli/cmd/web -type f -exec sha256sum {} \;
+            displayName: Print Proton CLI Web Checksum
+          - script: PROTON_BUILD_PLATFORMS="linux/amd64 linux/arm64" build/release
+            displayName: Build releases
+          # branch 构建上传到 /branches/${GIT_BRANCH_NAME}/${PROTON_VERSION}.${BUILD_BUILDNUMBER}
+          # tag    构建上传到 /tags/${GIT_TAG}
+          - script: |
+              set -o xtrace
+
+              source build/lib/version.sh
+              proton::version::get_version_vars
+
+              FTP_REMOTE_DIRECTORY=/proton/proton-cli
+              if [[ "$(Build.SourceBranch)" =~ ^refs/heads ]]; then
+                FTP_REMOTE_DIRECTORY="${FTP_REMOTE_DIRECTORY}/${BUILD_SOURCEBRANCH/refs\/heads/\branches}/${PROTON_VERSION}"
+              else
+                FTP_REMOTE_DIRECTORY="${FTP_REMOTE_DIRECTORY}/${BUILD_SOURCEBRANCH/refs/}"
+              fi
+
+              echo "##vso[task.setvariable variable=ftpRemoteDirectory]${FTP_REMOTE_DIRECTORY}"
+            displayName: Set variable ftpRemoteDirectory
+          - task: FtpUpload@2
+            displayName: Upload to ftp
+            inputs:
+              credentialsOption: serviceEndpoint
+              serverEndpoint: ftps-ict
+              rootDirectory: _output/release-tars
+              remoteDirectory: $(ftpRemoteDirectory)
+              trustSSL: true
+  # more details: https://confluence.aishu.cn/pages/viewpage.action?pageId=145129867
+  - stage: QualityCheck
+    jobs:
+      - job: Check
+        container: dotnet
+        steps:
+          - checkout: none
+          - task: DownloadBuildArtifacts@0
+            displayName: Download Lint
+            inputs:
+              artifactName: lint-report
+          - task: DownloadBuildArtifacts@0
+            displayName: Download UT & Coverage
+            inputs:
+              artifactName: ut-report
+          - task: PublishTestResults@2
+            displayName: Publish Lint
+            inputs:
+              testResultsFormat: JUnit
+              testResultsFiles: $(Build.ArtifactStagingDirectory)/lint-report/$(LintReportName)
+              testRunTitle: golangci-lint-report
+          - task: PublishTestResults@2
+            displayName: Publish UT
+            inputs:
+              testResultsFormat: JUnit
+              testResultsFiles: $(Build.ArtifactStagingDirectory)/ut-report/$(UTReportName)
+              testRunTitle: Unit Testing
+              failTaskOnFailedTests: false
+          - task: PublishCodeCoverageResults@1
+            displayName: Publish Coverage
+            inputs:
+              codeCoverageTool: Cobertura
+              summaryFileLocation: $(Build.ArtifactStagingDirectory)/ut-report/$(CoverageReportName)
+          - task: BuildQualityChecks@8
+            displayName: Quality Gate Lint
+            inputs:
+              checkWarnings: true
+              warningFailOption: fixed
+              warningThreshold: "0"
+              showStatistics: false
+              evaluateTaskWarnings: false
+              evaluateFileWarnings: true
+              warningFilesFolder: $(Build.StagingDirectory)/${{variables.UTArtifactName}}
+              warningFiles: '**/${{variables.LintReportName}}'  # 报告文件变量名，必须使用此变量名，为ci规范设计质量关键字
+              warningFileFilters: '/^.+<\/failure>.*?$/'  # 用来筛选错误条目的正则表达式
+          - task: BuildQualityChecks@8
+            displayName: Quality Gate UT
+            inputs:
+              checkWarnings: true
+              warningFailOption: 'fixed'
+              warningThreshold: '0'
+              showStatistics: false
+              evaluateTaskWarnings: false
+              evaluateFileWarnings: true
+              warningFilesFolder: $(Build.StagingDirectory)
+              warningFiles: '**/${{variables.UTReportName}}'
+              warningFileFilters: '/^.+<\/failure>.*?$/'
+          - task: BuildQualityChecks@8
+            displayName: Quality Gate Coverage
+            inputs:
+              coverageType: 'lines'
+              coverageFailOption: 'fixed'
+              checkCoverage: true
+              coverageThreshold: '5.0'
+  - stage: TriggerDownstreamPipeline
+    jobs:
+      - job: ProtonPackage
+        continueOnError: True
+        container: x86-builder
+        steps:
+          - script: go run devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/cmd/run-pipeline --pat $(azure.token) --project ONE-Architecture --pipeline ProtonPackage --ref $(Build.SourceBranch)

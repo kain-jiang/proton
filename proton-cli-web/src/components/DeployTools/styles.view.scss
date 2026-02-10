@@ -1,0 +1,85 @@
+@import "../../global.scss";
+
+.container {
+  background-color: $body-background;
+  font-weight: 600;
+  width: 100%;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  overflow: hidden;
+}
+
+.title-font {
+  color: $font-color-white;
+}
+
+.steps-position {
+  max-width: $content-width;
+  margin: 0 auto;
+  padding: 50px 0;
+}
+
+.foot-position {
+  position: fixed;
+  display: flex;
+  display: -webkit-flex; /* Safari */
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: $font-color-white !important;
+  z-index: 100;
+  margin: 0 auto;
+  justify-content: end;
+  -webkit-justify-content: flex-end;
+  box-shadow: 0 2px 9px 1px rgb(0 0 0 / 10%);
+}
+
+.main-content {
+  padding: 24px;
+  margin: 0;
+  min-height: 280px;
+  text-align: center;
+  overflow: auto;
+}
+
+.space {
+  margin-top: 60px;
+}
+
+.component-content {
+  display: flex;
+  justify-content: center;
+  text-align: left;
+}
+
+.waiting-init {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  justify-content: center;
+  position: fixed;
+  left: 0;
+  width: 100%;
+  top: 0;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  color: #fff;
+}
+
+.card-zone-box {
+  margin-bottom: 24px;
+  padding: 30px;
+  background: #fff;
+}
+
+.card-zone-box-wrap {
+  width: $content-width;
+  margin: 50px;
+  position: relative;
+  bottom: 70px;
+  display: block;
+}

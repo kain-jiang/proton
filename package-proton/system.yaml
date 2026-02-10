@@ -1,0 +1,16 @@
+appDefineType: app/v1betav1
+version: NEED_REPLACE
+name: ProtonSystem
+langNames:
+  zh-cn: 部署工作台
+  zh-tw: 部署工作台
+  en-us: ProtonSystem
+components:
+  helm_charts:
+    local:
+      - componentDefineType: helm/addtional
+        name: deploy-installer
+        version: NEED_REPLACE
+
+localRepo:
+  path: NEED_REPLACE

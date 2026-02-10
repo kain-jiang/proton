@@ -1,0 +1,6 @@
+- Command: execute
+  args:
+    transaction: false
+    Statements:
+      - >
+        ALTER TABLE task_system ADD COLUMN  sdescription VARCHAR(1000);

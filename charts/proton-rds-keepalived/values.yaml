@@ -1,0 +1,39 @@
+namespace: default
+
+env:
+  language: en_US.UTF-8
+  timezone: Asia/Shanghai
+
+image:
+  registry: "acr.aishu.cn"
+  repository: proton/rds-keepalived
+  tag: 1.4.0
+  pullPolicy: IfNotPresent
+
+nodeSelector:
+  nodeType: mariadb
+
+#vip
+vip:
+  # VRRP virtual router ID, must be unique on a particular network segment (0-255)
+  vrid: 179
+
+  # network interface to listen on. If undefined, the nodes default interface will be used instead
+  iface: ""
+
+  ip: 10.2.45.69
+
+  port: 3330
+
+  # Monitor service
+  serviceName: mariadb-proton-rds-mariadb
+
+  # Health check port
+  httpPort: 7777
+
+  onlySelfNode: true
+
+  useUnicast: true
+
+rbac:
+  create: true

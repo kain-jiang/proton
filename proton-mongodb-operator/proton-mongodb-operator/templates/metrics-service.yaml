@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "proton-mongodb-operator.fullname" . }}-controller-manager-metrics-service
+  labels:
+    control-plane: controller-manager
+  {{- include "proton-mongodb-operator.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.metricsService.type }}
+  selector:
+    control-plane: controller-manager
+  {{- include "proton-mongodb-operator.selectorLabels" . | nindent 4 }}
+  ports:
+	{{- .Values.metricsService.ports | toYaml | nindent 2 -}}

@@ -1,0 +1,205 @@
+{
+    "title": "消息队列",
+    "description": "消息队列组件MQ",
+    "type": "object",
+    "oneOf": [
+        {
+            "title": "proton内置nsq",
+            "description": "proton内置nsq",
+            "type": "object",
+            "required": [
+                "source_type",
+                "mqType"
+            ],
+            "properties": {
+                "source_type": {
+                    "description": "使用内置MQ,必须internal",
+                    "type": "string",
+                    "enum": [
+                        "internal"
+                    ],
+                    "const": "internal"
+                },
+                "mqType": {
+                    "description": "使用NSQ,必须为nsq",
+                    "type": "string",
+                    "enum": [
+                        "nsq"
+                    ],
+                    "const": "nsq"
+                }
+            }
+        },
+        {
+            "title": "proton内置kafa",
+            "description": "proton内置kafka",
+            "type": "object",
+            "required": [
+                "source_type",
+                "mqType"
+            ],
+            "properties": {
+                "source_type": {
+                    "description": "使用内置MQ,必须internal",
+                    "type": "string",
+                    "enum": [
+                        "internal"
+                    ],
+                    "const": "internal"
+                },
+                "mqType": {
+                    "description": "使用NSQ,必须为nsq",
+                    "type": "string",
+                    "enum": [
+                        "kafka"
+                    ],
+                    "const": "kafka"
+                }
+            }
+        },
+        {
+            "title": "外置MQ",
+            "description": "外置MQ",
+            "type": "object",
+            "required": [
+                "source_type"
+            ],
+            "properties": {
+                "source_type": {
+                    "description": "使用外置MQ,必须为external",
+                    "type": "string",
+                    "enum": [
+                        "external"
+                    ],
+                    "const": "external"
+                }
+            },
+            "oneOf": [
+                {
+                    "title": "消息队列NSQ",
+                    "description": "消息队列NSQ",
+                    "type": "object",
+                    "required": [
+                        "mqType",
+                        "nsqHost",
+                        "nsqPort",
+                        "nsqlookupdHost",
+                        "nsqlookupdPort"
+                    ],
+                    "properties": {
+                        "mqType": {
+                            "description": "使用NSQ,必须为nsq",
+                            "type": "string",
+                            "enum": [
+                                "nsq"
+                            ],
+                            "const": "nsq",
+                            "default": "nsq"
+                        },
+                        "nsqHost": {
+                            "description": "nsq连接主机地址,如 test.com或10.4.3.2",
+                            "type": "string"
+                        },
+                        "nsqPort": {
+                            "description": "nsq连接端口,如80",
+                            "type": "integer",
+                            "minimum": 1
+                        },
+                        "nsqlookupdHost": {
+                            "description": "nsq lookupd连接主机地址,如 test.com或10.4.3.2",
+                            "type": "string"
+                        },
+                        "nsqlookupdPort": {
+                            "description": "nsq lookupd连接端口,如91",
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    }
+                },
+                {
+                    "title": "kafka",
+                    "description": "消息队列kafka",
+                    "type": "object",
+                    "required": [
+                        "mqType",
+                        "mqHost",
+                        "mqPort",
+                        "auth"
+                    ],
+                    "properties": {
+                        "mqType": {
+                            "description": "使用NSQ,必须为nsq",
+                            "type": "string",
+                            "enum": [
+                                "kafka"
+                            ],
+                            "const": "kafka",
+                            "default": "kafka"
+                        },
+                        "mqHost": {
+                            "description": "消息队列连接主机地址,多个地址使用逗号分割,如 test.com,10.4.3.2",
+                            "type": "string"
+                        },
+                        "mqPort": {
+                            "description": "消息队列连接端口,如80",
+                            "type": "integer",
+                            "minimum": 1
+                        },
+                        "auth": {
+                            "description": "认证信息配置",
+                            "properties": {
+                                "username": {
+                                    "description": "认证账户",
+                                    "type": "string"
+                                },
+                                "password": {
+                                    "description": "认证账户密码",
+                                    "type": "string"
+                                },
+                                "mechanism": {
+                                    "description": "认证机制",
+                                    "type": "string",
+                                    "enum": [
+                                        "PLAIN",
+                                        "SCRAM-SHA-256",
+                                        "SCRAM-SHA-512"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    "title": "一般消息队列",
+                    "description": "消息队列NSQ",
+                    "type": "object",
+                    "required": [
+                        "mqType",
+                        "mqHost",
+                        "mqPort"
+                    ],
+                    "properties": {
+                        "mqType": {
+                            "description": "选择消息队列类型",
+                            "type": "string",
+                            "enum": [
+                                "tonglink",
+                                "htp20",
+                                "bmq"
+                            ]
+                        },
+                        "mqHost": {
+                            "description": "消息队列连接主机地址,多个地址使用逗号分割,如 test.com,10.4.3.2",
+                            "type": "string"
+                        },
+                        "mqPort": {
+                            "description": "消息队列连接端口,如80",
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    }
+                }
+            ]
+        }
+    ]
+}

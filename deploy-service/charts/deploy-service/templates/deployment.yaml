@@ -1,0 +1,118 @@
+{{- if semverCompare ">=1.16-0" .Capabilities.KubeVersion.GitVersion -}}
+apiVersion: apps/v1
+{{- else -}}
+apiVersion: extensions/v1beta1
+{{- end }}
+kind: Deployment
+metadata:
+  name: {{ include "deploy-service.fullname" . }}
+  namespace: {{ .Values.namespace }}
+  labels:
+{{ include "deploy-service.labels" . | indent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "deploy-service.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "deploy-service.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app: {{ include "deploy-service.name" . }}
+      annotations:
+        checksum/depservices: {{ toYaml .Values.depServices | sha256sum }}
+    spec:
+      dnsConfig:
+        options:
+          - name: single-request-reopen
+          - name: use-vc
+    {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      serviceAccountName: {{ template "deploy-service.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      hostAliases:
+      - ip : {{ .Values.hostAliases.host }}
+        hostnames:
+        - {{ .Values.hostAliases.hostname }}
+      containers:
+        - name: deploy-service
+          securityContext: {{- toYaml .Values.securityContext | nindent 12 }}
+          image: {{ include "deploy-service.image" . | quote }}
+          command: [ "./deploy-service/deploy-service" ]
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 9703
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /health/alive
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 5
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 5
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          env:
+            - name: TZ
+              value: {{ .Values.env.timezone | quote }}
+            - name: LANG
+              value: {{ .Values.env.language | quote }}
+            - name: LOG_LEVEL
+              value: {{ .Values.env.debugLevel | default "INFO" | quote }}
+            - name: TORNADO_PROCESS
+              value: {{ .Values.env.tornadoProcess | default 10 | quote }}
+            - name: HOST_IP
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: status.hostIP
+            - name: HELM_CACHE_HOME
+              value: {{ .Values.env.helmCacheDir | default "/tmp/.helm/cache" | quote }}
+            - name: HELM_CONFIG_HOME
+              value: {{ .Values.env.helmConfigDir | default "/tmp/.helm/config" | quote }}
+            - name: HELM_DATA_HOME
+              value: {{ .Values.env.helmDataDir | default "/tmp/.helm/data" | quote }}
+            - name: POLICY_ENGINE_HOST
+              value: {{ index .Values "depServices" "proton-policy-engine" "host"  | quote }}
+            - name: POLICY_ENGINE_PORT
+              value: {{ index .Values "depServices" "proton-policy-engine" "port"  | quote }}
+          volumeMounts:
+            - name: config
+              mountPath: /app/conf/config
+            - name: dmconfig
+              mountPath: /tmp/conf
+      volumes:
+        - name: config
+          configMap:
+            name: {{ include "deploy-service.fullname" . }}
+        - name: dmconfig
+          configMap:
+            name: {{ include "deploy-service.fullname" . }}-dmconfig
+
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

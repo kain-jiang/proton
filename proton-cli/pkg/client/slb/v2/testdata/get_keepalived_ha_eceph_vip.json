@@ -1,0 +1,22 @@
+{
+    "vrrp_instance": {
+        "eceph_vip": {
+            "advert_int": "1",
+            "unicast_src_ip": "10.10.14.215",
+            "nopreempt": "",
+            "notify_master": "/etc/slb/scripts/eceph_vip/entering_master.py",
+            "priority": "215",
+            "virtual_ipaddress": {
+                "10.10.14.218": "label eno3:ivip dev eno3"
+            },
+            "state": "BACKUP",
+            "virtual_router_id": "139",
+            "unicast_peer": {
+                "10.10.14.216": "",
+                "10.10.14.217": ""
+            },
+            "interface": "eno3",
+            "notify_backup": "/etc/slb/scripts/eceph_vip/entering_backup.py"
+        }
+    }
+}

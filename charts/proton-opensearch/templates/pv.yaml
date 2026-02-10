@@ -1,0 +1,63 @@
+{{- if not .Values.storage.storageClassName }}
+{{- range $i, $e := untilStep 0 (int ($.Values.replicaCount)) 1 -}}
+{{- range $key, $value := $.Values.storage.local }}
+{{- if eq (toString ($i)) $key }}
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: data-{{ template "opensearch.name" $ }}-{{ $i }}
+  labels:
+    app: {{ template "opensearch.name" $ }}
+    cluster: {{ $.Values.config.clusterName }}
+    podIndex: "{{ $i }}"
+    path: data
+spec:
+  capacity:
+    storage: {{ $.Values.storage.capacity }}
+  accessModes: [ "ReadWriteOnce" ]
+  storageClassName: ""
+  persistentVolumeReclaimPolicy: Retain
+  local:
+    path: {{ $value.path }}
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: "kubernetes.io/hostname"
+              operator: "In"
+              values:
+                - {{ $value.host }}
+{{- if $.Values.storage.repo.nfs.enabled }}
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: repo-{{ template "opensearch.name" $ }}-{{ $i }}
+  labels:
+    app: {{ template "opensearch.name" $ }}
+    cluster: {{ $.Values.config.clusterName }}
+    podIndex: "{{ $i }}"
+    path: repo
+spec:
+  capacity:
+    storage: {{ $.Values.storage.capacity }}
+  accessModes: [ "ReadWriteOnce" ]
+  storageClassName: ""
+  persistentVolumeReclaimPolicy: Retain
+  nfs:
+    server: {{ $.Values.storage.repo.nfs.server }}
+    path: {{ $.Values.storage.repo.nfs.path }}
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: "kubernetes.io/hostname"
+              operator: "In"
+              values:
+                - {{ $value.host }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}

@@ -1,0 +1,224 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: mongodboperators.mongodb.proton.aishu.cn
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.8.0
+  labels:
+  {{- include "proton-mongodb-operator.labels" . | nindent 4 }}
+spec:
+  group: mongodb.proton.aishu.cn
+  names:
+    kind: MongodbOperator
+    listKind: MongodbOperatorList
+    plural: mongodboperators
+    singular: mongodboperator
+  scope: Namespaced
+  versions:
+  - name: v1
+    schema:
+      openAPIV3Schema:
+        description: MongodbOperator is the Schema for the mongodboperators API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: MongodbOperatorSpec defines the desired state of MongodbOperator
+            properties:
+              exporter:
+                description: ExporterSpec defines the desired state of Exporter
+                properties:
+                  image:
+                    type: string
+                  imagePullPolicy:
+                    description: PullPolicy describes a policy for if/when to pull a
+                      container image
+                    type: string
+                type: object
+              logrotate:
+                description: LogrotateSpec defines the desired state of Logrotate
+                properties:
+                  image:
+                    type: string
+                  imagePullPolicy:
+                    description: PullPolicy describes a policy for if/when to pull a
+                      container image
+                    type: string
+                  logcount:
+                    format: int32
+                    type: integer
+                  logsize:
+                    type: string
+                  schedule:
+                    type: string
+                type: object
+              mgmt:
+                description: MgmtSpec defines the desired state of Mgmt
+                properties:
+                  image:
+                    type: string
+                  imagePullPolicy:
+                    description: PullPolicy describes a policy for if/when to pull a
+                      container image
+                    type: string
+                  logLevel:
+                    type: string
+                  service:
+                    properties:
+                      enableDualStack:
+                        type: boolean
+                      port:
+                        format: int32
+                        type: integer
+                      type:
+                        description: Service Type string describes ingress methods for
+                          a service
+                        type: string
+                    required:
+                    - enableDualStack
+                    type: object
+                  useEncryption:
+                    type: boolean
+                type: object
+              mongodb:
+                description: 'INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
+                  Important: Run "make" to regenerate code after modifying this file'
+                properties:
+                  conf:
+                    properties:
+                      tls:
+                        description: TLS is the configuration used to set up TLS encryption
+                        properties:
+                          enabled:
+                            type: boolean
+                        required:
+                        - enabled
+                        type: object
+                      wiredTigerCacheSizeGB:
+                        format: int32
+                        type: integer
+                    type: object
+                  debug:
+                    type: string
+                  image:
+                    description: Foo is an example field of MykindCluster. Edit mykindcluster_types.go
+                      to remove/update Foo string `json:"foo,omitempty"`
+                    type: string
+                  imagePullPolicy:
+                    description: PullPolicy describes a policy for if/when to pull a
+                      container image
+                    type: string
+                  replicas:
+                    format: int32
+                    type: integer
+                  replset:
+                    properties:
+                      name:
+                        type: string
+                    type: object
+                  resources:
+                    description: ResourceRequirements describes the compute resource
+                      requirements.
+                    properties:
+                      limits:
+                        additionalProperties:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        description: 'Limits describes the maximum amount of compute
+                          resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                        type: object
+                      requests:
+                        additionalProperties:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        description: 'Requests describes the minimum amount of compute
+                          resources required. If Requests is omitted for a container,
+                          it defaults to Limits if that is explicitly specified, otherwise
+                          to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                        type: object
+                    type: object
+                  service:
+                    properties:
+                      enableDualStack:
+                        type: boolean
+                      port:
+                        format: int32
+                        type: integer
+                      type:
+                        description: Service Type string describes ingress methods for
+                          a service
+                        type: string
+                    required:
+                    - enableDualStack
+                    type: object
+                  storage:
+                    properties:
+                      capacity:
+                        type: string
+                      storageClassName:
+                        type: string
+                      volume:
+                        items:
+                          properties:
+                            host:
+                              type: string
+                            path:
+                              type: string
+                          required:
+                          - host
+                          - path
+                          type: object
+                        type: array
+                    required:
+                    - capacity
+                    - storageClassName
+                    - volume
+                    type: object
+                type: object
+              secretname:
+                type: string
+            type: object
+          status:
+            description: MongodbOperatorStatus defines the observed state of MongodbOperator
+            properties:
+              replsets:
+                additionalProperties:
+                  properties:
+                    size:
+                      format: int32
+                      type: integer
+                  required:
+                  - size
+                  type: object
+                description: 'INSERT ADDITIONAL STATUS FIELD - define observed state
+                  of cluster Important: Run "make" to regenerate code after modifying
+                  this file'
+                type: object
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []

@@ -1,0 +1,7 @@
+Require: python 3.7
+
+Steps:
+    1.  setup [proton-rds-sdk-py](https://devops.aishu.cn/AISHUDevOps/ONE-Architecture/_git/proton-rds-sdk-py)
+    2.  pip3 install -i https://pypi.tuna.tsinghua.edu.cn/simple -r requirements.txt
+    3.  setup rds for test
+    4.  pytest -vs --maxfail 1 --host <HOST> --port <PORT> --user <USER> --password <PASSWORD> --database1 <DATABASE> --database2 <DATABASE> --alluredir ./allure-results/ <FILE>

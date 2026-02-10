@@ -1,0 +1,82 @@
+{
+    "title": "opensearch",
+    "description": "opensearch组件配置",
+    "type": "object",
+    "oneOf": [
+        {
+            "title": "内置opensearch",
+            "description": "内置opensearch",
+            "type": "object",
+            "required": [
+                "source_type"
+            ],
+            "properties": {
+                "source_type": {
+                    "type": "string",
+                    "enum": [
+                        "internal"
+                    ],
+                    "const": "internal",
+                    "default": "internal"
+                }
+            }
+        },
+        {
+            "title": "外置opensearch",
+            "description": "外置opensearch",
+            "type": "object",
+            "required": [
+                "source_type",
+                "host",
+                "port",
+                "user",
+                "password",
+                "version",
+                "protocol"
+            ],
+            "properties": {
+                "source_type": {
+                    "type": "string",
+                    "enum": [
+                        "external"
+                    ],
+                    "const": "external",
+                    "default": "external"
+                },
+                "host": {
+                    "type": "string",
+                    "description": "数据库连接地址"
+                },
+                "port": {
+                    "type": "integer",
+                    "description": "数据库连接端口",
+                    "minimum": 1
+                },
+                "user": {
+                    "type": "string",
+                    "description": "数据库账户"
+                },
+                "password": {
+                    "type": "string",
+                    "description": "数据库账户密码"
+                },
+                "version": {
+                    "type": "string",
+                    "description": "opensearch发布版本",
+                    "enum": [
+                        "7.10.0",
+                        "5.6.4"
+                    ]
+                },
+                "protocol": {
+                    "type": "string",
+                    "description": "http或https,暂不支持设置https服务端证书",
+                    "enum": [
+                        "http",
+                        "https"
+                    ]
+                }
+            }
+        }
+    ]
+}

@@ -1,0 +1,62 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+  - v*
+  - feat/*
+  - feature/*
+  - bug/*
+  - fix/*
+  - bugfix/*
+  - doc/*
+  - docs/*
+  - chore/*
+  - test/*
+  - perf/*
+  - refactor/*
+  - style/*
+  - build/*
+  - revert/*
+  - ci/*
+  - workflow/*
+
+variables:
+  # 使用 Git branch 作为 ftp 的上传目录, 比如 bugfix/12450, feature/996, release/1.2
+  - name: ftpRemoteDirectoryReplaceHeads
+    value: $[replace(variables['Build.SourceBranch'], 'refs/heads/', '')]
+  - name: ftpRemoteDirectoryReplaceTags
+    value: $[replace(variables['ftpRemoteDirectoryReplaceHeads'], 'refs/tags/', '')]
+  - name: ftpRemoteDirectory
+    value: $[replace(variables['ftpRemoteDirectoryReplaceTags'], 'refs/pull/', '')]
+  - group: ict-config
+
+pool:
+  name: ASDeployment
+  demands:
+    - Agent.OS -equals Linux
+    - Agent.OSArchitecture -equals X64
+    - docker
+    - curl
+
+steps:
+  - task: Bash@3
+    inputs:
+      filePath: "$(Build.SourcesDirectory)/scripts/run.sh"
+    displayName: "build_service"
+    env:
+      BRANCH_NAME: $(Build.SourceBranch)
+      BUILD_NUMBER: $(Build.BuildId)
+      RELEASE_VERSION: $(release_version)
+      SERVICE_VERSION: $(version)
+      BUILD_ARCH: $(arch)
+
+  - task: FtpUpload@2
+    displayName: upload source to ftp
+    inputs:
+      credentialsOption: serviceEndpoint
+      serverEndpoint: ftps-ict
+      rootDirectory: "$(Build.SourcesDirectory)/dist/source"
+      remoteDirectory: /proton/proton-cli-web/$(ftpRemoteDirectory)
+      trustSSL: true

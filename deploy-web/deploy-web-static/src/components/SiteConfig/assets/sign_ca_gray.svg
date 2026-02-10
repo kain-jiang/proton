@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="145px" height="137px" viewBox="0 0 145 137" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 63 (92445) - https://sketch.com -->
+    <title>ca证书</title>
+    <desc>Created with Sketch.</desc>
+    <defs>
+        <rect id="path-1" x="0" y="0" width="363" height="148" rx="8"></rect>
+        <linearGradient x1="40.6195182%" y1="6.73066518%" x2="90.4918461%" y2="62.9894132%" id="linearGradient-3">
+            <stop stop-color="#E9E9E9" stop-opacity="0.6" offset="0%"></stop>
+            <stop stop-color="#E3E3E3" stop-opacity="0" offset="100%"></stop>
+        </linearGradient>
+    </defs>
+    <g id="页面-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="ca证书" transform="translate(-218.000000, 0.179490)">
+            <mask id="mask-2" fill="white">
+                <use xlink:href="#path-1"></use>
+            </mask>
+            <g id="蒙版"></g>
+            <g id="编组-2" mask="url(#mask-2)">
+                <g transform="translate(178.000000, -112.000000)">
+                    <path d="M90.5,27 C125.570082,27 154,55.4299184 154,90.5 C154,125.570082 125.570082,154 90.5,154 C55.4299184,154 27,125.570082 27,90.5 C27,55.4299184 55.4299184,27 90.5,27 Z M90.5,41 C63.1619049,41 41,63.1619049 41,90.5 C41,117.838095 63.1619049,140 90.5,140 C117.838095,140 140,117.838095 140,90.5 C140,63.1619049 117.838095,41 90.5,41 Z" id="形状结合备份-8" stroke="none" fill="url(#linearGradient-3)" fill-rule="evenodd" transform="translate(90.500000, 90.500000) rotate(-222.000000) translate(-90.500000, -90.500000) "></path>
+                    <circle id="椭圆形备份-4" stroke="#DCDCDC" stroke-width="1" fill="none" cx="185" cy="197.189387" r="6"></circle>
+                    <g id="编组-15" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" transform="translate(97.000000, 186.189387)">
+                        <circle id="椭圆形" fill="#E9EAEB" fill-rule="nonzero" transform="translate(34.441111, 30.054823) rotate(-45.000000) translate(-34.441111, -30.054823) " cx="34.4411111" cy="30.0548226" r="20.018685"></circle>
+                        <g id="编组" transform="translate(43.000000, 0.000000)" stroke="#DCDCDC" stroke-width="2">
+                            <path d="M9,11.2 C14.0625,16.128 17.325,22.96 17.325,30.576 C17.325,41.776 10.4625,51.408 0.5625,55.44" id="路径"></path>
+                            <path d="M14.625,44.688 C18.9,45.36 23.7375,44.352 25.0875,36.064 C19.8,35.28 15.525,38.416 14.625,44.688 Z" id="路径"></path>
+                            <path d="M6.075,53.2 C9.45,55.776 14.2875,57.232 19.35,50.512 C15.1875,47.376 9.9,48.16 6.075,53.2 Z" id="路径"></path>
+                            <path d="M17.8875,32.256 C22.1625,31.808 26.6625,29.568 25.7625,21.28 C20.475,21.84 17.2125,25.984 17.8875,32.256 Z" id="路径"></path>
+                            <path d="M15.975,21.168 C19.575,18.928 22.725,15.008 18.3375,7.84 C13.8375,10.752 12.6,15.792 15.975,21.168 Z" id="路径"></path>
+                            <path d="M9.9,11.76 C10.9125,7.616 10.4625,2.688 2.3625,0.56 C1.0125,5.712 3.825,10.192 9.9,11.76 Z" id="路径"></path>
+                        </g>
+                        <g id="编组" stroke="#DCDCDC" stroke-width="2">
+                            <path d="M17.5217391,11.2 C12.4347826,16.128 9.15652174,22.96 9.15652174,30.576 C9.15652174,41.776 16.0521739,51.408 26,55.44" id="路径"></path>
+                            <path d="M11.8695652,44.688 C7.57391304,45.36 2.71304348,44.352 1.35652174,36.064 C6.66956522,35.28 10.9652174,38.416 11.8695652,44.688 Z" id="路径"></path>
+                            <path d="M20.4608696,53.2 C17.0695652,55.776 12.2086957,57.232 7.12173913,50.512 C11.4173913,47.376 16.6173913,48.16 20.4608696,53.2 Z" id="路径"></path>
+                            <path d="M8.59130435,32.256 C4.29565217,31.808 -0.226086957,29.568 0.67826087,21.28 C5.99130435,21.84 9.26956522,25.984 8.59130435,32.256 Z" id="路径"></path>
+                            <path d="M10.626087,21.168 C7.00869565,18.928 3.84347826,15.008 8.25217391,7.84 C12.6608696,10.752 13.9043478,15.792 10.626087,21.168 Z" id="路径"></path>
+                            <path d="M16.6173913,11.76 C15.6,7.616 16.0521739,2.688 24.1913043,0.56 C25.5478261,5.712 22.7217391,10.192 16.6173913,11.76 Z" id="路径"></path>
+                        </g>
+                        <polygon id="路径" fill="#F2F2F2" fill-rule="nonzero" points="31 42 31 58 34.5 54.5714286 38 58 38 42"></polygon>
+                        <rect id="矩形" stroke="#DCDCDC" stroke-width="2" fill="#FFFFFF" fill-rule="nonzero" x="18" y="18" width="33" height="26"></rect>
+                        <polyline id="路径" stroke="#DCDCDC" stroke-width="2" points="38 42 38 58 34.5 54.5714286 31 58 31 42"></polyline>
+                        <circle id="椭圆形" stroke="#DCDCDC" stroke-width="2" fill="#F2F2F2" fill-rule="nonzero" cx="34.5" cy="41.5" r="5.5"></circle>
+                        <line x1="25" y1="25.5" x2="43" y2="25.5" id="路径" stroke="#DCDCDC" stroke-width="2"></line>
+                        <line x1="29" y1="30.5" x2="40" y2="30.5" id="路径" stroke="#DCDCDC" stroke-width="2"></line>
+                    </g>
+                    <circle id="椭圆形" stroke="#DCDCDC" stroke-width="1" fill="none" cx="97" cy="177.189387" r="6"></circle>
+                    <circle id="椭圆形备份-3" stroke="#DCDCDC" stroke-width="1" fill="none" cx="172" cy="245.189387" r="3"></circle>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

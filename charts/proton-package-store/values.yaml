@@ -1,0 +1,57 @@
+# Default values package-store
+
+namespace: resource
+
+image:
+  registry: acr.aishu.cn
+  pullPolicy: IfNotPresent
+  store:
+    repository: /proton/package-store
+    tag: latest
+
+replicaCount: 3
+
+env:
+  language: en_US.UTF-8
+  timezone: Asia/Shanghai
+  # set log verbosity: debug, info, warn, error, or fatal
+  log_level: info
+
+depServices:
+  rds:
+    database: package_store
+    host: "mariadb-mariadb-master"
+    port: "3330"
+    username: ""  # REQUIRED: set at deploy time
+    password: ""  # REQUIRED: set at deploy time
+
+    maxConnections: 30
+
+  serviceAccountName: ""
+
+resources:
+  store:
+    requests:
+      cpu: 200m
+      memory: 50Mi
+    limits:
+      cpu: 1
+      memory: 200Mi
+
+storage:
+  #s3: ""
+  storageClassName: ""
+
+  capacity: 10Gi
+  path: /data/local/package-store
+  local:
+    0:
+      host: node1
+      path: /data/local/package-store-0
+    1:
+      host: node2
+      path: /data/local/package-store-1
+    2:
+      host: node3
+      path: /data/local/package-store-2
+

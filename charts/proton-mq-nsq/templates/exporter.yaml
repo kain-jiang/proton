@@ -1,0 +1,96 @@
+#Connect to the pod by headless service
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "nsq.exporter-name" . }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ template "nsq.exporter-name" . }}
+  annotations:
+    # Create endpoints also if the related pod isn't ready
+    service.alpha.kubernetes.io/tolerate-unready-endpoints: "true"
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9117"
+spec:
+{{- if .Values.service.enableDualStack }}
+  ipFamilies:
+  - IPv6
+  - IPv4
+  ipFamilyPolicy: RequireDualStack
+{{- end }}
+  selector:
+    app: {{ template "nsq.exporter-name" . }}
+  clusterIP: None
+  ports:
+  - name: exporter
+    port: 9117
+    targetPort: 9117
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ template "nsq.exporter-name" . }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ template "nsq.exporter-name" . }}
+spec:
+  serviceName: {{ template "nsq.exporter-name" . }}
+  podManagementPolicy: Parallel
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ template "nsq.exporter-name" . }}
+  template:
+    metadata:
+      name: {{ template "nsq.exporter-name" . }}
+      labels:
+        app: {{ template "nsq.exporter-name" . }}
+    spec:
+      securityContext:
+        runAsUser: 5000
+        runAsGroup: 5000
+        fsGroup: 1099
+      affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+              - matchExpressions:
+                - key: kubernetes.io/os
+                  operator: In
+                  values:
+                  - linux
+          podAntiAffinity:
+            preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 1
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                    - {{ template "nsq.exporter-name" . }}
+                topologyKey: "kubernetes.io/hostname"
+      containers:
+      - name: exporter
+        image: {{ template "nsq.exporter-image" . }}
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+        - containerPort: 9117
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: NSQD_NAME
+          value: {{ template "proton-mq-nsq.name" . }}-nsqd
+        - name: NSQLOOKUPD_NAME
+          value: {{ template "proton-mq-nsq.name" . }}-nsqlookupd
+        - name: NSQD_TCP_PORT
+          value: "{{ .Values.service.nsqd.tcpPort }}"
+        - name: NSQD_HTTP_PORT
+          value: "{{ .Values.service.nsqd.httpPort }}"
+        - name: NSQLOOKUPD_PORT
+          value: "{{ .Values.service.nsqlookupd.httpPort }}"
+        - name: NAMESPACE
+          value: {{ .Values.namespace }}
+

@@ -1,0 +1,15 @@
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ .Release.Name  }}
+spec:
+  ports:
+    - name: public-port
+      port: 9527
+      targetPort: 9527
+  selector:
+    app: {{ .Release.Name }}

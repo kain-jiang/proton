@@ -1,0 +1,170 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: @@.Name@@
+  namespace: {{.Release.Namespace}}
+  labels:
+    "app.kubernetes.io/deploy": "@@.Name@@"
+spec:
+  {{- $dv := index .Values.deploy "@@.Name@@" }}
+  @@- if .Replica.Custom @@
+  replicas: {{ $dv.replicaCount }}
+  @@- else @@
+  {{- if hasKey $dv "replicaCount" }}
+  replicas: {{ $dv.replicaCount }}
+  {{- else }}
+  replicas: {{ .Values.global.replicaCount }}
+  {{- end }}
+  @@- end @@
+  selector:
+    matchLabels:
+      "app.kubernetes.io/deploy": "@@.Name@@"
+  template:
+    metadata:
+      labels:
+        "app.kubernetes.io/deploy": "@@.Name@@"
+    spec:
+      volumes:
+      - name: values
+        configMap:
+          name: {{.Release.Name}}-values
+      {{- range $.Values.global.configmapVolume }}
+      - name: {{.name}}
+        configMap: 
+          name: {{.name}}
+          {{- if .items }}
+          items:
+          {{- range .items }}
+          - key: {{.key}}
+            path: {{.path}}
+          {{- end }}
+          {{- end }}
+      {{- end }}
+      {{- with .Values.global.image.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.global.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      @@- if .Init @@
+      initContainers:
+      @@- end @@
+      @@- range $index, $c := .Init @@
+      - name: @@$c.Name@@
+        {{- with .Values.global.securityContext }}
+        securityContext:
+          {{- toYaml .| nindent 10 }}
+        {{- end }}
+        image: {{.Values.global.image.registry}}@@$c.Image.Image@@:@@$c.Image.Tag@@
+        imagePullPolicy: {{ .Values.global.image.pullPolicy }}
+        command: @@printStringSlice $c.Command@@
+        args: @@printStringSlice $c.Args@@
+      @@- end @@
+      containers: 
+      @@- range $index, $c := .Containers @@
+      {{- $cv := index .Values.deploy "@@$.Name@@" "container" "@@$c.Name@@"}}
+      - name: @@$c.Name@@
+        {{- with .Values.global.securityContext }}
+        securityContext:
+          {{- toYaml . | nindent 10 }}
+        {{- end}}
+        ports:
+        @@- range $port := .Ports @@
+        - containerPort: @@$port@@
+        @@- end @@
+        image: {{.Values.global.image.registry}}/@@$c.Image.Image@@:@@$c.Image.Tag@@
+        imagePullPolicy: {{ .Values.global.image.pullPolicy }}
+        command: @@printStringSlice $c.Command@@
+        @@- with $c.Args @@
+        args: @@printStringSlice $c.Args@@
+        @@- end @@
+        resources:
+          @@- if $c.Resources.Custom @@
+          {{- toYaml $cv.resources | nindent 10 }}
+          @@- else @@
+          {{- if hasKey $cv "resources"}}
+          {{- with $cv.resources }}
+          limits:
+            cpu: {{.limits.cpu}}
+            memory: {{.limits.memory}}
+          {{- if .requests}}
+          requests:
+            cpu: {{.requests.cpu}}
+            memory: {{.requests.memory}}
+          {{- end}}
+          {{- end }}
+          {{- else }}
+          {{- with .Values.global.resources }}
+          limits:
+            cpu: {{.limits.cpu}}
+            memory: {{.limits.memory}}
+          {{- if .requests}}
+          requests:
+            cpu: {{.requests.cpu}}
+            memory: {{.requests.memory}}
+          {{- end}}
+          {{- end }}
+          {{- end }}
+          @@- end @@
+        {{- with $cv.livenessProbe }}
+        livenessProbe:
+          {{- toYaml . | nindent 10 }}
+        {{- end}}
+        {{- with $cv.readinessProbe }}
+        readinessProbe:
+          {{- toYaml . | nindent 10 }}
+        {{- end}}
+        {{- with $cv.startupProbe }}
+        startupProbe:
+          {{- toYaml .| nindent 10 }}
+        {{- end}}
+        volumeMounts:
+        - name: values
+          mountPath: "/etc/globalConfig"
+        {{- range $.Values.global.configmapVolume }}
+        - name: {{.name}}
+          mountPath: {{.mountPath}}
+        {{- end}}
+
+      @@- end @@
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+
+@@- range $i, $svc := .Services @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: @@$svc.Name@@
+  labels: 
+    "app.kubernetes.io/deploy": "@@.Name@@"
+spec:
+  type: ClusterIP
+  ports:
+  @@- range $i0, $port := .Port @@
+  - port: @@$port.Port@@
+    @@- if $port.TargetPort @@
+    targetPort: @@ $port.TargetPort @@
+    @@- else @@
+    targetPort: @@ $port.Port @@
+    @@- end @@
+    protocol: @@ $port.Protocol @@
+    name: @@ $port.Name @@
+  @@- end @@
+  selector:
+    "app.kubernetes.io/deploy": "@@$.Name@@"
+
+@@- end @@

@@ -1,0 +1,5 @@
+apiVersion: v1
+appVersion: 5.3.3
+description: Helm Chart For Proton Kafka
+name: proton-kafka
+version: 0.0.0

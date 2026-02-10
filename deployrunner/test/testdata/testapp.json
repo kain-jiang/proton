@@ -1,0 +1,151 @@
+{
+	"appDefineType": "app/v1betav1",
+	"aid": 0,
+	"version": "0.0.1",
+	"name": "test",
+	"configSchema": {
+		"title": "simple",
+		"description": "simple",
+		"type": "object",
+		"properties": {
+			"t4th": {
+				"description": "第四范式服务标识",
+				"properties": {
+					"switch": {
+						"type": "string",
+						"enum": [
+							"true",
+							"false"
+						],
+						"description": "服务使能开关"
+					},
+					"host": {
+						"type": "string",
+						"description": "服务器"
+					},
+					"port": {
+						"type": "string",
+						"description": "端口"
+					},
+					"connectType": {
+						"type": "string",
+						"enum": [
+							"ocr",
+							"fileReader"
+						],
+						"description": "连接第四范式ORC的方式"
+					},
+					"protocol": {
+						"type": "string",
+						"description": "服务连接协议",
+						"enum": [
+							"https",
+							"http"
+						]
+					}
+				}
+			},
+			"test": {
+				"type": "array",
+				"items": {
+					"type": "string",
+					"dpsensitive": true
+				}
+			},
+			"test0": {
+				"type": "array",
+				"items": {
+					"type": "object",
+					"properties": {
+						"test": {
+							"type": "array",
+							"items": {
+								"type": "string",
+								"dpsensitive": true
+							}
+						}
+					}
+				}
+			}
+		}
+	},
+	"components": {
+		"resources": [
+			{
+				"componentDefineType": "proton/resource",
+				"name": "rds",
+				"type": "rds"
+			},
+			{
+				"componentDefineType": "proton/resource",
+				"name": "redis",
+				"type": "redis"
+			},
+			{
+				"componentDefineType": "proton/resource",
+				"name": "mq",
+				"type": "mq"
+			},
+			{
+				"componentDefineType": "proton/resource",
+				"name": "opensearch",
+				"type": "opensearch"
+			},
+			{
+				"componentDefineType": "proton/resource",
+				"name": "mongodb",
+				"type": "mongodb"
+			},
+			{
+				"componentDefineType": "proton/resource",
+				"name": "proton-etcd",
+				"type": "proton-etcd"
+			},
+			{
+				"componentDefineType": "proton/resource",
+				"name": "proton-policy-engine",
+				"type": "proton-policy-engine"
+			},
+			{
+				"componentDefineType": "proton/resource",
+				"name": "graphDatabase",
+				"type": "graphDatabase"
+			}
+		],
+		"helm_charts": {
+			"test": [
+				{
+					"componentDefineType": "helm/task",
+					"name": "python3",
+					"version": "0.1.0",
+					"configSchema": {},
+					"dependence": [
+						{
+							"name": "python4",
+							"version": "0.1.0"
+						}
+					],
+					"repository": "",
+					"images": [
+						"python6"
+					]
+				},
+				{
+					"componentDefineType": "helm/task",
+					"name": "python4",
+					"version": "0.1.0",
+					"configSchema": {},
+					"repository": "",
+					"images": []
+				}
+			]
+		}
+	},
+	"graph": null,
+	"helmRepos": [
+		{
+			"name": "test",
+			"url": "http://127.0.0.1:30002/test"
+		}
+	]
+}

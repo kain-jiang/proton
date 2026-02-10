@@ -1,0 +1,270 @@
+- Command: execute
+  args:
+    transaction: false
+    Statements:
+      - >
+        CREATE TABLE  IF NOT EXISTS task_component (
+        aid INT COMMENT 'application id',
+        cid INT AUTO_INCREMENT COMMENT 'component id',
+        cname VARCHAR(50) NOT NULL COMMENT 'component name',
+        cversion VARCHAR(128) NOT NULL COMMENT 'appliation verion',
+        ctype VARCHAR(20) NOT NULL COMMENT 'component type',
+        crtype VARCHAR(20) COMMENT 'reuse component type',
+        ctimeout int NOT NULL COMMENT 'task time out',
+        cconfig MEDIUMBLOB COMMENT 'component config schema document',
+        cattribute MEDIUMBLOB COMMENT 'component attribute schema document',
+        spec BLOB COMMENT 'sepc component type config',
+        PRIMARY KEY(cid)
+        ) COMMENT 'component in application';
+      - >
+        CREATE TABLE  IF NOT EXISTS task_application (
+          aid INT AUTO_INCREMENT COMMENT 'application id',
+          app_type VARCHAR(30) NOT NULL COMMENT 'application defiene type',
+          version VARCHAR(128) NOT NULL COMMENT 'appliation verion',
+          aname VARCHAR(50) NOT NULL COMMENT 'application name',
+          aschema MEDIUMBLOB COMMENT 'application config schema document',
+          graph MEDIUMBLOB COMMENT 'application component edge set',
+          adependence MEDIUMBLOB COMMENT 'application dependence application info',
+          UNIQUE KEY (aname,version),
+          PRIMARY KEY(aid)
+        ) COMMENT 'application package';
+      - >
+        CREATE TABLE IF NOT EXISTS task_application_instance (
+        ins_id INT AUTO_INCREMENT COMMENT 'application instance id',
+        aid INT COMMENT 'application id, index application',
+        sid INT COMMENT 'system id, index system',
+        version VARCHAR(128) NOT NULL COMMENT 'application version, copy from application',
+        aname VARCHAR(50) NOT NULL COMMENT 'application name, copy from appliation',
+        status INT COMMENT 'application instance status',
+        config MEDIUMBLOB COMMENT 'application instance config',
+        owner INT NOT NULL COMMENT 'job executor id',
+        icomment VARCHAR(128) NOT NULL COMMENT 'application instance comment',
+        create_time INT NOT NULL COMMENT 'instance create time',
+        start_time INT NOT NULL COMMENT 'instance execute start time',
+        end_time INT NOT NULL COMMENT 'instance execute end time',
+        atrait MEDIUMBLOB COMMENT 'application control config',
+        otype INT COMMENT 'instance operatetion type, like delete, upgrade',
+        PRIMARY KEY(ins_id)
+        )COMMENT 'application instance';
+      - >
+        CREATE TABLE IF NOT EXISTS verification_function_records (
+        f_id bigint(11) NOT NULL AUTO_INCREMENT COMMENT 'Record the unique identifier of the test batch',
+        ai_id bigint(11) NOT NULL COMMENT 'Application instance ID',
+        verify_result varchar(20) NOT NULL COMMENT 'Record the results of this batch of tests, value in pass/warn/failed',
+        verify_end_time int NOT NULL COMMENT 'Record the end time of this batch of test execution',
+        PRIMARY KEY (f_id)
+        );
+      - >
+        CREATE TABLE IF NOT EXISTS task_component_lock (
+        jid INT COMMENT 'job id the onwer for this lock',
+        sid INT COMMENT 'system id, copy from component instance or job instance',
+        cname VARCHAR(50) NOT NULL COMMENT 'component name, copy from component instance',
+        UNIQUE KEY (sid, cname),
+        PRIMARY KEY (sid,cname)
+        ) COMMENT 'component lock table';
+      - >
+        CREATE TABLE IF NOT EXISTS task_edge (
+          cfrom INT NOT NULL COMMENT 'from point',
+          cto INT NOT NULL COMMENT 'to point',
+          UNIQUE KEY (cfrom, cto),
+          PRIMARY KEY(cfrom, cto)
+        ) COMMENT 'component instance relation';
+      - >
+        CREATE TABLE IF NOT EXISTS function_test_entries (
+        t_id bigint(11) NOT NULL AUTO_INCREMENT COMMENT 'Unique identification of functional test case results',
+        f_id bigint(11) NOT NULL COMMENT 'Record the unique identifier of the test batch',
+        test_function_name varchar(1024) NOT NULL COMMENT 'Record the name of the testing function',
+        test_description varchar(1024) NOT NULL COMMENT 'Record the description or summary of test cases',
+        test_result varchar(20) NOT NULL COMMENT 'Record the results of a single test case, value in pass/failed',
+        PRIMARY KEY (t_id),
+        KEY f_id (f_id) USING BTREE
+        );
+      - >
+        CREATE TABLE IF NOT EXISTS verification_data_records (
+          d_id bigint(11) NOT NULL AUTO_INCREMENT COMMENT 'Record the unique ID of the data test batch entry',
+          ai_id bigint(11) NOT NULL COMMENT 'Application instance ID',
+          verify_result varchar(20) NOT NULL COMMENT 'Record the results of this batch of tests, value in pass/fail',
+          verify_end_time int NOT NULL COMMENT 'Record the end time of this batch of test execution',
+          PRIMARY KEY (d_id)
+        );
+      - >
+        CREATE TABLE IF NOT EXISTS task_work_application (
+        ins_id INT AUTO_INCREMENT COMMENT 'application instance id',
+        aid INT COMMENT 'application id, index application',
+        sid INT COMMENT 'system id, index system',
+        version VARCHAR(128) NOT NULL COMMENT 'application version, copy from application',
+        aname VARCHAR(50) NOT NULL COMMENT 'application name, copy from appliation',
+        icomment VARCHAR(128) NOT NULL COMMENT 'application instance comment',
+        status INT COMMENT 'application instance status', 
+        create_time INT NOT NULL COMMENT 'instance create time',
+        start_time INT NOT NULL COMMENT 'instance execute start time',
+        end_time INT NOT NULL COMMENT 'instance execute end time',
+        PRIMARY KEY(ins_id),
+        UNIQUE KEY (aname,version,sid)
+        ) COMMENT 'work application instance table';
+      - >
+        CREATE TABLE IF NOT EXISTS task_work_component (
+        ins_id INT COMMENT 'component instance id',
+        sid INT COMMENT 'system id, index system',
+        version VARCHAR(128) NOT NULL COMMENT 'application version, copy from application',
+        cname VARCHAR(50) NOT NULL COMMENT 'component name, copy from appliation',
+        create_time INT NOT NULL COMMENT 'instance create time',
+        start_time INT NOT NULL COMMENT 'instance execute start time',
+        end_time INT NOT NULL COMMENT 'instance execute end time',
+        PRIMARY KEY(ins_id),
+        UNIQUE KEY (cname,version,sid)
+        ) COMMENT 'work application instance table';
+      - >
+        CREATE TABLE IF NOT EXISTS data_test_entries (
+        t_id bigint(11) NOT NULL AUTO_INCREMENT COMMENT 'Unique identifier of the data model test result entry',
+        d_id bigint(11) NOT NULL COMMENT 'Record the identification of data testing batches',
+        test_result varchar(20) NOT NULL COMMENT 'Record the results of a single test case, value in pass/failed/warn',
+        test_result_details varchar(4096) NOT NULL DEFAULT '' COMMENT 'Record detailed information on test results',
+        service_name varchar(50) NOT NULL COMMENT 'Record the microservice name',
+        PRIMARY KEY (t_id) ,
+        KEY d_id (d_id) USING BTREE
+        );
+      - >
+        CREATE TABLE IF NOT EXISTS task_job (
+        jid INT AUTO_INCREMENT COMMENT 'job instance id',
+        target_id INT NOT NULL COMMENT 'target application instance id',
+        current_id INT NOT NULL COMMENT 'current application instance id',
+        PRIMARY KEY(jid)
+        ) COMMENT 'job record';
+      - >
+        CREATE TABLE IF NOT EXISTS task_system (
+        namespace VARCHAR(50) NOT NULL COMMENT 'system namespace',
+        sid INT AUTO_INCREMENT COMMENT 'system id',
+        sname VARCHAR(20) UNIQUE NOT NULL COMMENT 'Convenient for human reading',
+        config MEDIUMBLOB COMMENT 'system level service config',
+        sdescription VARCHAR(1000), 
+        UNIQUE KEY (namespace),
+        PRIMARY KEY(sid)
+        ) COMMENT 'system info';
+      - >
+        CREATE TABLE IF NOT EXISTS task_component_instance (
+        ins_id INT AUTO_INCREMENT COMMENT 'component instance id',
+        ains_id INT COMMENT 'owner application instance id, index application instance',
+        acid INT NOT NULL COMMENT 'owner application component id, index component',
+        sid INT COMMENT 'system id, index system',
+        version VARCHAR(128) NOT NULL COMMENT 'component version, copy from application',
+        aname VARCHAR(50) NOT NULL COMMENT 'owner application name, copy from appliation',
+        cname VARCHAR(50) NOT NULL COMMENT 'component name, copy from appliation',
+        ctype VARCHAR(30) NOT NULL COMMENT 'component defiene type',
+        crtype VARCHAR(20) COMMENT 'reuse component type',
+        status INT COMMENT 'application instance status',
+        config MEDIUMBLOB COMMENT 'component instance config',
+        c_attribute MEDIUMBLOB COMMENT 'component instance attribute',
+        revission INT COMMENT 'component installed revission',
+        timeout INT  COMMENT 'task timeout',
+        create_time INT NOT NULL COMMENT 'instance create time',
+        start_time INT NOT NULL COMMENT 'instance execute start time',
+        end_time INT NOT NULL COMMENT 'instance execute end time',
+        PRIMARY KEY(ins_id)
+        )COMMENT 'application instance';
+      - >
+        CREATE TABLE IF NOT EXISTS task_job_log (
+        jlid INT AUTO_INCREMENT COMMENT 'job log auto id',
+        jid INT NOT NULL COMMENT 'job id; foreign key from job jid',
+        cid INT  NOT NULL COMMENT 'weak foreign key from component instance which control by job; Can be 0 if not a component log',
+        aiid INT NOT NULL COMMENT 'weak foreign key from application instance id; the component"s application instance or job targe application instance',
+        aname VARCHAR(50) NOT NULL COMMENT 'owner application name, copy from appliation',
+        cname VARCHAR(50) NOT NULL COMMENT 'component name, copy from appliation',
+        ecode INT NOT NULL COMMENT 'error code or log info code',
+        ltime INT NOT NULL COMMENT 'log timestamp seconds',
+        msg BLOB COMMENT 'job log message',
+        PRIMARY KEY(jlid)
+        ) COMMENT 'job log record';
+      - >
+        CREATE TABLE IF NOT EXISTS task_app_config_template (
+        tid INT AUTO_INCREMENT COMMENT 'application config template id',
+        tversion VARCHAR(50) NOT NULL COMMENT 'config template version',
+        tname VARCHAR(50) NOT NULL COMMENT 'config templte name',
+        tdescription VARCHAR(1000) NOT NULL COMMENT 'config template description text',
+        aname VARCHAR(50) NOT NULL COMMENT 'owner application name, copy from appliation',
+        aversion VARCHAR(128) COMMENT 'application version rule',
+        config MEDIUMBLOB COMMENT 'application config which contain app config and compoents config ',
+        labels VARCHAR(500) COMMENT 'config label for situation. must be a small array',
+        minversion INT COMMENT 'application min version',
+        maxversion INT COMMENT 'application max version',
+        PRIMARY KEY(tid),
+        UNIQUE KEY (tname,tversion,aname),
+        INDEX min (minversion, maxversion)
+        ) COMMENT 'application config template'
+      - >
+        CREATE TABLE IF NOT EXISTS task_app_config_template_index (
+        id INT AUTO_INCREMENT COMMENT 'primary key id',
+        tid INT NOT NULL COMMENT 'application config template id',
+        label VARCHAR(50) NOT NULL COMMENT 'application config label for index',
+        PRIMARY KEY(id),
+        INDEX tid (tid),
+        INDEX label (label) USING HASH
+        ) COMMENT 'application config template label index'
+      - >
+        CREATE TABLE IF NOT EXISTS task_job_lock (
+        id INT AUTO_INCREMENT COMMENT 'primary key id',
+        sid INT COMMENT 'system id',
+        aname VARCHAR(100) COMMENT 'application identity ',
+        jid INT COMMENT 'the locker job',
+        PRIMARY KEY(id),
+        UNIQUE KEY (sid,aname)
+        ) COMMENT 'application job lock';
+      - >
+        CREATE TABLE IF NOT EXISTS task_app_lang (
+        id INT AUTO_INCREMENT COMMENT 'primary key id',
+        alang CHAR(10) COMMENT 'application lang index',
+        aname VARCHAR(100) COMMENT 'application identity ',
+        alias VARCHAR(100) COMMENT 'application lang name',
+        PRIMARY KEY(id),
+        INDEX alang (alang, aname)
+        ) COMMENT 'application lang resource, it will be cache in service. query when cache miss.'
+      - >
+        CREATE TABLE IF NOT EXISTS task_compose_job (
+        jid INT AUTO_INCREMENT COMMENT 'compose job id',
+        jname VARCHAR(100) COMMENT 'job name defined by user',
+        mversion VARCHAR(128) COMMENT 'manifests version if set by manifest control',
+        mdescription VARCHAR(1000), 
+        sid INT COMMENT 'system id',
+        status INT COMMENT 'job status',
+        processed INT COMMENT 'job process',
+        total INT COMMENT 'job total task number',
+        config MEDIUMBLOB ,
+        create_time INT NOT NULL COMMENT 'instance create time',
+        start_time INT NOT NULL COMMENT 'instance execute start time',
+        end_time INT NOT NULL COMMENT 'instance execute end time',
+        PRIMARY KEY(jid),
+        INDEX jid (jid),
+        INDEX jname (jname)
+        ) COMMENT 'proton component multil info'
+      - >
+        CREATE TABLE IF NOT EXISTS task_compose_job_task (
+        id INT AUTO_INCREMENT COMMENT 'primary key id',
+        jid INT COMMENT 'compose job id',
+        jtindex INT COMMENT 'compose job task index ',
+        ajid INT COMMENT 'application job id',
+        PRIMARY KEY(id),
+        INDEX jindex (jid, jtindex)
+        ) COMMENT 'proton component multil info'
+      - >
+        CREATE TABLE IF NOT EXISTS task_compose_manifests (
+        id INT AUTO_INCREMENT COMMENT 'primary key id',
+        mname VARCHAR(100) COMMENT 'manifests identify',
+        mversion VARCHAR(128) COMMENT 'manifests version',
+        manifests MEDIUMBLOB COMMENT 'manifests content',
+        mdescription VARCHAR(1000), 
+        PRIMARY KEY(id),
+        UNIQUE KEY (mname,mversion),
+        INDEX manifests (mname, mversion)
+        ) COMMENT 'manifest store.'
+      - >
+        CREATE TABLE IF NOT EXISTS task_work_compose_manifests (
+        id INT AUTO_INCREMENT COMMENT 'primary key id',
+        jid INT COMMENT 'compose job id',
+        mname VARCHAR(100) COMMENT 'job name defined by user',
+        mversion VARCHAR(128) COMMENT 'manifests version',
+        sid INT COMMENT 'system id',
+        mdescription VARCHAR(1000), 
+        status INT COMMENT 'job status',
+        PRIMARY KEY(id),
+        UNIQUE KEY (mname,sid)
+        ) COMMENT 'manifest worked list.'

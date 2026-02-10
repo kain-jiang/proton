@@ -1,0 +1,120 @@
+{{- if .Values.config.enable }}
+{{- $net :=  (fromYaml (include "net" .)) -}}
+{{- $images := (fromYaml (include "images" .)) -}}
+
+apiVersion: apps/v1
+kind: {{ .Values.workload.kind }}
+metadata:
+  name: nginx-ingress-controller-{{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: ingress-nginx-{{ include "ingressClassName" . }}
+spec:
+  {{- if ne .Values.workload.kind "DaemonSet" }}
+  replicas: {{.Values.replicaCount}}
+  {{- end }}
+  selector:
+    matchLabels:
+      app: ingress-nginx-{{ include "ingressClassName" . }}
+  template:
+    metadata:
+      labels:
+        app: ingress-nginx-{{ include "ingressClassName" . }}
+    spec:
+      serviceAccountName: nginx-ingress-{{ include "ingressClassName" . }}
+      {{- if eq $net.network "hostnetwork" }}
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      {{- end }}
+      {{- with $.Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+      - name: nginx-ingress-controller
+        image: {{ $images.controller | quote }}
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        args:
+          - /nginx-ingress-controller
+          - --profiling=false
+          - --election-id=ingress-controller-leader-{{ include "ingressClassName" . }}
+          - --ingress-class={{ include "ingressClassName" . }}
+          {{- if semverCompare ">=1.20.0-0" .Capabilities.KubeVersion.GitVersion }}
+          - --controller-class=k8s.io/{{ include "ingressClassName" . }}
+          {{- end }}
+          - --configmap=$(POD_NAMESPACE)/nginx-configuration-{{ include "ingressClassName" . }}
+          {{- if .Values.default_ssl_certificate }}
+          - --default-ssl-certificate={{ .Values.default_ssl_certificate }}
+          {{- else if .Values.default_ssl_certificate_same_namspece }}
+          - --default-ssl-certificate={{ .Release.Namespace }}/{{.Values.default_ssl_certificate_same_namspece}}
+          {{- end }}
+          {{- if $net.httpPort }}
+          - --http-port={{ $net.httpPort }}
+          {{- end }}
+          {{- if $net.httpsPort }}
+          - --https-port={{ $net.httpsPort }}
+          {{- end }}
+          {{- if .Values.service.healthzPort }}
+          - --healthz-port={{ .Values.service.healthzPort }}
+          {{- end }}
+          {{- if .Values.service.defaultServerPort  }}
+          - --default-server-port={{ .Values.service.defaultServerPort }}
+          {{- end }}
+          {{- if .Values.service.statusPort }}
+          - --status-port={{ .Values.service.statusPort }}
+          {{- end }}
+          {{- if  .Values.service.streamPort }}
+          - --stream-port={{ .Values.service.streamPort }}
+          {{- end }}
+        env:
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          - name: POD_NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+          - name: TZ
+            value: {{ .Values.env.timezone }}
+        ports:
+        {{- if gt ( $net.httpPort | int) 0 }}
+        - name: http
+          containerPort: {{$net.httpPort}}
+          {{- if eq $net.network "hostport" }}
+          hostPort: {{$net.httpPort}}
+          {{- end}}
+        {{- end}}
+        {{- if gt ( $net.httpsPort | int) 0 }}
+        - name: https
+          containerPort: {{$net.httpsPort}}
+          {{- if eq $net.network "hostport"  }}
+          hostPort: {{$net.httpsPort}}
+          {{- end}}
+        {{- end }}
+      {{- with .Values.resources }}
+        resources:
+{{ toYaml . | indent 10 }}
+      {{- end }}
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /healthz
+            port: {{ .Values.service.healthzPort }}
+            scheme: HTTP
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /healthz
+            port: {{ .Values.service.healthzPort }}
+            scheme: HTTP
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        securityContext:
+          runAsNonRoot: false
+{{- end }}

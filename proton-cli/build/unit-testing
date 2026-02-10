@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# Run unit testing and generate report as junit-xml.
+
+set -o errexit
+set -o nounset
+set -o pipefail
+
+PROTON_ROOT=$(dirname "${BASH_SOURCE[0]}")/..
+
+source "${PROTON_ROOT}/build/lib/init.sh"
+
+proton::gotestsum::verify
+proton::gotestsum::junitfile

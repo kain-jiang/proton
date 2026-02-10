@@ -1,0 +1,135 @@
+{{- if (eq .Values.config.nodeGroup "master") }}
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ template "opensearch.name" . }}-headless
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ template "opensearch.name" . }}
+    cluster: {{ .Values.config.clusterName }}
+spec:
+{{- if .Values.service.enableDualStack }}
+  ipFamilies:
+  - IPv6
+  - IPv4
+  ipFamilyPolicy: PreferDualStack
+{{- end }}
+  clusterIP: None # This is needed for statefulset hostnames like opensearch-0 to resolve
+  publishNotReadyAddresses: true # Create endpoints also if the related pod isn't ready
+  selector:
+    app: {{ template "opensearch.name" . }}
+    cluster: {{ .Values.config.clusterName }}
+  ports:
+    - name: http
+      port: {{ .Values.service.http.port }}
+      targetPort: http
+    - name: transport
+      port: {{ .Values.service.transport.port }}
+      targetPort: transport
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ template "opensearch.name" . }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ template "opensearch.name" . }}
+    cluster: {{ .Values.config.clusterName }}
+spec:
+{{- if .Values.service.enableDualStack }}
+  ipFamilies:
+  - IPv6
+  - IPv4
+  ipFamilyPolicy: PreferDualStack
+{{- end }}
+  type: {{ .Values.service.http.type }}
+  selector:
+    app: {{ template "opensearch.name" . }}
+    cluster: {{ .Values.config.clusterName }}
+  ports:
+    - name: http
+      port: {{ .Values.service.http.port }}
+      targetPort: http
+      {{- if or (eq .Values.service.http.type "NodePort") (eq .Values.service.http.type "LoadBalancer") }}
+      nodePort: {{ .Values.service.http.nodePort }}
+      {{- end }}
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ template "opensearch.name" . }}-transport
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ template "opensearch.name" . }}
+    cluster: {{ .Values.config.clusterName }}
+spec:
+{{- if .Values.service.enableDualStack }}
+  ipFamilies:
+  - IPv6
+  - IPv4
+  ipFamilyPolicy: PreferDualStack
+{{- end }}
+  type: {{ .Values.service.transport.type }}
+  selector:
+    app: {{ template "opensearch.name" . }}
+    cluster: {{ .Values.config.clusterName }}
+  ports:
+    - name: transport
+      port: {{ .Values.service.transport.port }}
+      targetPort: transport
+      {{- if or (eq .Values.service.transport.type "NodePort") (eq .Values.service.transport.type "LoadBalancer") }}
+      nodePort: {{ .Values.service.transport.nodePort }}
+      {{- end }}
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ .Values.config.clusterName }}-read
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ template "opensearch.name" . }}
+    cluster: {{ .Values.config.clusterName }}
+spec:
+{{- if .Values.service.enableDualStack }}
+  ipFamilies:
+  - IPv6
+  - IPv4
+  ipFamilyPolicy: PreferDualStack
+{{- end }}
+  type: {{ .Values.service.read.type }}
+  selector:
+    read: {{ .Values.config.clusterName }}-read
+  ports:
+    - name: read
+      port: {{ .Values.service.read.port }}
+      targetPort: http
+      {{- if or (eq .Values.service.read.type "NodePort") (eq .Values.service.read.type "LoadBalancer") }}
+      nodePort: {{ .Values.service.read.nodePort }}
+      {{- end }}
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ .Values.config.clusterName }}-write
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ template "opensearch.name" . }}
+    cluster: {{ .Values.config.clusterName }}
+spec:
+{{- if .Values.service.enableDualStack }}
+  ipFamilies:
+  - IPv6
+  - IPv4
+  ipFamilyPolicy: PreferDualStack
+{{- end }}
+  type: {{ .Values.service.write.type }}
+  selector:
+    write: {{ .Values.config.clusterName }}-write
+  ports:
+    - name: write
+      port: {{ .Values.service.write.port }}
+      targetPort: http
+      {{- if or (eq .Values.service.write.type "NodePort") (eq .Values.service.write.type "LoadBalancer") }}
+      nodePort: {{ .Values.service.write.nodePort }}
+      {{- end }}
+{{- end }}

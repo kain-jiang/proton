@@ -1,0 +1,58 @@
+{{- if or .Values.depServices.zookeeper.sasl.enabled .Values.config.sasl.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "kafka.name" . }}-cm
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ template "kafka.name" . }}
+data:
+  jaas.conf: |
+    {{- if .Values.config.sasl.enabled }}
+      {{- if hasPrefix "SCRAM-SHA" (upper .Values.config.sasl.mechanism) }}
+    KafkaServer {
+      org.apache.kafka.common.security.scram.ScramLoginModule required
+      username="kafkaserver"
+      password="{{ .Values.depServices.zookeeper.sasl.password }}";
+    };
+    KafkaClient {
+      org.apache.kafka.common.security.scram.ScramLoginModule required
+      username="kafkaclient"
+      password="{{ .Values.depServices.zookeeper.sasl.password }}";
+    };
+      {{- else }}
+    KafkaServer {
+      org.apache.kafka.common.security.plain.PlainLoginModule required
+      username="kafkaserver"
+      password="{{ .Values.depServices.zookeeper.sasl.password }}"
+      {{- range $idx, $value := $.Values.config.sasl.user }}
+      user_{{ $value.username }}="{{ $value.password }}"
+      {{- end }}
+      user_kafkaserver="{{ .Values.depServices.zookeeper.sasl.password }}"
+      user_kafkaclient="{{ .Values.depServices.zookeeper.sasl.password }}"
+      user_kafka-exporter="{{ .Values.depServices.zookeeper.sasl.password }}";
+    };
+    KafkaClient {
+      org.apache.kafka.common.security.plain.PlainLoginModule required
+      username="kafkaclient"
+      password="{{ .Values.depServices.zookeeper.sasl.password }}";
+    };
+      {{- end }}
+    {{- end }}
+    
+    {{- if .Values.depServices.zookeeper.sasl.enabled }}
+    Client {
+        org.apache.zookeeper.server.auth.DigestLoginModule required
+        username="{{ .Values.depServices.zookeeper.sasl.username }}"
+        password="{{ .Values.depServices.zookeeper.sasl.password }}";
+    };
+    {{- end }}
+  {{- if and .Values.config.sasl.enabled (hasPrefix "SCRAM-SHA" (upper .Values.config.sasl.mechanism)) }}
+  users.txt: |
+    {{- range $idx, $value := $.Values.config.sasl.user }}
+      {{- if and $value.username $value.password}}
+    {{ $value.username }} {{ $value.password }} {{$value.aclTopicPrefix}}
+      {{- end}}
+    {{- end }}
+  {{- end }}
+{{- end }}

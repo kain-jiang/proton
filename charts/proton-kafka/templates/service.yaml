@@ -1,0 +1,98 @@
+# kafka和jmx-exporter集群内service
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "kafka.name" . }}-headless
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ template "kafka.name" . }}
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/path: "/metrics"
+    prometheus.io/port: "{{ .Values.service.jmxExporter.port }}"
+spec:
+  {{- if .Values.service.enableDualStack }}
+  ipFamilies:
+  - IPv6
+  - IPv4
+  ipFamilyPolicy: PreferDualStack
+  {{- end }}
+  clusterIP: None
+  publishNotReadyAddresses: true # Create endpoints also if the related pod isn't ready
+  selector:
+    app: {{ template "kafka.name" . }}
+  ports:
+    - name: kafka
+      port: {{ .Values.service.kafka.port }}
+      protocol: TCP
+      targetPort: kafka
+    - name: jmx-exporter
+      port: {{ .Values.service.jmxExporter.port }}
+      protocol: TCP
+      targetPort: jmx-exporter
+
+# kafka各个节点的nodePort
+{{- if .Values.service.external.enabled -}}
+{{- range $i, $e := until (int .Values.replicaCount) }}
+{{- range $idx, $value := $.Values.service.external.ports }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "kafka.name" $ }}-external-{{ add $value.nodePortBase $i }}
+  namespace: {{ $.Values.namespace }}
+  labels:
+    app: {{ template "kafka.name" $ }}
+spec:
+  {{- if $.Values.service.enableDualStack }}
+  ipFamilies:
+  - IPv6
+  - IPv4
+  ipFamilyPolicy: PreferDualStack
+  {{- end }}
+  type: NodePort
+  selector:
+    app: {{ template "kafka.name" $ }}
+    statefulset.kubernetes.io/pod-name: {{ template "kafka.name" $ }}-{{ $i }}
+  ports:
+    - name: kafka-external
+      port: {{ $value.port }}
+      protocol: TCP
+      targetPort: {{ lower $value.name }}
+      nodePort: {{ add $value.nodePortBase $i }}
+{{- end }}
+{{- end }}
+{{- end }}
+
+# exporter的service
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ template "kafka-exporter.name" . }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ template "kafka-exporter.name" . }}
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/path: "/metrics"
+    prometheus.io/port: "{{ .Values.service.exporter.port }}"
+spec:
+  {{- if .Values.service.enableDualStack }}
+  ipFamilies:
+  - IPv6
+  - IPv4
+  ipFamilyPolicy: PreferDualStack
+  {{- end }}
+  selector:
+    app: {{ template "kafka-exporter.name" . }}
+  type: {{ .Values.service.exporter.type }}
+  ports:
+  - name: metrics
+    protocol: TCP
+    port: {{ .Values.service.exporter.port }}
+    targetPort: metrics
+{{- if eq .Values.service.exporter.type "NodePort" }}
+    nodePort: {{ .Values.service.exporter.nodePort }}
+{{- end }}
+

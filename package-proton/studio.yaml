@@ -1,0 +1,137 @@
+appDefineType: app/v1betav1
+version: NEED_REPLACE
+name: DeploymentStudio
+langNames:
+  zh-cn: 工作站
+  zh-tw: 工作站
+  en-us: Studio
+configSchema:
+  title: Studio
+  description: 组件配置定义
+  type: object
+  properties:
+    initAccessAddress:
+      title: access-address
+      description: 初始化时的访问地址配置
+      type: object
+      required:
+        - access_addr
+      properties:
+        enable_http:
+          description: 是否开启HTTP端口暴露，一般请保持关闭
+          type: boolean
+          default: false
+        access_addr:
+          description: 访问地址：https://ip_or_domain:443/
+          type: string
+          pattern: ^https:\/\/(\[[0-9a-fA-F:]+\]|[a-zA-Z0-9.-]+)(:[0-9]+)?(\/.*)?$
+        access_type:
+          description: 访问地址类型：internal 代表内置访问地址，ingress端口将会随访问地址配置；external 表示访问地址不在集群内，ingress 端口将会固定成443
+          type: string
+          enum:
+            - internal
+            - external
+          default: internal
+    serviceAccount:
+      type: object
+      title: 指定serviceAccount
+      description: 指定serviceAccount
+      properties:
+        create:
+          description: 是否创建serviceAccount
+          type: boolean
+          enum:
+            - true
+            - false
+        name:
+          description: serviceAccount名称，如果create为false，则必须指定serviceAccount名称
+          type: string
+    resources:
+      type: object
+      title: 容器资源控制
+      description: 目前支持仅设置cpu和内存的下限和上限,同一资源下限和上限的值还会影响其程序运行时优先级。低优先级服务在内存不足时可能会被触发oom,以及高计算负载时cpu使用限制
+      properties:
+        requests:
+          type: object
+          description: 容器运行需要的最小资源分配,该配置将会影响服务调度
+          properties:
+            memory:
+              type: string
+              description: 内存资源的基本单位是字节(byte)。你可以使用这些后缀之一，将内存表示为 纯整数或定点整数:E、P、T、G、M、K、Ei、Pi、Ti、Gi、Mi、Ki。
+              title: 最低内存
+            cpu:
+              type: string
+              description: CPU 资源以 CPU 单位度量,小数值是可以使用的。一个请求 0.5 CPU 的容器保证会获得请求 1 个 CPU 的容器的 CPU 的一半。 你可以使用后缀 m 表示毫。例如 100m CPU、100 milliCPU 和 0.1 CPU 都相同。 精度不能超过 1m。
+              title: cpu
+        limits:
+          type: object
+          description: 容器运行最大资源限制,该配置将会影响服务运行时的资源的可使用最大值
+          properties:
+            memory:
+              type: string
+              description: 程序使用内存超出该值将会发生oom。内存资源的基本单位是字节(byte)。你可以使用这些后缀之一，将内存表示为 纯整数或定点整数:E、P、T、G、M、K、Ei、Pi、Ti、Gi、Mi、Ki。
+              title: 内存
+            cpu:
+              type: string
+              description: 将会影响程序cpu使用上限与程序运算优先级。CPU 资源以 CPU 单位度量,小数值是可以使用的。一个请求 0.5 CPU 的容器保证会获得请求 1 个 CPU 的容器的 CPU 的一半。 你可以使用后缀 m 表示毫。例如 100m CPU、100 milliCPU 和 0.1 CPU 都相同。 精度不能超过 1m。
+              title: cpu
+    replicaCount:
+      type: number
+      title: 服务副本数
+    classifiedConfig:
+      type: object
+      title: 涉密模式配置
+      properties:
+        status:
+          type: string
+          title: 涉密模式总开关
+          enum:
+            - enabled
+            - disabled
+components:
+  resources:
+    - componentDefineType: proton/resource
+      name: deploy-core
+      type: deployCore
+    - componentDefineType: proton/resource
+      name: rds
+      type: rds
+    - componentDefineType: proton/resource
+      name: mongodb
+      type: mongodb
+    - componentDefineType: proton/resource
+      name: mq
+      type: mq
+    - componentDefineType: proton/resource
+      name: redis
+      type: redis
+    - componentDefineType: proton/resource
+      name: opensearch
+      type: opensearch
+    - componentDefineType: proton/resource
+      type: proton-policy-engine
+      name: proton-policy-engine
+  helm_charts:
+    local:
+      - componentDefineType: helm/service
+        name: deploy-service
+        version: NEED_REPLACE
+      - componentDefineType: helm/service
+        name: communication-config
+        version: NEED_REPLACE
+      - componentDefineType: helm/service
+        name: class-443
+        version: NEED_REPLACE
+      - componentDefineType: helm/service
+        name: deploy-web
+        version: NEED_REPLACE
+    ict:
+      - componentDefineType: helm/service
+        name: deploymentstudio-dm-pre
+        version: 3.5.0-develop.20260122.1.24513939
+helmRepos:
+  - name: ict
+    url: https://acr.aishu.cn/chartrepo/ict
+
+localRepo:
+  path: NEED_REPLACE

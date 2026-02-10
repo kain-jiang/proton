@@ -1,0 +1,33 @@
+.label {
+  // width: 136px;
+  text-align: left;
+}
+
+.delete {
+  text-align: right;
+}
+
+.wrapper {
+  margin-bottom: 24px;
+  padding: 30px;
+  background: #fff;
+}
+
+.split {
+  display: inline-block;
+  width: 3px;
+  height: 17px;
+  background: #0091ff;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+.title {
+  margin-right: 15px;
+}
+
+.list-split {
+  height: 1px;
+  background-color: #eee;
+  margin-bottom: 24px;
+}

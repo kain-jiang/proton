@@ -1,0 +1,17 @@
+- Command: execute
+  args:
+    transaction: false
+    Statements:
+      - >
+        CREATE TABLE IF NOT EXISTS task_sqldata_upgrade (
+          dateid INT,
+          stage INT,
+          epoch  INT,
+          porder  INT,
+          status INT,
+          oporder INT,
+          opstatus INT,
+          tempdata BYTEA,
+          svcname VARCHAR(100),
+          PRIMARY KEY(dateid,svcname)
+        );

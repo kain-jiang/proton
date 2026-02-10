@@ -1,0 +1,27 @@
+{{- if not $.Values.storage.storageClassName }}
+{{- $r := int $.Values.replicaCount }}
+{{- range $i, $v := list "0" "1" "2" }}
+{{- if lt $i $r }}
+{{- range $key, $value := $.Values.storage.local }}
+{{- if eq $v $key }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: package-store-datadir-{{ $.Release.Name }}-{{ $i }}
+  namespace: {{ $.Values.namespace }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ $.Values.storage.capacity }}
+  selector:
+    matchLabels:
+      app: {{ $.Release.Name  }}
+      podindex: '{{ $i }}'
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}

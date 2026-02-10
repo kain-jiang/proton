@@ -1,0 +1,36 @@
+version: "2"
+
+formatters:
+  enable:
+    - goimports
+    - gofmt
+    - swaggo
+  settings:
+    goimports:
+      local-prefixes:
+        - component-manage
+        - devops.aishu.cn
+        - taskrunner
+
+linters:
+  default: standard
+  disable:
+    - errcheck
+    - staticcheck
+  exclusions:
+    rules:
+      - linters:
+          - staticcheck
+        path: _test\.go
+      - linters:
+          - staticcheck
+        path: test
+      - linters:
+          - staticcheck
+        path: pkg/store
+      - linters:
+          - staticcheck
+        path: pkg/sql-driver
+      - linters:
+          - staticcheck
+        path: api/rest/proton_component

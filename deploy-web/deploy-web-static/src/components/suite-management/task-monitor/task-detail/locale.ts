@@ -1,0 +1,26 @@
+import { i18nDeploy as i18n } from "../../../../core/mediator";
+
+export default i18n([
+    ["详情", "詳情", "Details"],
+    ["执行详情", "執行詳情", "Execution details"],
+    ["验证记录", "驗證記錄", "Verification record"],
+    ["成功", "成功", "Success"],
+    ["失败", "失敗", "Failure"],
+    ["基本信息", "基本資訊", "Basic information"],
+    ["任务类型", "任務類型", "Task type"],
+    ["开始时间", "開始時間", "Start time"],
+    ["结束时间", "結束時間", "End time"],
+    ["运行时间", "運行時間", "Run time"],
+    ["状态", "狀態", "Status"],
+    ["执行阶段", "執行階段", "Execution phase"],
+    ["任务执行详情", "任務執行詳情", "Task execution details"],
+    ["安装", "安裝", "Install"],
+    ["更新", "更新", "Update"],
+    ["名称", "名稱", "Name"],
+    ["版本", "版本", "Version"],
+    ["执行信息", "執行資訊", "Execution information"],
+    ["查看", "查看", "View"],
+    ["ID", "ID", "ID"],
+    ["服务信息", "服務資訊", "Service information"],
+    ["共${total}条", "共${total}條", "Total ${total} item(s)"],
+]);

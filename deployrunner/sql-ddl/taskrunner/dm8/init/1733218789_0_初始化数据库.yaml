@@ -1,0 +1,288 @@
+- Command: execute
+  args:
+    transaction: false
+    Statements:
+      - >
+        CREATE TABLE  IF NOT EXISTS task_component (
+          aid INT,
+          cid INT AUTO_INCREMENT,
+          cname VARCHAR(50) NOT NULL,
+          cversion VARCHAR(128) NOT NULL,
+          ctype VARCHAR(20) NOT NULL,
+          crtype VARCHAR(20),
+          ctimeout int NOT NULL,
+          cconfig BLOB,
+          cattribute BLOB,
+          spec BLOB,
+          PRIMARY KEY(cid)
+        );
+      - >
+        CREATE TABLE IF NOT EXISTS task_work_application (
+          ins_id INT AUTO_INCREMENT,
+          aid INT,
+          sid INT,
+          version VARCHAR(128) NOT NULL,
+          aname VARCHAR(50) NOT NULL,
+          icomment VARCHAR(128) NOT NULL,
+          status INT,
+          create_time INT NOT NULL,
+          start_time INT NOT NULL,
+          end_time INT NOT NULL,
+          PRIMARY KEY(ins_id)
+        );
+      - >
+        CREATE UNIQUE INDEX IF NOT EXISTS "task_work_application_unique" ON task_work_application(aname,version,sid);
+      - >
+        CREATE TABLE IF NOT EXISTS verification_function_records (
+          f_id BIGINT NOT NULL IDENTITY(1, 1),
+          ai_id BIGINT NOT NULL,
+          verify_result VARCHAR(20) NOT NULL,
+          verify_end_time int NOT NULL,
+          CLUSTER PRIMARY KEY (f_id)
+        );
+      - >
+        CREATE TABLE IF NOT EXISTS task_application_instance (
+          ins_id INT AUTO_INCREMENT,
+          aid INT,
+          sid INT,
+          version VARCHAR(128) NOT NULL,
+          aname VARCHAR(50) NOT NULL,
+          status INT,
+          config BLOB,
+          owner INT NOT NULL,
+          icomment VARCHAR(128) NOT NULL,
+          create_time INT NOT NULL,
+          start_time INT NOT NULL,
+          end_time INT NOT NULL,
+          atrait BLOB,
+          otype INT,
+          PRIMARY KEY(ins_id)
+        );
+      - >
+        CREATE TABLE IF NOT EXISTS task_component_lock (
+          jid INT,
+          sid INT,
+          cname VARCHAR(50) NOT NULL,
+          PRIMARY KEY (sid,cname)
+        );
+      - >
+        CREATE TABLE IF NOT EXISTS data_test_entries (
+          t_id BIGINT NOT NULL IDENTITY(1, 1),
+          d_id BIGINT NOT NULL,
+          test_result VARCHAR(20) NOT NULL,
+          test_result_details VARCHAR(4096) NOT NULL DEFAULT '',
+          service_name VARCHAR(50) NOT NULL,
+          CLUSTER PRIMARY KEY (t_id)
+        );
+      - >
+        CREATE INDEX IF NOT EXISTS data_test_entries_d_id ON data_test_entries(d_id);
+      - >
+        CREATE TABLE IF NOT EXISTS function_test_entries (
+          t_id BIGINT NOT NULL IDENTITY(1, 1),
+          f_id BIGINT NOT NULL,
+          test_function_name VARCHAR(1024) NOT NULL,
+          test_description VARCHAR(1024) NOT NULL,
+          test_result VARCHAR(20) NOT NULL,
+          CLUSTER PRIMARY KEY (t_id)
+        );
+      - >
+        CREATE INDEX IF NOT EXISTS function_test_entries_f_id ON function_test_entries(f_id);
+      - >
+        CREATE UNIQUE INDEX IF NOT EXISTS "task_component_lock_unique" ON task_component_lock(sid, cname);
+      - >
+        CREATE TABLE IF NOT EXISTS task_edge (
+          cfrom INT NOT NULL,
+          cto INT NOT NULL,
+          PRIMARY KEY(cfrom, cto)
+        );
+      - >
+        CREATE UNIQUE INDEX IF NOT EXISTS "task_edge_unique" ON task_edge(cfrom, cto);
+      - >
+        CREATE TABLE IF NOT EXISTS task_job (
+          jid INT AUTO_INCREMENT,
+          target_id INT NOT NULL,
+          current_id INT NOT NULL,
+          PRIMARY KEY(jid)
+        );
+      - >
+        CREATE TABLE IF NOT EXISTS task_work_component (
+          ins_id INT,
+          sid INT,
+          version VARCHAR(128) NOT NULL,
+          cname VARCHAR(50) NOT NULL,
+          create_time INT NOT NULL,
+          start_time INT NOT NULL,
+          end_time INT NOT NULL,
+          PRIMARY KEY(ins_id)
+        );
+      - >
+        CREATE UNIQUE INDEX IF NOT EXISTS "task_work_component_unique" ON task_work_component(cname,version,sid);
+      - >
+        CREATE TABLE IF NOT EXISTS task_application (
+          aid INT AUTO_INCREMENT,
+          app_type VARCHAR(30) NOT NULL,
+          version VARCHAR(128) NOT NULL,
+          aname VARCHAR(50) NOT NULL,
+          aschema BLOB,
+          graph BLOB,
+          adependence BLOB,
+          PRIMARY KEY(aid)
+        );
+      - >
+        CREATE UNIQUE INDEX IF NOT EXISTS "task_application_unique" ON task_application(aname,version);
+      - >
+        CREATE TABLE IF NOT EXISTS task_component_instance (
+          ins_id INT AUTO_INCREMENT,
+          ains_id INT,
+          acid INT NOT NULL,
+          sid INT,
+          version VARCHAR(128) NOT NULL,
+          aname VARCHAR(50) NOT NULL,
+          cname VARCHAR(50) NOT NULL,
+          ctype VARCHAR(30) NOT NULL,
+          crtype VARCHAR(20),
+          status INT,
+          config BLOB,
+          c_attribute BLOB,
+          revission INT,
+          timeout INT ,
+          create_time INT NOT NULL,
+          start_time INT NOT NULL,
+          end_time INT NOT NULL,
+          PRIMARY KEY(ins_id)
+        );
+      - >
+        CREATE TABLE IF NOT EXISTS task_job_log (
+          jlid INT AUTO_INCREMENT,
+          jid INT NOT NULL,
+          cid INT  NOT NULL,
+          aiid INT NOT NULL,
+          aname VARCHAR(50) NOT NULL,
+          cname VARCHAR(50) NOT NULL,
+          ecode INT NOT NULL,
+          ltime INT NOT NULL,
+          msg BLOB,
+          PRIMARY KEY(jlid)
+        );
+      - >
+        CREATE TABLE IF NOT EXISTS task_system (
+          namespace VARCHAR(50) NOT NULL,
+          sid INT AUTO_INCREMENT,
+          sname VARCHAR(20) UNIQUE NOT NULL,
+          config BLOB,
+          sdescription VARCHAR(1000), 
+          PRIMARY KEY(sid)
+        );
+      - >
+        CREATE UNIQUE INDEX IF NOT EXISTS "task_system_unique" ON task_system(namespace);
+      - >
+        CREATE TABLE IF NOT EXISTS verification_data_records (
+          d_id BIGINT NOT NULL IDENTITY(1, 1),
+          ai_id BIGINT NOT NULL,
+          verify_result VARCHAR(20) NOT NULL,
+          verify_end_time int NOT NULL,
+          CLUSTER PRIMARY KEY (d_id)
+        );
+      - >
+        CREATE TABLE IF NOT EXISTS task_app_config_template (
+          tid INT AUTO_INCREMENT,
+          tversion VARCHAR(50) NOT NULL,
+          tname VARCHAR(50) NOT NULL ,
+          tdescription VARCHAR(1000) ,
+          aname VARCHAR(50) NOT NULL ,
+          aversion VARCHAR(128),
+          config BLOB,
+          labels VARCHAR(500) ,
+          minversion INT ,
+          maxversion INT ,
+          PRIMARY KEY(tid)
+        )
+      - >
+        CREATE UNIQUE INDEX IF NOT EXISTS "task_app_config_template_unique" ON task_app_config_template(tname,tversion,aname);
+      - >
+        CREATE INDEX IF NOT EXISTS task_app_config_template_min ON task_app_config_template(minversion, maxversion);
+      - >
+        CREATE TABLE IF NOT EXISTS task_app_config_template_index (
+          id INT AUTO_INCREMENT,
+          tid INT NOT NULL ,
+          label VARCHAR(50) NOT NULL,
+          PRIMARY KEY(id)
+        )
+      - >
+        CREATE INDEX IF NOT EXISTS task_app_config_template_index_label ON task_app_config_template_index(label)
+      - >
+        CREATE INDEX IF NOT EXISTS task_app_config_template_index_tid ON task_app_config_template_index(tid)
+      - >
+        CREATE TABLE IF NOT EXISTS task_job_lock (
+          id INT AUTO_INCREMENT,
+          sid INT,
+          aname VARCHAR(100),
+          jid INT,
+          PRIMARY KEY(id)
+        )
+      - >
+        CREATE UNIQUE INDEX IF NOT EXISTS "task_job_lock_unique" ON task_job_lock(sid, aname);
+      - >
+        CREATE TABLE IF NOT EXISTS task_app_lang (
+          id INT AUTO_INCREMENT,
+          alang CHAR(10),
+          aname VARCHAR(100),
+          alias VARCHAR(100),
+          PRIMARY KEY(id)
+        )
+      - >
+        CREATE INDEX IF NOT EXISTS task_app_lang_index ON task_app_lang(alang, aname);
+      - >
+        CREATE TABLE IF NOT EXISTS task_compose_job (
+          jid INT AUTO_INCREMENT,
+          jname VARCHAR(100),
+          mversion VARCHAR(128),
+          mdescription VARCHAR(1000),
+          sid INT,
+          status INT,
+          processed INT,
+          total INT,
+          config BLOB ,
+          create_time INT NOT NULL,
+          start_time INT NOT NULL,
+          end_time INT NOT NULL,
+          PRIMARY KEY(jid)
+        )
+      - >
+        CREATE INDEX IF NOT EXISTS task_compose_job_jid ON task_compose_job(jid);
+      - >
+        CREATE INDEX IF NOT EXISTS task_compose_job_jname ON task_compose_job(jname);
+      - >
+        CREATE TABLE IF NOT EXISTS task_compose_job_task (
+        id INT AUTO_INCREMENT,
+        jid INT,
+        jtindex INT,
+        ajid INT,
+        PRIMARY KEY(id)
+        )
+      - >
+        CREATE INDEX IF NOT EXISTS task_compose_job_task_jname ON task_compose_job_task(jid, jtindex);
+      - >
+        CREATE TABLE IF NOT EXISTS task_compose_manifests (
+          id INT AUTO_INCREMENT,
+          mname VARCHAR(100),
+          mversion VARCHAR(128),
+          manifests BLOB,
+          mdescription VARCHAR(1000),
+          PRIMARY KEY(id)
+        )
+      - >
+        CREATE UNIQUE INDEX IF NOT EXISTS task_compose_manifests ON task_compose_manifests(mname, mversion);
+      - >
+        CREATE TABLE IF NOT EXISTS task_work_compose_manifests (
+          id INT AUTO_INCREMENT,
+          jid INT,
+          mname VARCHAR(100),
+          mversion VARCHAR(128),
+          sid INT,
+          mdescription VARCHAR(1000), 
+          status INT,
+          PRIMARY KEY(id)
+        )
+      - >
+        CREATE UNIQUE INDEX IF NOT EXISTS task_work_compose_manifests ON task_work_compose_manifests(mname, sid);

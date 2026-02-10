@@ -1,0 +1,38 @@
+# Default values for tidu_template.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+
+
+
+global:
+  configmapVolume:
+  - items:
+    - key: default.yaml
+      path: serviec_access.yaml
+    mountPath: /etc/globalConfig/secret
+    name: cms-service-access
+  replicaCount: 1
+  image:
+    registry: "hub.tiduyun.com:5000/steamer-2"
+    imagePullSecrets: []
+    pullPolicy: "IfNotPresent"
+  securityContext: {}
+  podSecurityContext:
+    runAsUser: 1000
+    runAsGroup: 1000
+  env:
+    languaue: "en_US.UTF-8"
+    timezone: "Asia/Shanghai"
+  service:
+    enableDualStack: false
+  resources:
+    requests:
+      cpu: 1
+      memory: 10
+    limits:
+      cpu: 1
+      memory: 100
+
+depservice: {}
+

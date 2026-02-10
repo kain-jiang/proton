@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  namespace: {{ .Values.namespace }}
+  name: {{ include "deploy-service.fullname" . }}
+data:
+  deploy-service-config.yaml: |
+    depServices:
+      {{- toYaml .Values.depServices | nindent 6 }}
+    initAccessAddress:
+      {{- toYaml .Values.initAccessAddress | nindent 6 }}
+    useProtonCli: true
+    protonCliConfig:
+      name: proton-cli-config
+      namespace: {{ .Values.pnamespace | default "proton" | quote }}
+      key: ClusterConfiguration

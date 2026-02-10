@@ -1,0 +1,92 @@
+{
+    "name": "third-app-management",
+    "version": "1.4.1",
+    "componentDefineType": "fool",
+    "configSchema": null,
+    "attributeSchema": null,
+    "Dendence": null,
+    "spec": null,
+    "timeout": 0,
+    "deploys": [
+        {
+            "name": "thirdapp-management",
+            "replica": {
+                "defaultReplica": 1
+            },
+            "containers": [
+                {
+                    "name": "nodemgnt",
+                    "command": [
+                        "/thirdappmanagement"
+                    ],
+                    "ports": [
+                        7777
+                    ],
+                    "image": {
+                        "registry": "acr.aichu.cn",
+                        "imag": "as/third-app-management",
+                        "tag": "m5.1.235415-1.4.1"
+                    },
+                    "livenessProbe": {
+                        "httpGet": {
+                            "path": "/api/third-app-management/health/alive",
+                            "port": 7777,
+                            "scheme": "HTTP"
+                        },
+                        "failureThreshold": 5,
+                        "initialDelaySeconds": 30,
+                        "periodSeconds": 10,
+                        "successThreshold": 1,
+                        "terminationGracePeriodSeconds": 30,
+                        "timeoutSeconds": 5
+                    },
+                    "readinessProbe": {
+                        "httpGet": {
+                            "path": "/api/third-app-management/health/ready",
+                            "port": 7777,
+                            "scheme": "HTTP"
+                        },
+                        "failureThreshold": 5,
+                        "initialDelaySeconds": 30,
+                        "periodSeconds": 10,
+                        "successThreshold": 1,
+                        "timeoutSeconds": 5
+                    },
+                    "startupProbe": {
+                        "httpGet": {
+                            "path": "/api/third-app-management/health/ready",
+                            "port": 7777,
+                            "scheme": "HTTP"
+                        },
+                        "failureThreshold": 5,
+                        "initialDelaySeconds": 30,
+                        "periodSeconds": 10,
+                        "successThreshold": 1,
+                        "terminationGracePeriodSeconds": 30,
+                        "timeoutSeconds": 5
+                    },
+                    "resources": {
+                        "custom": false,
+                        "requests": {
+                            "memory": "60Mi",
+                            "cpu": "0.1"
+                        }
+                    }
+                }
+            ],
+            "service": [
+                {
+                    "name": "third-app-management-host",
+                    "ports": [
+                        {
+                            "name": "port",
+                            "port": 7777,
+                            "targetPort": 7777,
+                            "protocol": "TCP"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

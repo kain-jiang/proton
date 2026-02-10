@@ -1,0 +1,206 @@
+import { i18nDeploy as i18n } from "../../../core/mediator";
+
+export default i18n([
+    [
+        "请设置管理控制台节点",
+        "請設定管理主控台節點",
+        "Please set the management console node",
+    ],
+    ["保存", "儲存", "Save"],
+    ["取消", "取消", "Cancel"],
+    ["Web客户端访问", "Web用戶端存取", "Web access"],
+    ["客户端https端口：", "用戶端存取https埠：", "client https port:"],
+    ["客户端http端口：", "用戶端存取http埠：", "client http port:"],
+    ["对象存储", "物件存儲", "Storage"],
+    ["此输入项不允许为空", "必填欄位", "This filed is required"],
+    [
+        "域名只能包含 英文、数字 及 -. 字符，长度范围 3~20 个字符，请重新输入",
+        "網域名稱只能包含 英文、數字 及-.字元，長度範圍3~20個字元，請重新輸入",
+        "Domain name can only contain letters, number and -. characters. It should be between 3 to 20 characters, please re-enter",
+    ],
+    [
+        "IP地址格式形如 XXX.XXX.XXX.XXX，每段必须是 0~255 之间的整数，请重新输入",
+        "IP位址格式形如XXX.XXX.XXX.XXX，每段必須是0~255之間的整數，請重新輸入",
+        "IP address should be in XXX.XXX.XXX.XXX format, and each segment must be an integer between 0 and 255. Please re-enter",
+    ],
+    [
+        "访问配置修改失败，错误信息如下：",
+        "存取設定修改失敗，錯誤資訊如下：",
+        "Failed to change Access Configuration. Error:",
+    ],
+    ["保存成功", "儲存成功", "Saved successfully"],
+    [
+        "端口号必须是 1~65535 之间的整数，请重新输入",
+        "埠號必須是1~65535之間的整數，請重新輸入",
+        "The port number must be an integer between 1~65535, please re-enter",
+    ],
+    [
+        "设置 Web客户端访问https/http端口 成功",
+        "設定 Web用戶端存取https/http埠 成功",
+        "Set Web Access https/http Port successfully",
+    ],
+    [
+        "设置 对象存储https/http端口 成功",
+        "設定  物件存儲https/http埠 成功",
+        "Set the storage https/http Port successfully",
+    ],
+    ["应用服务", "應用服務", "Application"],
+    ["对象存储访问地址：", "物件存儲存取位址：", "Object Storage Address: "],
+    [
+        "对象存储HTTPS端口：",
+        "物件存儲HTTPS連接埠：",
+        "Object Storage HTTPS Port:",
+    ],
+    [
+        "设置 应用服务 访问地址 成功",
+        "設定 應用服務 存取位址 成功",
+        "Set the Application access Address successfully",
+    ],
+    [
+        "设置 对象存储 访问地址 成功",
+        "設定 物件存儲 存取位址 成功",
+        "Set the Storage access Address successfully",
+    ],
+    [
+        "应用服务 访问地址：${appServiceAccessingAddress}，Web客户端访问https：${webClientPortHttps}，Web客户端访问http：${webClientPortHttp}",
+        "應用服務 存取位址：${appServiceAccessingAddress}，Web用戶端存取https：${webClientPortHttps}，Web用戶端存取http：${webClientPortHttp}",
+        "Application access Address:${appServiceAccessingAddress}，Web access https：${webClientPortHttps}，Web access http：${webClientPortHttp}",
+    ],
+    [
+        "对象存储 访问地址：${objectStorageAccessingAddress}，对象存储https：${objStorePortHttps}，对象存储http：${objStorePortHttp}",
+        "物件存儲 存取位址：${objectStorageAccessingAddress}，物件存儲https：${objStorePortHttps}，物件存儲http：${objStorePortHttp}",
+        "Storage access Address:${objectStorageAccessingAddress}，Storage access https：${objStorePortHttps}，Storage access http：${objStorePortHttp}",
+    ],
+    [
+        "对象存储 访问地址：${objectStorageAccessingAddress}",
+        "物件存儲 存取位址：${objectStorageAccessingAddress}",
+        "Storage access Address:${objectStorageAccessingAddress}",
+    ],
+    [
+        "应用服务 访问地址：${appServiceAccessingAddress}",
+        "應用服務 存取位址：${appServiceAccessingAddress}",
+        "Application access Address:${appServiceAccessingAddress}",
+    ],
+    [
+        "Web客户端访问https：${webClientPortHttps}，Web客户端访问http：${webClientPortHttp}",
+        "Web用戶端存取https：${webClientPortHttps}，Web用戶端存取http：${webClientPortHttp}",
+        "Web access https：${webClientPortHttps}，Web access http：${webClientPortHttp}",
+    ],
+    [
+        "对象存储https：${objStorePortHttps}，对象存储http：${objStorePortHttp}",
+        "物件存儲https：${objStorePortHttps}，物件存儲http：${objStorePortHttp}",
+        "Storage access https：${objStorePortHttps}，Storage access http：${objStorePortHttp}",
+    ],
+    [
+        "Web客户端访问http：${webClientPortHttp}",
+        "Web用戶端存取http：${webClientPortHttp}",
+        "Web access http：${webClientPortHttp}",
+    ],
+    [
+        "Web客户端访问https：${webClientPortHttps}",
+        "Web用戶端存取https：${webClientPortHttps}",
+        "Web access https：${webClientPortHttps}",
+    ],
+    [
+        "对象存储https：${objStorePortHttps}",
+        "物件存儲https：${objStorePortHttps}",
+        "Storage access https：${objStorePortHttps}",
+    ],
+    [
+        "对象存储http：${objStorePortHttp}",
+        "物件存儲http：${objStorePortHttp}",
+        "Storage access http：${objStorePortHttp}",
+    ],
+    ["正在保存...", "正在儲存...", "Saving..."],
+    ["访问地址：", "存取位址：", "Access Address:"],
+    ["HTTPS端口：", "HTTPS埠口：", "HTTPS Port: "],
+    ["访问前缀：", "存取首碼：", "Access Prefix: "],
+    [
+        "设置 访问地址 成功，",
+        "設定 存取位址 成功，",
+        "Set Access Address successfully.",
+    ],
+    [
+        "访问地址：${appServiceAccessingAddress}",
+        "存取位址：${appServiceAccessingAddress}",
+        "Access Address: ${appServiceAccessingAddress}",
+    ],
+    [
+        "https端口：${webClientPortHttps}",
+        "https埠口：${webClientPortHttps}",
+        "https port：${webClientPortHttps}",
+    ],
+    [
+        "文档域http端口：${webClientPortHttp}",
+        "文件網域http埠：${webClientPortHttp}",
+        "Document Domain http port:${webClientPortHttp}",
+    ],
+    [
+        "https端口：${webClientPortHttps}，http端口：${webClientPortHttp}",
+        "https埠口：${webClientPortHttps}，http埠口：${webClientPortHttp}",
+        "https port：${webClientPortHttps}，http port:${webClientPortHttp}",
+    ],
+    [
+        "您确定要修改访问配置吗？",
+        "您確定要修改存取設定嗎？",
+        "Want to modify the access configuration?",
+    ],
+    [
+        "完成修改后，您需要重新登录系统工作台并返回【访问配置】页面更新证书。",
+        "完成修改後，您需要重新登入系統工作台並返回【存取設定】頁面更新證書。",
+        "After this, you’ll be required to log in to System Console again and update license on [Access Configuration] page.",
+    ],
+    [
+        "若当前站点为分站点，您需要通知主站点管理员更新相关信息，否则该分站点将和主站点失去连接。",
+        "若當前站台為分站台，您需要通知主站台管理員更新相關資訊，否則該分站台將和主站台失去連線。",
+        "If this site is a branch site, you should inform the admin of its central site to update related info, in case of the disconnection between this site and the central site.",
+    ],
+    [
+        "修改 访问端口 成功",
+        "修改 存取埠口 成功",
+        "Modify Access Port successfully",
+    ],
+    ["${port}", "${port}", "${port}"],
+    [
+        "即将跳转至登录页，请稍等...",
+        "即將跳轉至登入頁面，請稍等...",
+        "Jumping to Login page...",
+    ],
+    ["IPV4地址：", "IPV4位址：", "IPV4 Address:"],
+    ["IPV6地址：", "IPV6位址：", "IPV6 Address:"],
+    ["域名：", "域名：", "Domain Name:"],
+    [
+        "请按照以下规则输入内容:",
+        "請按照以下規則輸入內容：",
+        "The address must be following these rules: ",
+    ],
+    [
+        "域名只能包含 英文、数字 及 -. 字符，每一级不能以“-”字符开头或结尾，每一级长度必需 1~63 个字符，且总长不能超过253个字符。",
+        "域名只能包含 英文、數字 及 -. 字元，每一級不能以“-”字元開頭或結尾，每一級長度必需 1~63 個字元，且總長不能超過253個字元。",
+        "The domain name shall only contain English letters, numbers and -.. Each level shall not start or end with “-” and its length must be within 63 characters. The total length shall not exceed 253 characters.",
+    ],
+    [
+        "IP地址格式形如 X:X:X:X:X:X:X:X，其中X表示地址中的16b，以16进制表示。",
+        "IP位址格式形如 X:X:X:X:X:X:X:X，其中X表示位址中的16b，以16進製表示。",
+        "The IP address format is X: X: X: X: X: X: X: X: X: X, where X represents 16b in the address, expressed in hexadecimal.",
+    ],
+    [
+        "IP地址格式形如 XXX.XXX.XXX.XXX，每段必须是 0~255 之间的整数。",
+        "IP位址格式形如 XXX.XXX.XXX.XXX，每段必須是 0~255 之間的整數。",
+        "The IP address format is XXX.XXX.XXX. Each segment must be an integer between 0 and 255. ",
+    ],
+    ["访问地址类型：", "訪問地址類型：", "Access Address Type:"],
+    ["internal：", "internal：", "internal:"],
+    ["external：", "external：", "external:"],
+    [
+        "class-443服务的nginx实例端口将和HTTPS端口保持一致。",
+        "class-443服務的nginx實例埠口將和HTTPS埠口保持一致。",
+        "The nginx instance port for class-443 service will be consistent with the HTTPS port.",
+    ],
+    [
+        "class-443服务的nginx实例将固定监听80/443端口，请注意配置负载均衡器。",
+        "class-443服務的nginx實例將固定監聽80/443埠口，請注意配置負載平衡器。",
+        "The nginx instance of the class-443 service will listen to ports 80/443. Please pay attention to the configuration of the load balancer.",
+    ],
+    ["确定", "確定", "OK"],
+]);

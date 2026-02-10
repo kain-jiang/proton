@@ -1,0 +1,5 @@
+apiVersion: v1
+appVersion: "APP-VERSION"
+description: A Helm chart for Proton Message Queue
+name: proton-mq-nsq
+version: 0.0.0

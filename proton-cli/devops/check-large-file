@@ -1,0 +1,79 @@
+#!/bin/bash
+
+set -o errexit
+set -o pipefail
+set -o nounset
+
+function get_commit_list_between_two_branch {
+  git rev-list "${1}" "${2}"
+}
+
+function get_blob_commit_path_list {
+  while read commit; do
+    git diff-tree -r -c -M -C --no-commit-id "${commit}" \
+      | cut -b 2- \
+      | while read src_mode dst_mode src_sha1 dst_sha1 status src_path dst_path rest; do
+          case "${status}" in
+            A|M|T)
+              sha1="${dst_sha1}"
+              file="${src_path}"
+              ;;
+            D)
+              continue
+              ;;
+            C|R*)
+              sha1="${dst_sha1}"
+              file="${dst_path}"
+              ;;
+            *)
+              echo >&2 "Unsupported status: $status"
+              echo >&2 "    ${src_mode} ${dst_mode} ${src_sha1} ${dst_sha1} ${status} ${src_path} ${dst_path} ${rest}"
+              continue
+              ;;
+          esac
+          echo "${sha1} ${commit} ${file}"
+        done
+  done
+}
+
+function get_size_commit_path_list {
+  git cat-file --batch-check="%(objectsize) %(rest)"
+}
+
+function filter_not_less_than {
+  threshold=${1}
+  index=${2:-0}
+  local count=0
+  while read -a line; do
+    if [[ $index -ge ${#line[@]} ]]; then
+      continue
+    fi
+
+    if [[ ${line[${index}]} -lt $threshold ]]; then
+      continue
+    fi
+
+    count=$((${count} + 1))
+    echo "${line[@]}"
+  done
+  exit $count
+}
+
+function swap_columns {
+  while read -a line; do
+    if [[ $1 -ge ${#line[@]} || $2 -ge ${#line[@]} ]]; then
+      continue
+    fi
+
+    t="${line[${1}]}"
+    line[${1}]="${line[${2}]}"
+    line[${2}]="${t}"
+    echo "${line[@]}"
+  done
+}
+
+get_commit_list_between_two_branch "${1-HEAD}" "${2-^refs/heads/master}" \
+  | get_blob_commit_path_list \
+  | get_size_commit_path_list \
+  | filter_not_less_than $((1 << 20)) \
+  | numfmt --field=1 --to=iec-i --padding=7 --suffix=B --round=nearest \

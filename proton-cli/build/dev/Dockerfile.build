@@ -1,0 +1,26 @@
+FROM acr.aishu.cn/ict/builder:golang-1.24.20250516.3
+
+RUN sed --in-place 's/deb.debian.org/mirrors.ustc.edu.cn/g' /etc/apt/sources.list.d/debian.sources
+RUN apt-get update
+RUN apt-get --yes install rsync
+
+ENV TRIVY_URL=https://ftp-ict.aishu.cn/proton/tools/trivy/v0.34.0/trivy_0.34.0_Linux-64bit.tar.gz
+
+RUN curl -k -O --silent "${TRIVY_URL}"
+RUN tar -xf "${TRIVY_URL##*/}" --directory=/usr/local/bin trivy
+RUN rm "${TRIVY_URL##*/}"
+
+WORKDIR /app
+
+# github.com/elazarl/goproxy@v0.0.0-20180725130230-947c36da3153 这个依赖只在 goproxy.aishu.cn
+RUN go env -w GOPROXY=https://mirrors.aliyun.com/goproxy,https://goproxy.aishu.cn
+
+RUN --mount=type=bind,target=/app,readonly \
+    go mod download -x && \
+    go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64.8 && \
+    go install gotest.tools/gotestsum@v1.12.2 && \
+    go install github.com/axw/gocov/gocov@v1.2.1 && \
+    go install github.com/AlekSi/gocov-xml@v1.1.0 && \
+    go install devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/cmd/run-pipeline && \
+    go install devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/cmd/download-proton-cli-web
+

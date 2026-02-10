@@ -1,0 +1,64 @@
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: manager-role
+rules:
+- apiGroups:
+  - ""
+  - apps
+  - batch
+  - rbac.authorization.k8s.io
+  resources:
+  - clusterrolebindings
+  - clusterroles
+  - configmaps
+  - cronjobs
+  - deployments
+  - endpoints
+  - jobs
+  - persistentvolumeclaims
+  - persistentvolumes
+  - pods
+  - pods/exec
+  - secrets
+  - serviceaccounts
+  - services
+  - statefulsets
+  - statefulsets/scale
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - rds.proton.aishu.cn
+  resources:
+  - rdsmariadbclusters
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - rds.proton.aishu.cn
+  resources:
+  - rdsmariadbclusters/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - rds.proton.aishu.cn
+  resources:
+  - rdsmariadbclusters/status
+  verbs:
+  - get
+  - patch
+  - update

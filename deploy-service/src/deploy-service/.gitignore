@@ -1,0 +1,12 @@
+/.idea
+/venv
+/.venv
+/.vscode
+__pycache__
+*.pyc
+/.python-version
+/gen-py-tmp
+/Pipfile
+/Pipfile.lock
+/*.iml
+/.fleet

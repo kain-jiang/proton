@@ -1,0 +1,73 @@
+.form {
+    display: table;
+    border-spacing: 0 10px;
+}
+
+.row {
+    display: table-row;
+
+    & .cell {
+        display: table-cell;
+        vertical-align: middle;
+    }
+
+    & .label {
+        line-height: 30px;
+    }
+
+    & .field {
+        position: relative;
+        padding-left: 10px;
+
+        & .btn-space {
+            margin-right: 8px;
+        }
+
+        & .btn-width {
+            width: 74px;
+        }
+
+        & .required {
+            position: absolute;
+            top: 11px;
+            left: 0;
+            color: #E60012;
+            font-size: 13px;
+        }
+
+        & .tips {
+            color: #E60012;
+        }
+
+        & .file-wrap {
+            box-sizing: border-box;
+            position: relative;
+            border: 1px solid #d3d4db;
+            height: 30px;
+            line-height: 28px;
+            padding-left: 8px;
+            border-radius: 4px;
+
+            & .file-button {
+                box-sizing: border-box;
+                position: absolute;
+                top: 0;
+                right: 0;
+                width: 80px;
+                height: 29px;
+                text-align: center;
+                border-left: 1px solid #d3d4db;
+
+                & .file-input {
+                    opacity: 0;
+                    display: block;
+                    width: 80px;
+                    height: 30px;
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                }
+            }
+        }
+    }
+}

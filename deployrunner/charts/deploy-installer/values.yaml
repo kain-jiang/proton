@@ -1,0 +1,60 @@
+# Default values for deploy-installer.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicacount: 1
+namespace: anyshare
+
+image:
+  registry: acr.aishu.cn
+  repository: ict/applicationrunner-installer
+  pullPolicy: IfNotPresent #镜像拉去策略,默认值如样例
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: ""
+
+ingress:
+  class: class-443
+  annotations:
+    nginx.ingress.kubernetes.io/configuration-snippet: 'more_set_headers ''Access-Control-Expose-Headers:
+      Location'';'
+    nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
+    nginx.ingress.kubernetes.io/cors-allow-headers: DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization,Location,pragma,X-Language
+    nginx.ingress.kubernetes.io/cors-allow-methods: GET,PUT,POST,DELETE,HEAD,OPTIONS
+    nginx.ingress.kubernetes.io/cors-allow-origin: '*'
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: 2048m
+
+imagePullSecrets: []
+
+# securityContext: # POD.container的securityContext,要求全局可配置,无配置时默认值如下,deployment写法可查看任意当前已有chart
+#   runAsNonRoot: true
+#   runAsUser: 5000
+#   runAsGroup: 5000
+
+service:
+  enableDualStack: false #开启service双栈，默认值为不开启
+
+depServices:
+  deploy-installer:
+    parallel: 20
+    log_level: debug
+    protonConf:
+      namespace: proton
+    system_name: "aishu"
+    force: "true"
+    createnamespace: "true"
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 1280Mi
+  requests:
+    cpu: 10m
+    memory: 10Mi
+
+serviceAccount:
+  name: ""
+  create: true
+  clusterRole:
+    name: proton-deploy
+    create: true

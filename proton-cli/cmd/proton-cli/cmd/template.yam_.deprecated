@@ -1,0 +1,512 @@
+apiVersion: v1
+
+# --------------------------------------------------------
+# 此文件已废弃，内容拆分到子文件中，此处暂留做备份，其中的内容已经过时
+# --------------------------------------------------------
+
+nodes:
+  - name: node1
+    ip4: xxx
+    #ip6: xxx
+    # internal_ip 是已经存在的节点内部 IP，即 ECeph 的内部 IP。仅在部署 ECeph 时需要填写。
+    internal_ip: xxx
+  - name: node2
+    ip4: xxx
+    #ip6: xxx
+    internal_ip: xxx
+  - name: node3
+    ip4: xxx
+    #ip6: xxx
+    internal_ip: xxx
+
+# 此chrony项目为新增，用于管理Chrony NTP时间源配置，详情请参考实施指导手册
+chrony:
+  # mode可选三种模式，usermanaged代表用户手动管理，localmaster代表随机选择一个内部master节点作为时间服务器，externalntp代表使用外部时间服务器
+  mode: usermanaged
+  # mode为externalntp时，可以在下方填入一个且只允许填写一个需要指定的自定义时间源服务器
+  # mode为localmaster时，server为空或一个master节点名，由系统自动填写，非必要禁止填写和更改server中的该节点名
+  # mode为usermanaged时，server为空，proton-cli将不更改Chrony配置，原有proton-cli配置文件脱离管理，请自行决定要应用哪些配置
+  server:
+    - 0.pool.ntp.org
+
+eceph:
+  hosts:
+    - vm-xx-xx-centos
+    - vm-xx-xx-centos
+    - vm-xx-xx-centos
+  # 单节点keepalived为选填，多节点场景keepalived必填，使用keepalived时必须要有内部ip
+  # 虚拟ip不能与节点的实际ip相同，且必须和实际内外部ip在同一以掩码标识的网段
+  keepalived:
+    internal: 10.**.**.**/24
+    external: 10.**.**.**/24
+  # tls为 ECeph 的数字证书信息，选填，不填会自动以当前时间为名称生成新的证书
+  # certificate-data和key-data为base64编码，编码内容包括形如-----BEGIN CERTIFICATE-----的证书头部
+  tls:
+    secret:
+    certificate-data:
+    key-data:
+
+cs:
+  # provisioner 定义 Kubernetes 的提供者
+  #   - local:      Proton 部署的本地的 Kubernetes
+  #   - external:   外部的已经部署好的 Kubernetes
+  provisioner: local
+  master:
+    # Kubernetes master 节点
+    - node1
+    - node2
+    - node3
+
+  # ipFamilies 定义 Proton CS 提供的 Kubernetes 所使用的网络协议栈，支持 IPv4 和
+  # IPv6。支持同时使用两种网络协议栈。
+  #
+  # 双栈：
+  # ipFamilies:
+  #   - IPv4
+  #   - IPv6
+  ipFamilies:
+    - IPv4
+
+  ha_port: 8443
+
+  host_network:
+    bip: 172.33.0.1/16 #网桥所使用的 IP,需要加子网掩码
+    pod_network_cidr: 192.169.0.0/16 #K8s Pod Network,必须是一个合法的网段,双栈情况使用英文逗号分隔ipv4与ipv6的cidr(192.169.0.0/16,fc00:b36f:c1c3:2000::/64)
+    service_cidr: 10.96.0.0/12 #K8s service_cidr Network,必须是一个合法的网段,双栈情况使用英文逗号分隔ipv4与ipv6的cidr(10.96.0.0/12,fc01:b36f:c1c3:1000::/108)
+    #ipv4_interface: ens160                        # ipv4 ip所在网卡名称 部署双栈时需要指定
+    #ipv6_interface: ens160                        # ipv6 ip所在网卡名称 部署双栈时需要指定
+  cs_controller_dir: ./service-package
+  etcd_data_dir: /sysvol/proton_data/cs_etcd_data
+  docker_data_dir: /sysvol/proton_data/cs_docker_data
+
+cr:
+  local:
+    hosts:
+      - node1
+      - node2
+    ports:
+      chartmuseum: 5001
+      registry: 5000
+      rpm: 5003
+      cr_manager: 5002
+    ha_ports:
+      chartmuseum: 15001
+      registry: 15000
+      rpm: 15003
+      cr_manager: 15002
+    storage: /sysvol/proton_data/cr_data
+  # external:
+  #   registry:
+  #     host: registry.example.org
+  #     username: sample-username
+  #     password: sample-password
+  #   chartmuseum:
+  #     host: chartmuseum.example.org
+  #     username: sample-username
+  #     password: sample-password
+
+# proton-mariadb
+proton_mariadb:
+  replica_count: 1
+  hosts:
+    - node1
+    - node2
+    - node3
+  config:
+    innodb_buffer_pool_size: 8G
+    resource_requests_memory: 24G
+    resource_limits_memory: 24G
+  admin_user: FAKE_USERNAME
+  admin_passwd: FAKE_PASSWORD
+  data_path: /sysvol/mariadb
+# mongodb
+proton_mongodb:
+  replica_count: 1
+  hosts:
+    - node1
+    - node2
+    - node3
+  admin_user: FAKE_USERNAME
+  admin_passwd: FAKE_PASSWORD
+  data_path: /sysvol/mongodb/mongodb_data
+
+# redis
+proton_redis:
+  replica_count: 1
+  hosts:
+    - node1
+    - node2
+    - node3
+  admin_user: FAKE_USERNAME
+  admin_passwd: FAKE_PASSWORD
+  data_path: /sysvol/redis/redis_data
+
+#proton-mq-nsq
+proton_mq_nsq:
+  replica_count: 1
+  hosts:
+    - node1
+    - node2
+    - node3
+  data_path: /sysvol/mq-nsq/mq-nsq_data
+
+# policy-engine
+# 不超过3个，最多支持 3 副本
+proton_policy_engine:
+  replica_count: 1
+  hosts:
+    - node1
+    - node2
+    - node3
+  data_path: /sysvol/policy-engine/policy-engine_data
+
+# policy-etcd
+# 不超过3个，最多支持 3 副本
+proton_etcd:
+  replica_count: 1
+  hosts:
+    - node1
+    - node2
+    - node3
+  data_path: /sysvol/proton-etcd/proton-etcd_data
+
+# opensearch
+opensearch:
+  replica_count: 1
+  hosts:
+    - node1
+  # mode 可以为 hot, master, warm
+  mode: master
+  config: # 可选配置(如果配置为空，请注意显式设置为{})， 键值对值为null代表移除配置，恢复默认
+    jvmOptions: -Xmx8g -Xms8g # JVM内存设置
+    hanlpRemoteextDict: http://ecoconfig-private.anyshare:32128/api/ecoconfig/v1/word-list/remote_ext_dict # 远程词库
+  data_path: /anyshare/opensearch
+  ## OpenSearch 的原生参数
+  ## Detail: "https://opensearch.org/docs/latest/security/configuration/yaml/#opensearchyml"
+  # settings:
+  #   cluster.routing.allocation.disk.watermark.flood_stage: 70%
+  #   cluster.routing.allocation.disk.watermark.high: 65%
+  #   cluster.routing.allocation.disk.watermark.low: 60%
+  ## OpenSearch 需求的资源
+  ## reference: https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#resources
+  # resources:
+  #   limits:
+  #     cpu: 40
+  #     memory: 64Gi
+  #   requests:
+  #     cpu: 40
+  #     memory: 64Gi
+
+# AnyShare configuration management service
+cms: {}
+
+# Component Management Service
+component_management: {}
+
+# Kubernetes plugin for Nvidia GPUs, not user configurable (yet)
+nvidia_device_plugin:  {}
+
+kafka:
+  replica_count: 1
+  hosts:
+    - node1
+  data_path: /sysvol/kafka/kafak_data
+  # 根据 AnyRobot 性能测试的推荐资源配额
+  # arch: arm, node:   1, cpu:  96, memory: 128
+  env:
+    KAFKA_HEAP_OPTS: -Xms9G -Xmx9G
+  resources:
+    limits:
+      cpu: "4"
+      memory: 10Gi
+    requests:
+      cpu: "4"
+      memory: 10Gi
+  # arch: arm, node:   6, cpu:  96, memory: 128
+  # env:
+  #   KAFKA_HEAP_OPTS: -Xms12G -Xmx12G
+  # resources:
+  #   limits:
+  #     cpu: "4"
+  #     memory: 13Gi
+  #   requests:
+  #     cpu: "4"
+  #     memory: 13Gi
+  # arch: arm, node:  12, cpu:  96, memory: 128
+  # env:
+  #   KAFKA_HEAP_OPTS: -Xms12G -Xmx12G
+  # resources:
+  #   limits:
+  #     cpu: "4"
+  #     memory: 13Gi
+  #   requests:
+  #     cpu: "4"
+  #     memory: 13Gi
+  # arch: arm, node:   1, cpu:  48, memory: 128
+  # env:
+  #   KAFKA_HEAP_OPTS: -Xms6G -Xmx6G
+  # resources:
+  #   limits:
+  #     cpu: "2"
+  #     memory: 7Gi
+  #   requests:
+  #     cpu: "2"
+  #     memory: 7Gi
+  # arch: x86, node:   1, cpu:  32, memory:  64
+  # env:
+  #   KAFKA_HEAP_OPTS: -Xms4G -Xmx4G
+  # resources:
+  #   limits:
+  #     cpu: "1"
+  #     memory: 5Gi
+  #   requests:
+  #     cpu: "1"
+  #     memory: 5Gi
+  # arch: x86, node:  12, cpu:  32, memory:  64
+  # env:
+  #   KAFKA_HEAP_OPTS: -Xms6G -Xmx6G
+  # resources:
+  #   limits:
+  #     cpu: "2"
+  #     memory: 7Gi
+  #   requests:
+  #     cpu: "2"
+  #     memory: 7Gi
+  # arch: x86, node:   6, cpu:  32, memory:  64
+  # env:
+  #   KAFKA_HEAP_OPTS: -Xms6G -Xmx6G
+  # resources:
+  #   limits:
+  #     cpu: "2"
+  #     memory: 7Gi
+  #   requests:
+  #     cpu: "2"
+  #     memory: 7Gi
+
+zookeeper:
+  replica_count: 1
+  hosts:
+    - node1
+    - node2
+    - node3
+  data_path: /sysvol/zookeeper/zookeeper_data
+  # 根据 AnyRobot 性能测试的推荐资源配额
+  # arch: arm, node:   1, cpu:  96, memory: 128
+  env:
+    JVMFLAGS: -Xms400m -Xmx400m
+  resources:
+    limits:
+      cpu: 200m
+      memory: 800Mi
+    requests:
+      cpu: 200m
+      memory: 800Mi
+  # arch: arm, node:   6, cpu:  96, memory: 128
+  # env:
+  #   JVMFLAGS: -Xms400m -Xmx400m
+  # resources:
+  #   limits:
+  #     cpu: 200m
+  #     memory: 800Mi
+  #   requests:
+  #     cpu: 200m
+  #     memory: 800Mi
+  # arch: arm, node:  12, cpu:  96, memory: 128
+  # env:
+  #   JVMFLAGS: -Xms400m -Xmx400m
+  # resources:
+  #   limits:
+  #     cpu: 200m
+  #     memory: 800Mi
+  #   requests:
+  #     cpu: 200m
+  #     memory: 800Mi
+  # arch: arm, node:   1, cpu:  48, memory: 128
+  # env:
+  #   JVMFLAGS: -Xms400m -Xmx400m
+  # resources:
+  #   limits:
+  #     cpu: 200m
+  #     memory: 800Mi
+  #   requests:
+  #     cpu: 200m
+  #     memory: 800Mi
+  # arch: x86, node:   1, cpu:  32, memory:  64
+  # env:
+  #   JVMFLAGS: -Xms400m -Xmx400m
+  # resources:
+  #   limits:
+  #     cpu: 200m
+  #     memory: 800Mi
+  #   requests:
+  #     cpu: 200m
+  #     memory: 800Mi
+  # arch: x86, node:  12, cpu:  32, memory:  64
+  # env:
+  #   JVMFLAGS: -Xms400m -Xmx400m
+  # resources:
+  #   limits:
+  #     cpu: 200m
+  #     memory: 800Mi
+  #   requests:
+  #     cpu: 200m
+  #     memory: 800Mi
+  # arch: x86, node:   6, cpu:  32, memory:  64
+  # env:
+  #   JVMFLAGS: -Xms400m -Xmx400m
+  # resources:
+  #   limits:
+  #     cpu: 200m
+  #     memory: 800Mi
+  #   requests:
+  #     cpu: 200m
+  #     memory: 800Mi
+
+# orientdb:
+#   # OrientDB不支持多节点部署，这里只允许填写一个节点，填多个会报错
+#   hosts:
+#     - node1
+#   data_path: /sysvol/orientdb-master
+
+# # Proton 可观测服务使用的 Prometheus
+# prometheus:
+#   # 一体机环境 Prometheus 运行在下列节点
+#   hosts:
+#     - node1
+#     - node2
+#   # 一体机环境 Prometheus 使用每个节点的下列路径作为数据目录
+#   data_path: /sysvol/prometheus
+#   # 托管 Kubernetes 环境 Prometheus 使用下列 Storage Class 作为持久化数据
+#   storageClassName: standard
+
+# # Proton 可观测服务使用的 Grafana
+# grafana:
+#   # 一体机环境 Grafana 运行在下列节点
+#   hosts:
+#     - node1
+#   # 一体机环境 Grafana 使用每个节点的下列路径作为数据目录
+#   data_path: /sysvol/grafana
+#   # 托管 Kubernetes 环境 Grafana 使用下列 Storage Class 作为持久化数据
+#   storageClassName: standard
+
+# # AnyData 使用的 Nebula Graph
+# nebula:
+#   hosts:
+#     - node1
+#     - node2
+#     - node3
+#   data_path: /sysvol/nebula
+#   # 未指定密码时，生成随机密码。部署完成后通过 proton-cli get conf 获取。
+#   # password: 12450
+
+# 基础组件连接信息统一管理，用到业务账号的内置组件除之前的配置外，还需在此处填写业务账号用户名和密码；
+# 组件外置时，所有信息在这里填写
+resource_connect_info:
+# #internal rds
+  rds:
+    source_type: internal
+    username: FAKE_USERNAME
+    password: FAKE_PASSWORD
+# #external rds
+  # rds:
+  #   source_type: external
+  #   rds_type: MySQL #DM8 MySQL GoldenDB TiDB
+  #   hosts: ""  # 外置组件地址，多个英文逗号分隔
+  #   port:   #整型，多副本时，端口必须一样
+  #   username: ""
+  #   password: ""
+#  #internal mongodb
+  mongodb:
+    source_type: internal
+    username: FAKE_USERNAME
+    password: FAKE_PASSWORD #
+# #external mongodb
+  # mongodb:
+  #   source_type: external
+  #   hosts: ""  # 外置组件地址，多个英文逗号分隔
+  #   port:
+  #   replica_set: "" #副本集名称
+  #   username: ""
+  #   password: ""
+  #   ssl: false #boolean 类型值，是否开启ssl，可选，默认不开启
+  #   auth_source: "" #登录验证数据库名称
+  #   # 其它可选参数
+  #   #options: ""
+  #   #  key1: value1
+  #   #  key2: value2
+
+# redis三种模式
+  # internal sentinel
+  redis:
+    source_type: internal
+# #external sentinel
+  # redis:
+  #   source_type: external
+  #   connect_type:sentinel
+  #   sentinel_hosts: "" # snetinel访问地址，多个时用英文逗号分隔
+  #   sentinel_port:   # 整型，多个节点时，端口必须一致
+  #   sentinel_username: ""
+  #   sentinel_password: ""
+  #   username: ""  #可选
+  #   password: ""  #可选
+  #   master_group_name: "" #
+# #external master_slave
+  # redis:
+  #   source_type: external
+  #   connect_type: master-slave
+  #   master_hosts: "" # 主节点访问地址，多个时用英文逗号分隔
+  #   master_port:  #整型数字，多个master时，端口必须一样
+  #   slave_hosts: "" # 从节点访问地址，多个时用英文逗号分隔
+  #   slave_port:  #整型，多个slave时，端口必须一样
+  #   username: ""
+  #   password: ""
+# #external standalone
+  # redis:
+  #   source_type: external
+  #   connect_type: standalone
+  #   hosts: "" #
+  #   port:     # 整型
+  #   username: ""
+  #   password: ""
+# internal mq
+  mq:
+    source_type: internal  #  # external
+#  # external mq
+  # mq:
+  #   source_type: external
+  #   mq_type: kafka # nsq tonglink htp20 kafka bmq
+  #   mq_hosts: "" #mq工作节点访问地址，多个时用英文逗号分隔
+  #   mq_port:  #整型，多副本时，端口必须保持一样
+  #   mq_lookupd_hosts: "" #mq管理节点访问地址，多个时用英文逗号分隔；非nsq不填
+  #   mq_lookupd_port:  #多副本时，端口必须保持一样；非nsq不填
+  #   auth:   # 当前只有kafka支持配置auth，其它中间件不填
+  #     username: ""
+  #     password: ""
+  #     mechanism: "PALIN" # SCRAM-SHA-512 SCRAM-SHA-256 PALIN
+
+# # internal opensearch
+  opensearch:
+    source_type: internal
+# # external opensearch
+  # opensearch:
+  #   source_type: external
+  #   hosts: "" #服务访问地址，多个时用英文逗号分隔
+  #   port:   #整型，多副本时，端口必须保持一样
+  #   username: ""
+  #   password: ""
+  #   version: 7.10.0 # 5.6.4 7.10.0
+# internal policy_engine
+  policy_engine:
+    source_type: internal  #  # external #  # external
+  # policy_engine:
+  #   source_type: external
+  #   hosts: "" #服务访问地址，多个时用英文逗号分隔
+  #   port:   #整型，多副本时，端口必须保持一样
+# internal etcd
+  etcd:
+    source_type: internal  #  # external
+  # etcd:
+  #   source_type: external
+  #   hosts:  "" #节点访问地址，多个时用英文逗号分隔
+  #   port:    #整型，多副本时，端口必须保持一样
+  #   secret: ""

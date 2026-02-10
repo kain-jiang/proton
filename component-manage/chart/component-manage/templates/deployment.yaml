@@ -1,0 +1,88 @@
+{{- if semverCompare ">=1.16-0" .Capabilities.KubeVersion.GitVersion -}}
+apiVersion: apps/v1
+{{- else -}}
+apiVersion: extensions/v1beta1
+{{- end }}
+kind: Deployment
+metadata:
+  name: {{ template "component-manage.name" . }}
+  namespace: {{ template "component-manage.namespace" . }}
+  labels:
+    {{ include "component-manage.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "component-manage.labels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+      labels:
+        {{- include "component-manage.labels" . | nindent 8 }}
+    spec:
+    {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      serviceAccountName: {{ template "component-manage.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8888
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /health/alive
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: http
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: {{ template "component-manage.name" . }}-conf
+              mountPath: /app/config.yaml
+              subPath: config.yaml
+          env:
+            - name: GIN_MODE
+              value: release
+            - name: TZ
+              value: {{ .Values.env.timezone | quote }}
+            - name: LANG
+              value: {{ .Values.env.language | quote }}
+            - name: HOST_IP
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: status.hostIP
+            - name: HELM_CACHE_HOME
+              value: {{ .Values.env.helmCacheDir | default "/tmp/.helm/cache" | quote }}
+            - name: HELM_CONFIG_HOME
+              value: {{ .Values.env.helmConfigDir | default "/tmp/.helm/config" | quote }}
+            - name: HELM_DATA_HOME
+              value: {{ .Values.env.helmDataDir | default "/tmp/.helm/data" | quote }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        - name: {{ template "component-manage.name" . }}-conf
+          configMap:
+            name: {{ template "component-manage.name" . }}-conf
+    {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}

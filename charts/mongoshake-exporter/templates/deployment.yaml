@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+  {{- if .Release.Namespace }}
+  namespace: {{ .Release.Namespace }}
+  {{- else}}
+  namespace: {{ .Values.namespace }}
+  {{- end}}
+  labels:
+    k8s-app: {{ .Release.Name }}
+spec:
+  selector:
+    matchLabels:
+      k8s-app: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        k8s-app: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: mongoshake-exporter
+          image: {{ .Values.image.registry }}/{{ .Values.image.MongoShakeExporter.repository }}:{{ .Values.image.MongoShakeExporter.tag }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: TZ
+              value: {{ .Values.env.timezone }}
+          args:
+            - --mongoshakeURL={{ .Values.config.mongoshakeurl}}
+            - --scrapeInterval={{ .Values.config.scrapeInterval}}
+          ports:
+            - name: metrics
+              containerPort: {{ .Values.service.port }}
+          readinessProbe:
+            httpGet:
+              path: /metrics
+              port: {{ .Values.service.port }}
+            initialDelaySeconds: 3
+            timeoutSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /metrics
+              port: {{ .Values.service.port }}
+            initialDelaySeconds: 3
+            timeoutSeconds: 5
+          resources:
+            requests:
+              cpu: {{ .Values.resources.requests.cpu }}
+              memory: {{ .Values.resources.requests.memory }}
+            limits:
+              cpu: {{ .Values.resources.limits.cpu }}
+              memory: {{ .Values.resources.limits.memory }}
+

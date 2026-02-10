@@ -1,0 +1,53 @@
+apiVersion: mongodb.proton.aishu.cn/v1
+kind: MongodbOperator
+metadata:
+  name: mongodboperator
+spec:
+  # TODO(user): Add fields here
+  secretname: mongo-secret
+  mongodb:
+    replicas: 2
+    replset:
+      name: rs0
+    image: acr.aishu.cn/proton/mongodb:2.0.0-develop
+    imagePullPolicy: IfNotPresent
+    service: 
+      type: NodePort
+      enableDualStack: false
+      port: 30280
+    debug: "0"
+    conf:
+      wiredTigerCacheSizeGB: 4
+      tls:
+        enabled: false
+    storage:
+      capacity: 10Gi
+      storageClassName: ""
+      volume:
+        - host: node-10-10
+          path: /sysvol/mongodb/mongodb-0
+        - host: node-10-10
+          path: /sysvol/mongodb/mongodb-1
+    resources:
+      requests:
+        cpu: 1m
+        memory: 2Gi
+  mgmt:
+    # image: acr.aishu.cn/proton/proton-mongodb-mgmt:1.10.2
+    image: mgmt:2.0.0
+    imagePullPolicy: IfNotPresent
+    service:
+      type: NodePort
+      enableDualStack: false
+      port: 30281
+    useEncryption: false
+    logLevel: info
+  exporter:
+    image: acr.aishu.cn/proton/mongodb-exporter:2.0.0-develop
+    imagePullPolicy: IfNotPresent
+  logrotate:
+    image: acr.aishu.cn/proton/logrotate:1.0.0
+    imagePullPolicy: IfNotPresent
+    logsize: 2M
+    schedule: "*/2 * * * *"
+    logcount: 5

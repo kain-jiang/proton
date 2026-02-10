@@ -1,0 +1,6 @@
+- Command: execute
+  args:
+    transaction: false
+    Statements:
+      - >
+        ALTER TABLE IF EXISTS task_system ADD COLUMN IF NOT EXISTS sdescription VARCHAR(1000);

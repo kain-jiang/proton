@@ -1,0 +1,89 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ .Release.Name }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ .Release.Name }}
+spec:
+  serviceName: {{ .Release.Name }}
+  replicas: {{ .Values.replicaCount }}
+  updateStrategy:
+    type: "RollingUpdate"
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}
+    spec:
+      terminationGracePeriodSeconds: 5
+      serviceAccount: {{ .Values.depServices.serviceAccoutName | default   .Release.Name    }}
+      containers:
+        - name: package-store
+          image: {{ .Values.image.registry }}{{ .Values.image.store.repository }}:{{ .Values.image.store.tag }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+          - name: POD_IP
+            valueFrom:
+              fieldRef:
+                fieldPath: status.podIP
+          {{- range $key, $val := .Values.env }}
+          - name: {{ $key }}
+            value: {{ $val | quote }}
+          {{- end}}
+          - name: ReleaseName
+            value: {{ .Release.Name }}
+          - name: Namespace
+            value: {{ .Values.namespace }}
+          ports:
+            - name: svc-port
+              containerPort: 9527
+            - name: private-port
+              containerPort: 9526
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: private-port
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 6
+            timeoutSeconds: 3
+
+          resources:
+            {{- with .Values.resources.store }}
+{{ toYaml . | indent 12 }}
+            {{- end }}
+          volumeMounts:
+            #mount db config
+            - name: config
+              mountPath: /data/dbconfig
+              readOnly: true
+            #mount SSL file
+{{- if   .Values.depServices.secretName }}
+            - name: sslfile
+              mountPath: /data/ssl
+              readOnly: true
+{{- end }}
+             #mount local storeage
+            - name: package-store-datadir
+              mountPath: /data/local
+      volumes:
+        - name: config
+          secret:
+            secretName: {{ .Release.Name }}-dbconfig
+  volumeClaimTemplates:
+    - metadata:
+        name: package-store-datadir
+        namespace: {{ .Values.namespace }}
+      spec:
+        {{- if .Values.storage.storageClassName }}
+        storageClassName: "{{ .Values.storage.storageClassName }}"
+        {{- end}}
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: {{ .Values.storage.capacity }}
+
+

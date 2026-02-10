@@ -1,0 +1,40 @@
+ARG VERSION="0.1.0-alpha"
+ARG REPOSITORY_SERVICE REPOSITORY_STATIC
+ARG REGISTRY
+ARG TAG
+
+FROM acr.aishu.cn/ict/builder:tools-yq.latest AS yq
+FROM acr.aishu.cn/public/ubuntu:22.04.20251014 AS runtime
+FROM acr.aishu.cn/ict/builder:tools-helm-3.17 AS helm3
+
+# stage1: 修改版本
+FROM yq AS stage1
+ARG TAG REPOSITORY_SERVICE REPOSITORY_STATIC REGISTRY
+COPY ./charts /src
+
+WORKDIR /work
+
+RUN true \
+    && cp -r /src/* ./ \
+    && yq -i '.image.registry = "'${REGISTRY}'"' ./deploy-web/values.yaml \
+    && yq -i '.image.deploy_web_static.repository = "'${REPOSITORY_STATIC}'"' ./deploy-web/values.yaml \
+    && yq -i '.image.deploy_web_static.tag = "'${TAG}'"' ./deploy-web/values.yaml \
+    && yq -i '.image.deploy_web_service.repository = "'${REPOSITORY_SERVICE}'"' ./deploy-web/values.yaml \
+    && yq -i '.image.deploy_web_service.tag = "'${TAG}'"' ./deploy-web/values.yaml
+
+
+# stage2: 打包Chart
+FROM runtime AS stage2
+ARG VERSION
+COPY --from=helm3 /usr/bin/helm /usr/bin/helm
+COPY --from=stage1 /work /src
+
+WORKDIR /work
+
+RUN true \
+    && helm package --version ${VERSION} /src/*
+
+
+# stage3: 生成制品
+FROM scratch AS result
+COPY --from=stage2 /work/*.tgz /

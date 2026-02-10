@@ -1,0 +1,25 @@
+#!/bin/bash
+
+set -o errexit
+set -o nounset
+set -o pipefail
+
+PROTON_ROOT=$(dirname "${BASH_SOURCE[0]}")/..
+
+source "${PROTON_ROOT}/build/lib/log.sh"
+source "${PROTON_ROOT}/build/lib/version.sh"
+proton::log::get_log_vars
+proton::version::get_version_vars
+
+cat <<EOF
+STABLE_BUILD_GIT_COMMIT ${PROTON_GIT_COMMIT-}
+STABLE_BUILD_SCM_STATUS ${PROTON_GIT_TREE_STATE-}
+STABLE_BUILD_SCM_REVISION ${PROTON_VERSION-}
+STABLE_CONTAINER_IMAGE_TAG ${PROTON_CONTAINER_IMAGE_TAG}
+STABLE_CONTAINER_REPOSITORY ${PROTON_CONTAINER_REPOSITORY:-acr.aishu.cn/proton/proton}
+gitCommit ${PROTON_GIT_COMMIT-}
+gitTreeState ${PROTON_GIT_TREE_STATE-}
+gitVersion ${PROTON_VERSION-}
+buildDate $(date ${SOURCE_DATE_EPOCH:+"--date=@${SOURCE_DATE_EPOCH}"} -u +'%Y-%m-%dT%H:%M:%SZ')
+defaultLogLevel ${PROTON_DEFAULT_LOG_LEVEL}
+EOF

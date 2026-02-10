@@ -1,0 +1,9 @@
+server = "http://registry.aishu.cn:15000"
+
+[host]
+
+  [host."http://registry.aishu.cn:15000"]
+    capabilities = []
+    override_path = false
+
+    [host."http://registry.aishu.cn:15000".header]

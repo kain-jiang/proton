@@ -1,0 +1,153 @@
+node('x86_64') {
+    stage 'Checkout'
+    sh "rm -rf ${WORKSPACE}/proton-cli"
+        checkout([
+            $class : 'GitSCM',
+            branches: [[name: '*/${BRANCH_NAME}']],
+            doGenerateSubmoduleConfigurations: false,
+            extensions: [
+                [
+                $class: 'RelativeTargetDirectory',
+                relativeTargetDir: './proton-cli'
+                ]
+            ],
+            submoduleCfg: [],
+            userRemoteConfigs: [
+                [
+                credentialsId: 'bea73795-697a-49a6-a202-345c1aa588a0',
+                url: 'https://devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3'
+                ]
+            ]
+            ])
+
+    stage 'Build'
+        def VERSION = sh(script: 'grep -o \'".*"\' ${WORKSPACE}/proton-cli/pkg/version/version.go | sed \'s/"//g\'', returnStdout: true)
+        withDockerContainer(args: "-v ${WORKSPACE}/proton-cli:/proton-cli", image: 'acr.aishu.cn/ict/slb_builder:7') {
+            sh "mkdir -p /root/rpmbuild/SPECS /root/rpmbuild/SOURCES /proton-cli/output/"
+            sh "curl ftp://ftp-ict.aishu.cn/proton/proton-cli/x86_64/${BRANCH_NAME}/proton-cli -o /root/rpmbuild/SOURCES/proton-cli"
+            sh "cp -rpf /proton-cli/proton-cli.spec /root/rpmbuild/SPECS/"
+            sh "sed -i 's/PROTON_CLI_VERSION/${VERSION.trim()}/g' /root/rpmbuild/SPECS/proton-cli.spec"
+            sh "cd /root/rpmbuild/SPECS/;rpmbuild -bb proton-cli.spec"
+            sh "cp -rpf /root/rpmbuild/RPMS/x86_64/proton-cli-*.rpm /proton-cli/output/"
+        }
+
+    stage 'Package artifacts'
+        dir("${WORKSPACE}/proton-cli/output") {
+            if (BRANCH_NAME =~ "^ICT.*") {
+                FTP_BRANCH_TYPE = "feature"
+            } else if (BRANCH_NAME =~ /^(\d+).(\d+).(\d+)$/) {
+                FTP_BRANCH_TYPE = "release"
+            } else {
+                FTP_BRANCH_TYPE = "develop"
+            }
+            REMOTE_FTP_DIR = "proton-cli/x86_64/${BRANCH_NAME}/"
+        }
+
+    stage 'Upload To FTP'
+        dir("${WORKSPACE}/proton-cli/output") {
+            ftpPublisher alwaysPublishFromMaster: false,
+            continueOnError: false,
+            failOnError: false,
+            publishers: [
+                [configName: 'FTP_ICT',
+                    transfers: [
+                        [
+                            asciiMode: false,
+                            cleanRemote: false, excludes: '',
+                            flatten: false,
+                            makeEmptyDirs: false,
+                            noDefaultExcludes: false,
+                            patternSeparator: '[, ]+',
+                            remoteDirectory: "${REMOTE_FTP_DIR}",
+                            remoteDirectorySDF: false,
+                            sourceFiles: "*.rpm"
+                        ]
+                    ],
+                    usePromotionTimestamp: false,
+                    useWorkspaceInPromotion: false,
+                    verbose: true
+                ]
+            ]
+        }
+        SLB_RPM_PATH = "ftp://ftp-ict.aishu.cn/proton/proton-cli/x86_64/${BRANCH_NAME}/proton-cli-${VERSION.trim()}-${BUILD_NUMBER}.el7.x86_64.rpm"
+        RPM_REPO = "ftp://ftp-ict.aishu.cn/repo/centos7-x86_64.repo"
+        build job: 'PROTON_YUM_REPO_UPDATE', parameters: [string(name: 'BRANCH', value: "${FTP_BRANCH_TYPE}"), string(name: 'ARCH', value: 'x86_64'), string(name: 'URL_RPM', value: "${SLB_RPM_PATH}"), string(name: 'URL_REPO', value: "${RPM_REPO}")], propagate: false, wait: false
+
+}
+
+node('aarch64') {
+    stage 'Checkout'
+        sh "rm -rf ${WORKSPACE}/proton-cli"
+        checkout([
+            $class : 'GitSCM',
+            branches: [[name: '*/${BRANCH_NAME}']],
+            doGenerateSubmoduleConfigurations: false,
+            extensions: [
+                [
+                $class: 'RelativeTargetDirectory',
+                relativeTargetDir: './proton-cli'
+                ]
+            ],
+            submoduleCfg: [],
+            userRemoteConfigs: [
+                [
+                credentialsId: 'bea73795-697a-49a6-a202-345c1aa588a0',
+                url: 'https://devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3'
+                ]
+            ]
+            ])
+
+    stage 'Build'
+        def VERSION = sh(script: 'grep -o \'".*"\' ${WORKSPACE}/proton-cli/pkg/version/version.go | sed \'s/"//g\'', returnStdout: true)
+        withDockerContainer(args: "-v ${WORKSPACE}/proton-cli:/proton-cli", image: 'acr.aishu.cn/ict/slb_builder_aarch64:7') {
+            sh "mkdir -p /root/rpmbuild/SPECS /root/rpmbuild/SOURCES /proton-cli/output/"
+            sh "curl ftp://ftp-ict.aishu.cn/proton/proton-cli/aarch64/${BRANCH_NAME}/proton-cli -o /root/rpmbuild/SOURCES/proton-cli"
+            sh "cp -rpf /proton-cli/proton-cli.spec /root/rpmbuild/SPECS/"
+            sh "sed -i 's/PROTON_CLI_VERSION/${VERSION.trim()}/g' /root/rpmbuild/SPECS/proton-cli.spec"
+            sh "cd /root/rpmbuild/SPECS/;rpmbuild -bb proton-cli.spec"
+            sh "cp -rpf /root/rpmbuild/RPMS/aarch64/proton-cli-*.rpm /proton-cli/output/"
+        }
+
+    stage 'Package artifacts'
+        dir("${WORKSPACE}/proton-cli/output") {
+            if (BRANCH_NAME =~ "^ICT.*") {
+                FTP_BRANCH_TYPE = "feature"
+            } else if (BRANCH_NAME =~ /^(\d+).(\d+).(\d+)$/) {
+                FTP_BRANCH_TYPE = "release"
+            } else {
+                FTP_BRANCH_TYPE = "develop"
+            }
+            REMOTE_FTP_DIR = "proton-cli/aarch64/${BRANCH_NAME}/"
+        }
+
+    stage 'Upload To FTP'
+        dir("${WORKSPACE}/proton-cli/output") {
+            ftpPublisher alwaysPublishFromMaster: false,
+            continueOnError: false,
+            failOnError: false,
+            publishers: [
+                [configName: 'FTP_ICT',
+                    transfers: [
+                        [
+                            asciiMode: false,
+                            cleanRemote: false, excludes: '',
+                            flatten: false,
+                            makeEmptyDirs: false,
+                            noDefaultExcludes: false,
+                            patternSeparator: '[, ]+',
+                            remoteDirectory: "${REMOTE_FTP_DIR}",
+                            remoteDirectorySDF: false,
+                            sourceFiles: "*.rpm"
+                        ]
+                    ],
+                    usePromotionTimestamp: false,
+                    useWorkspaceInPromotion: false,
+                    verbose: true
+                ]
+            ]
+        }
+        SLB_RPM_PATH = "ftp://ftp-ict.aishu.cn/proton/proton-cli/aarch64/${BRANCH_NAME}/proton-cli-${VERSION.trim()}-${BUILD_NUMBER}.el7.aarch64.rpm"
+        RPM_REPO = "ftp://ftp-ict.aishu.cn/repo/centos7-aarch64.repo"
+        build job: 'PROTON_YUM_REPO_UPDATE', parameters: [string(name: 'BRANCH', value: "${FTP_BRANCH_TYPE}"), string(name: 'ARCH', value: 'aarch64'), string(name: 'URL_RPM', value: "${SLB_RPM_PATH}"), string(name: 'URL_REPO', value: "${RPM_REPO}")], propagate: false, wait: false
+
+}

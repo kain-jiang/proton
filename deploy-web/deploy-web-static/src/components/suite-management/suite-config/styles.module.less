@@ -1,0 +1,58 @@
+@import "../../../global.less";
+
+.config-container {
+  flex: 1;
+  border: 1px solid @listBorderColor;
+  min-height: 0;
+
+  & .header-title {
+    padding-left: 16px;
+    line-height: 32px;
+    font-size: 16px;
+  }
+
+  & .col-list {
+    height: 100%;
+    border-right: 1px solid @listBorderColor;
+  }
+
+  & .service-content-list {
+    background-color: @listBG;
+    height: 100%;
+    border-top: 1px solid @listBorderColor;
+    overflow-y: auto;
+
+    & .service-content {
+      padding: 0 16px;
+      height: 40px;
+      border-bottom: 1px solid @listBorderColor;
+      display: flex;
+      cursor: pointer;
+
+      & .service-content-name {
+        line-height: 40px;
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+    }
+
+    & .service-content-choosed {
+      background-color: #fff;
+    }
+
+    & .service-content-disabled {
+      color: @fontColorDisabled;
+      cursor: not-allowed;
+    }
+  }
+}
+
+.modal-content {
+  margin-top: 15px;
+}
+
+.skin-color {
+  color: @skinColor;
+}

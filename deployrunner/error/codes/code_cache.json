@@ -1,0 +1,298 @@
+[
+ [
+  {
+   "Code": 0,
+   "MCode": 0,
+   "Name": "ECNULL",
+   "Description": "未知或未归类错误"
+  },
+  {
+   "Code": 1,
+   "MCode": 0,
+   "Name": "ErrParam",
+   "Description": "参数错误"
+  },
+  {
+   "Code": 2,
+   "MCode": 0,
+   "Name": "ErrUniqueKey",
+   "Description": "数据唯一键冲突"
+  },
+  {
+   "Code": 3,
+   "MCode": 0,
+   "Name": "ErrAppTypeNoDefined",
+   "Description": "应用类型未定义"
+  },
+  {
+   "Code": 4,
+   "MCode": 0,
+   "Name": "ErrHelmChartAPIVersion",
+   "Description": "helmchart版本错误"
+  },
+  {
+   "Code": 5,
+   "MCode": 0,
+   "Name": "ErrJobExecuting",
+   "Description": "任务正在执行中的限制"
+  },
+  {
+   "Code": 6,
+   "MCode": 0,
+   "Name": "ErrJobCantStop",
+   "Description": "任务不可暂停"
+  },
+  {
+   "Code": 7,
+   "MCode": 0,
+   "Name": "ErrConfigNotComfirm",
+   "Description": "任务配置参数未确认"
+  },
+  {
+   "Code": 8,
+   "MCode": 0,
+   "Name": "ErrComponentUsing",
+   "Description": "组件正在被使用的限制"
+  },
+  {
+   "Code": 9,
+   "MCode": 0,
+   "Name": "ErrApplicationFile",
+   "Description": "应用定义文件错误"
+  },
+  {
+   "Code": 10,
+   "MCode": 0,
+   "Name": "ErrConfigValidate",
+   "Description": "参数配置校验错误"
+  },
+  {
+   "Code": 11,
+   "MCode": 0,
+   "Name": "ErrNotFound",
+   "Description": "相关数据不存在"
+  },
+  {
+   "Code": 12,
+   "MCode": 0,
+   "Name": "ErrHelmRepoNoFound",
+   "Description": "helm仓库不存在"
+  },
+  {
+   "Code": 13,
+   "MCode": 0,
+   "Name": "ErrHelmChartNoFound",
+   "Description": "helm chart不存在"
+  },
+  {
+   "Code": 14,
+   "MCode": 0,
+   "Name": "ErrSystemNofound",
+   "Description": "system对象不存在"
+  },
+  {
+   "Code": 15,
+   "MCode": 0,
+   "Name": "ErrComponentVersionLess",
+   "Description": "组件版本过低"
+  },
+  {
+   "Code": 16,
+   "MCode": 0,
+   "Name": "ErrComponentNotFound",
+   "Description": "组件不存在"
+  },
+  {
+   "Code": 17,
+   "MCode": 0,
+   "Name": "ErrComponentDup",
+   "Description": "组件重复"
+  },
+  {
+   "Code": 18,
+   "MCode": 0,
+   "Name": "ErrAPPlicationComponentTortuous",
+   "Description": "应用定义中的组件存在循环依赖"
+  },
+  {
+   "Code": 19,
+   "MCode": 0,
+   "Name": "ErrComponentTypeNotDefined",
+   "Description": "组件定义不存在"
+  },
+  {
+   "Code": 20,
+   "MCode": 0,
+   "Name": "ErrComponentInstanceRevission",
+   "Description": "组件实例数据版本不一致"
+  },
+  {
+   "Code": 21,
+   "MCode": 0,
+   "Name": "ErrComponentDecodeError",
+   "Description": "组件数据反序列化失败"
+  },
+  {
+   "Code": 22,
+   "MCode": 0,
+   "Name": "ErrJobOwnerError",
+   "Description": "不具备任务对象所有权"
+  },
+  {
+   "Code": 23,
+   "MCode": 0,
+   "Name": "ErrApplicationStillUse",
+   "Description": "应用仍在使用限制"
+  },
+  {
+   "Code": 24,
+   "MCode": 0,
+   "Name": "ErrHelmRepoUnknow",
+   "Description": "未知helm仓库相关错误"
+  },
+  {
+   "Code": 25,
+   "MCode": 0,
+   "Name": "ECTimeout",
+   "Description": "超时错误"
+  },
+  {
+   "Code": 26,
+   "MCode": 0,
+   "Name": "ECJobCancel",
+   "Description": "任务取消"
+  },
+  {
+   "Code": 27,
+   "MCode": 0,
+   "Name": "ECContextEnd",
+   "Description": "协程上下文结束"
+  },
+  {
+   "Code": 28,
+   "MCode": 0,
+   "Name": "ECHelmChartNotFound",
+   "Description": "helm chart不存在"
+  },
+  {
+   "Code": 29,
+   "MCode": 0,
+   "Name": "ECHelmReleaseNotFound",
+   "Description": "helm release不存在"
+  },
+  {
+   "Code": 30,
+   "MCode": 0,
+   "Name": "ECHelmReleaseForceUpdate",
+   "Description": "强制更新helm release"
+  },
+  {
+   "Code": 31,
+   "MCode": 0,
+   "Name": "ECHelmRun",
+   "Description": "helm安装或更新运行中失败"
+  },
+  {
+   "Code": 32,
+   "MCode": 0,
+   "Name": "ECHelmTimeout",
+   "Description": "helm安装或更新超时"
+  },
+  {
+   "Code": 33,
+   "MCode": 0,
+   "Name": "ECHelmK8s",
+   "Description": "helm在操作k8s时错误"
+  },
+  {
+   "Code": 34,
+   "MCode": 0,
+   "Name": "ECHelmK8SORRender",
+   "Description": "helm chart渲染失败"
+  },
+  {
+   "Code": 35,
+   "MCode": 0,
+   "Name": "ECTemplate",
+   "Description": "helm chart检查渲染失败"
+  },
+  {
+   "Code": 36,
+   "MCode": 0,
+   "Name": "ECParseChart",
+   "Description": "helm chart内容解析错误"
+  },
+  {
+   "Code": 37,
+   "MCode": 0,
+   "Name": "ECExit",
+   "Description": "进程结束退出"
+  },
+  {
+   "Code": 38,
+   "MCode": 0,
+   "Name": "ECComponentDefined",
+   "Description": "组件定义错误"
+  },
+  {
+   "Code": 39,
+   "MCode": 0,
+   "Name": "ECK8sUnknow",
+   "Description": "未知或未归类k8s错误"
+  },
+  {
+   "Code": 40,
+   "MCode": 0,
+   "Name": "ECNetUnknow",
+   "Description": "未知或未归类网络错误"
+  },
+  {
+   "Code": 41,
+   "MCode": 0,
+   "Name": "ECSQLUnknow",
+   "Description": "未知或未归类关系数据库错误"
+  },
+  {
+   "Code": 42,
+   "MCode": 0,
+   "Name": "ECHTTPAPIRawError",
+   "Description": "外部HTTP原始错误"
+  },
+  {
+   "Code": 43,
+   "MCode": 0,
+   "Name": "ECBaseNode",
+   "Description": "内部使用基本节点错误"
+  },
+  {
+   "Code": 44,
+   "MCode": 0,
+   "Name": "ECNoAvailableWorker",
+   "Description": "任务执行队列已满"
+  },
+  {
+   "Code": 45,
+   "MCode": 0,
+   "Name": "ECNoAuthorized",
+   "Description": "无权限"
+  },
+  {
+   "Code": 46,
+   "MCode": 0,
+   "Name": "ECInvalidAuthorized",
+   "Description": "认证失败"
+  },
+  {
+   "Code": 47,
+   "MCode": 0,
+   "Name": "ECColumnExists",
+   "Description": "数据库列已存在"
+  },
+  {
+   "Code": 48,
+   "MCode": 0,
+   "Name": "ErrApplicationNotFound",
+   "Description": "应用不存在"
+  }
+ ]
+]

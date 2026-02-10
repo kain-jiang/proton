@@ -1,0 +1,53 @@
+ARG VERSION="0.1.0-alpha"
+ARG REGISTRY TAG
+ARG REPOSITORY
+ARG REPOSITORY_118
+ARG REPOSITORY_120
+ARG REPOSITORY_RT
+
+
+FROM acr.aishu.cn/ict/builder:tools-yq.latest AS yq
+FROM acr.aishu.cn/public/ubuntu:22.04.20251014 AS runtime
+FROM acr.aishu.cn/ict/builder:tools-helm-3.17 AS helm3
+
+# stage1: 修改版本
+FROM yq AS stage1
+ARG REGISTRY
+ARG TAG REPOSITORY REPOSITORY_118 REPOSITORY_120 REPOSITORY_RT
+COPY ./charts /src
+
+WORKDIR /work
+
+RUN true \
+    && cp -r /src/* ./ \
+    && yq -i '.image.ingressController.tag = "'${TAG}'"' ./class-443/values.yaml \
+    && yq -i '.image.ingressController.repository = "'${REPOSITORY}'"' ./class-443/values.yaml \
+    && yq -i '.image.ingressController118.tag = "'${TAG}'"' ./class-443/values.yaml \
+    && yq -i '.image.ingressController118.repository = "'${REPOSITORY_118}'"' ./class-443/values.yaml \
+    && yq -i '.image.ingressController120.tag = "'${TAG}'"' ./class-443/values.yaml \
+    && yq -i '.image.ingressController120.repository = "'${REPOSITORY_120}'"' ./class-443/values.yaml \
+    && yq -i '.image.registry = "'${REGISTRY}'"' ./class-443/values.yaml \
+    && yq -i '.images = []' ./class-443/_componentMeta.json \
+    && yq -i '.images.0 = "'${REGISTRY}/${REPOSITORY}:${TAG}'"' ./class-443/_componentMeta.json \
+    && yq -i '.images.1 = "'${REGISTRY}/${REPOSITORY_118}:${TAG}'"' ./class-443/_componentMeta.json \
+    && yq -i '.images.2 = "'${REGISTRY}/${REPOSITORY_120}:${TAG}'"' ./class-443/_componentMeta.json \
+    && yq -i '.image.job.repository = "'${REPOSITORY_RT}'"' ./communication-config/values.yaml \
+    && yq -i '.image.job.tag = "'${TAG}'"' ./communication-config/values.yaml \
+    && yq -i '.image.registry = "'${REGISTRY}'"' ./communication-config/values.yaml
+
+
+# stage2: 打包Chart
+FROM runtime AS stage2
+ARG VERSION
+COPY --from=helm3 /usr/bin/helm /usr/bin/helm
+COPY --from=stage1 /work /src
+
+WORKDIR /work
+
+RUN true \
+    && helm package --version ${VERSION} /src/*
+
+
+# stage3: 生成制品
+FROM scratch AS result
+COPY --from=stage2 /work/*.tgz /

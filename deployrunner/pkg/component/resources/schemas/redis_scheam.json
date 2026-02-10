@@ -1,0 +1,152 @@
+{
+    "title": "redis数据库",
+    "description": "在线内存数据库组件配置",
+    "type": "object",
+    "oneOf": [
+        {
+            "title": "内置redis",
+            "description": "内置redis目前为sentinel模式",
+            "type": "object",
+            "required": [
+                "source_type"
+            ],
+            "properties": {
+                "source_type": {
+                    "description": "使用内置redis,必须为Proton_Redis",
+                    "type": "string",
+                    "enum": [
+                        "internal"
+                    ],
+                    "const": "internal"
+                }
+            }
+        },
+        {
+            "title": "外置redis",
+            "description": "外置redis",
+            "type": "object",
+            "required": [
+                "source_type"
+            ],
+            "properties": {
+                "source_type": {
+                    "description": "使用外置redis,必须为Redis",
+                    "type": "string",
+                    "enum": [
+                        "Redis"
+                    ],
+                    "const": "Redis"
+                }
+            },
+            "oneOf": [
+                {
+                    "title": "standalone模式",
+                    "description": "设置standalond模式的redis",
+                    "type": "object",
+                    "required": [
+                        "connectType",
+                        "connectInfo"
+                    ],
+                    "properties": {
+                        "connectType": {
+                            "description": "设置为standalone,必须为standalone",
+                            "type": "string",
+                            "enum": [
+                                "standalone"
+                            ],
+                            "const": "standalone"
+                        },
+                        "connectInfo": {
+                            "description": "redis连接信息",
+                            "type": "object",
+                            "required": [
+                                "host",
+                                "port",
+                                "username",
+                                "password"
+                            ],
+                            "properties": {
+                                "host": {
+                                    "description": "redis连接地址,如 redis.st.cn",
+                                    "type": "string"
+                                },
+                                "port": {
+                                    "type": "integer",
+                                    "description": "redis连接信息",
+                                    "minimum": 1
+                                },
+                                "username": {
+                                    "type": "string",
+                                    "description": "redis 账户"
+                                },
+                                "password": {
+                                    "type": "string",
+                                    "description": "redis 账户密码"
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    "title": "master-slave",
+                    "description": "设置master-slave模式的redis",
+                    "type": "object",
+                    "required": [
+                        "connectType",
+                        "connectInfo"
+                    ],
+                    "properties": {
+                        "connectType": {
+                            "description": "设置为master-slave,必须为master-slave",
+                            "type": "string",
+                            "enum": [
+                                "master-slave"
+                            ],
+                            "const": "master-slave"
+                        },
+                        "connectInfo": {
+                            "description": "redis连接信息",
+                            "type": "object",
+                            "required": [
+                                "masterHost",
+                                "masterPort",
+                                "slaveHost",
+                                "slavePort",
+                                "username",
+                                "password"
+                            ],
+                            "properties": {
+                                "masterHost": {
+                                    "description": "redis master 连接地址,如 redis.st.cn",
+                                    "type": "string"
+                                },
+                                "masterPort": {
+                                    "type": "integer",
+                                    "description": "redis master 连接端口",
+                                    "minimum": 1
+                                },
+                                "slaveHost": {
+                                    "description": "redis master 连接地址,如 redis.st.cn",
+                                    "type": "string"
+                                },
+                                "slavePort": {
+                                    "type": "integer",
+                                    "description": "redis slave 连接端口",
+                                    "minimum": 1
+                                },
+                                "username": {
+                                    "type": "string",
+                                    "description": "redis 账户"
+                                },
+                                "password": {
+                                    "type": "string",
+                                    "description": "redis 账户密码"
+                                }
+                            }
+                        }
+                    }
+                }
+            ]
+        }
+    ]
+}

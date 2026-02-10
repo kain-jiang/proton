@@ -1,0 +1,18 @@
+- Command: execute
+  args:
+    transaction: false
+    Statements:
+      - >
+        ALTER TABLE task_app_config_template_index ADD COLUMN id INT AUTO_INCREMENT PRIMARY KEY;
+      - >
+        ALTER TABLE task_job_lock ADD COLUMN id INT AUTO_INCREMENT PRIMARY KEY;
+      - >
+        ALTER TABLE task_app_lang ADD COLUMN id INT AUTO_INCREMENT PRIMARY KEY;
+      - >
+        ALTER TABLE task_compose_job_task ADD COLUMN id INT AUTO_INCREMENT PRIMARY KEY;
+      - >
+        ALTER TABLE task_compose_manifests ADD COLUMN id INT AUTO_INCREMENT PRIMARY KEY;
+      - >
+        ALTER TABLE task_work_compose_manifests ADD COLUMN id INT AUTO_INCREMENT PRIMARY KEY;
+      
+      

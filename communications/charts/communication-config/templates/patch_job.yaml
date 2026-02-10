@@ -1,0 +1,41 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  namespace: {{.Release.Namespace}}
+  name: {{ .Release.Name }}
+  annotations:
+    helm.sh/hook-delete-policy: "before-hook-creation"
+    helm.sh/hook: "pre-install, pre-upgrade"
+    helm.sh/hook-weight: "0"
+spec:
+  template:
+    spec:
+      containers:
+      - name: patch
+        image: "{{ .Values.image.registry }}/{{ .Values.image.job.repository }}:{{ .Values.image.job.tag }}"
+        # command: ["curl",  "-XPOST 127.0.01:9703/api/deploy-manager/v1/communication/all", "-F", "backend-service=@/var/commnunication/application_communication.yaml", "-F", "oauth2=@/var/commnunication/service_access.yaml"]
+        command: ["bash", "-c"]
+        args: 
+        - |-
+          for ((i=0;i<20;i++))
+          do
+            http_code=$(curl -s -v -w '%{http_code}\n' --connect-timeout 3 -XPOST http://deploy-service:9703/api/deploy-manager/v1/communication/all -d @/var/commnunication/application_communication.json)
+            code=$?
+            if [[ $code == 0 ]] && [[ $http_code == 200 ]]
+            then
+              exit 0
+            fi
+            echo "code: ${code}, http_code: ${http_code}"
+            sleep 2
+          done
+          exit 1
+        volumeMounts: 
+        - name: communication
+          mountPath: /var/commnunication
+      restartPolicy: Never
+      volumes:
+      - name: communication
+        configMap: 
+          name: {{ .Release.Name }}
+  backoffLimit: 0
+  activeDeadlineSeconds: 240

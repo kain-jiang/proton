@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-alertrules
+  namespace: {{ .Values.namespace }}
+data:
+  {{- $files := .Files.Glob "alertrules/*.yaml" }}
+  {{- range $path, $file := $files }}
+  {{ base $path }}: |-
+{{ $file | toString | nindent 4 }}
+  {{- end }}

@@ -1,0 +1,58 @@
+{{- define "net"}}
+{{- $access := ((get ((lookup "v1" "Secret" .Release.Namespace "cms-release-config-anyshare").data | default dict ) "default.yaml" ) | b64dec | fromYaml) }}
+# set default for template test
+{{- $url := $access.access_addr | default "https://[fc99:3430::a04:1e03]:445" }}
+{{- $atype := $access.access_type | default "internal" }}
+
+{{- $httpsPort := .Values.service.httpsPort }}
+{{- $httpPort := .Values.service.httpPort }}
+
+{{- $port := "" }}
+{{- $schema := "" }}
+
+  # 提取协议 (schema)
+  {{- if regexMatch "^https://" $url -}}
+    {{- $schema = "https" -}}
+  {{- else if regexMatch "^http://" $url -}}
+    {{- $schema = "http" -}}
+  {{- else -}}
+    {{- $schema = "http" -}}  # 默认协议
+  {{- end }}
+
+  # 提取端口号
+  {{- if regexMatch "^http[s]?://\\[[0-9a-fA-F:]+\\]:([0-9]+).*" $url -}}
+    {{- $port = regexFind "\\]:([0-9]+)" $url | regexFind "[0-9]+" -}}
+  {{- else if regexMatch "^http[s]?://[0-9a-zA-Z.-]+:[0-9]+.*" $url -}}
+    {{- $port = regexFind ":(\\d+)" $url | regexFind "\\d+" -}}
+  {{- else if eq $schema "https" -}}
+    {{- $port = "443" -}}
+  {{- else -}}
+    {{- $port = "80" -}}
+  {{- end }}
+
+{{- if eq $atype "internal" }}
+  {{- if eq $schema "http" }}
+    {{- $httpPort = $port | default "80" | atoi }}
+  {{- else }}
+    {{- $httpsPort = $port | default "443" | atoi }}
+  {{- end }}
+{{- end }}
+
+httpsPort: {{ $httpsPort }}
+httpPort: {{ $httpPort  }}
+network: {{.Values.service.network | quote}}
+{{- end }}
+
+{{- define "images" }}
+    {{- if semverCompare ">=1.23.0-0" .Capabilities.KubeVersion.GitVersion }}
+controller: "{{ .Values.image.registry }}/{{ .Values.image.ingressController.repository }}:{{ .Values.image.ingressController.tag }}"
+    {{- else if semverCompare ">=1.20.0-0" .Capabilities.KubeVersion.GitVersion }}
+controller: "{{ .Values.image.registry }}/{{ .Values.image.ingressController.repository }}:{{ .Values.image.ingressController120.tag }}"
+    {{- else -}}
+controller: "{{ .Values.image.registry }}/{{ .Values.image.ingressController118.repository }}:{{ .Values.image.ingressController118.tag }}"
+    {{- end }}
+{{- end }}
+
+{{- define "ingressClassName" }}
+{{- get (get (get $.Values "depServices" | default dict) $.Chart.Name | default dict) "ingressClass" | default "class-443" -}}
+{{- end }}

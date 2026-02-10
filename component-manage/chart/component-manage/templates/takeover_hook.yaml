@@ -1,0 +1,37 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ template "component-manage.name" . }}-takeover
+  namespace: {{ template "component-manage.namespace" . }}
+  annotations:
+    helm.sh/hook-delete-policy: "before-hook-creation"
+    helm.sh/hook: "post-install, post-upgrade"
+    helm.sh/weight: "1"
+spec:
+  template:
+    spec:
+    {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      serviceAccountName: {{ template "component-manage.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      volumes:
+        - name: {{ template "component-manage.name" . }}-conf
+          configMap:
+            name: {{ template "component-manage.name" . }}-conf
+      containers:
+        - name: takeover
+          image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          command: ["/app/component-manage"]
+          args: ["takeover"]
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: {{ template "component-manage.name" . }}-conf
+              mountPath: /app/config.yaml
+              subPath: config.yaml
+      restartPolicy: Never
+  backoffLimit: 0
+  activeDeadlineSeconds: 240

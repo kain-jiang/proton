@@ -1,0 +1,467 @@
+{{- define "communication-config.ingress-rules" -}}
+
+aladdin-es:
+  port: 9200
+  uris:
+  - /anyshare/file
+aladdin-init:
+  port: 9528
+  uris:
+  - /api/aladdin-init
+aladdin-scanner-private:
+  port: 8090
+  uris:
+  - /api/aladdin-scanner
+applet-static:
+  port: 8686
+  uris:
+  - /applet
+appstore-private:
+  port: 7011
+  uris:
+  - /api/appstore
+appstore-public:
+  port: 7010
+  uris:
+  - /api/appstore
+appstore-static:
+  port: 8080
+  uris:
+  - /appstore/static
+audit-management:
+  port: 9608
+  uris:
+  - /api/audit-management
+auto-text-filter:
+  port: 9528
+  uris:
+  - /api/auto-text-filter
+autosheets:
+  port: 9800
+  uris:
+  - /autosheets
+capp-archive-proxy:
+  port: 30985
+  uris:
+  - /api/archivegw/v1
+capp-cmis-proxy-public:
+  port: 30968
+  uris:
+  - /api/capp-cmis/v1
+capp-eetl-public:
+  port: 30965
+  uris:
+  - /api/capp-eetl/v1
+capp-model-private:
+  port: 30951
+  uris:
+  - /api/capp-model/v1
+capp-model-public:
+  port: 30950
+  uris:
+  - /api/capp-model/v1
+capp-model-ui:
+  port: 18958
+  uris:
+  - /capp-model/
+capp-permission-private:
+  port: 30971
+  uris:
+  - /api/capp-permission/v1
+capp-permission-proxy:
+  port: 30972
+  uris:
+  - /api/capp-permission-proxy/v1
+capp-permission-public:
+  port: 30970
+  uris:
+  - /api/capp-permission/v1
+capp-sap-cert-mgt-private:
+  port: 30976
+  uris:
+  - /api/sap-cert-mgt/v1
+capp-sap-cert-mgt-public:
+  port: 30975
+  uris:
+  - /api/sap-cert-mgt/v1
+capp-sap-cert-mgt-ui:
+  port: 18975
+  uris:
+  - /sap-cert-mgt/
+capp-sap-edgp-link-conf-ui:
+  port: 18955
+  uris:
+  - /sap-edgp/
+capp-sap-edgp-public:
+  port: 30960
+  uris:
+  - /api/capp-edgp/v1
+capp-sap-edgp-ui:
+  port: 18956
+  uris:
+  - /coreapp-sap-edgp/
+capp-scs-public:
+  port: 30945
+  uris:
+  - /api/capp-scs/v1
+clip-server:
+  port: 9528
+  uris:
+  - /api/clip-server
+cognitive-assistant:
+  port: 8888
+  uris:
+  - /api/cognitive-assistant/
+collaboration-private:
+  port: 9801
+  uris:
+  - /api/collaboration
+collaboration-public:
+  port: 9800
+  uris:
+  - /api/collaboration
+confidential-private:
+  port: 9618
+  uris:
+  - /api/confidential
+confidential-public:
+  port: 9617
+  uris:
+  - /api/confidential
+defalutbackend:
+  port: 9008
+  uris:
+  - /api/defalutbackend
+deploy-abandon:
+  port: 9703
+  uris:
+  - /api/deploy-manager/abandon
+deploy-service:
+  port: 9703
+  uris:
+  - /api/deploy-manager/cert/download-cert/app
+  - /api/deploy-manager/cert/feature
+  - /api/deploy-manager/client
+  - /api/deploy-manager/cert/cert-info
+  - /api/deploy-manager/v1/application/version
+  - /api/instances
+  - /api/deploy-manager/v1/access-addr/redirect
+  - /api/proton-openapi/v1alpha1/timestamp
+deploy-web-redirect:
+  port: 18800
+  uris:
+  - /
+deploy-web-service:
+  port: 18080
+  uris:
+  - /api/deploy-web-service/v1/custom-name
+  - /api/deploy-web-service/v1/oemconfig
+dl-inference-server:
+  port: 8500
+  uris: []
+doc-center:
+  port: 30566
+  uris:
+  - /api/doc-center/v1
+doc-center-public:
+  port: 30566
+  uris:
+  - /api/doc-center
+  - /api/efast/v1/favorites
+doc-sync:
+  port: 32260
+  uris:
+  - /api/doc-sync
+document-domain-management:
+  port: 9604
+  uris:
+  - /api/document-domain-management
+document-sync-scheduling:
+  port: 9605
+  uris:
+  - /api/document-sync-scheduling
+document-sync-scheduling-private:
+  port: 9605
+  uris:
+  - /api/document-sync-scheduling
+eantivirus-private:
+  port: 9002
+  uris:
+  - /api/eantivirus
+eantivirus-public:
+  port: 9000
+  uris:
+  - /api/eantivirus
+ecoconfig-private:
+  port: 32128
+  uris:
+  - /api/ecoconfig
+ecoconfig-public:
+  port: 32127
+  uris:
+  - /api/ecoconfig
+ecoindex-private:
+  port: 32130
+  uris:
+  - /api/ecoindex
+ecoindex-public:
+  port: 32129
+  uris:
+  - /api/ecoindex
+ecosearch:
+  port: 32126
+  uris:
+  - /api/ecosearch
+  - /api/object-detection/v1/ping
+ecosearch-private:
+  port: 32127
+  uris:
+  - /api/ecosearch
+ecron-management:
+  port: 32345
+  uris:
+  - /api/ecron-management
+eftsearch:
+  port: 32066
+  uris: []
+egress-package-microservice:
+  port: 9001
+  uris:
+  - /api/egress-package
+encryption-microservice:
+  port: 9001
+  uris:
+  - /api/encryption
+fast-text-analysis:
+  port: 9528
+  uris:
+  - /api/fast-text-analysis
+file-collector:
+  port: 8081
+  uris:
+  - /api/file-collector
+identity-access-management-public:
+  port: 3000
+  uris:
+  - /api/identity-access-mgnt/
+igress-manager:
+  port: 9003
+  uris:
+  - /api/igress-manager
+image-features:
+  port: 9528
+  uris:
+  - /api/image-features
+infoinsight-quy:
+  port: 9898
+  uris:
+  - /api/infoinsight-enquiry/
+infoinsight-stg:
+  port: 9898
+  uris:
+  - /api/infoinsight-strategy/
+intelli-search-public:
+  port: 32126
+  uris:
+  - /api/intelli-search/
+intelliinfo-public:
+  port: 9000
+  uris:
+  - /api/intelliinfo
+kc-mc:
+  port: 7201
+  uris:
+  - /api/kc-mc/
+kc-topic:
+  port: 7212
+  uris:
+  - /api/kc-topic
+  - /api/kc-knowledge-lib
+  - /api/kc-manage
+  - /api/kc-search
+  - /api/kc-uc
+kc-web:
+  port: 7202
+  uris:
+  - /knowledge-center/
+  - /foxit/
+label-recommend:
+  port: 9528
+  uris:
+  - /api/label-recommend
+match-image:
+  port: 9528
+  uris:
+  - /api/match-image
+metadata-extract:
+  port: 9528
+  uris:
+  - /api/catalogdata-extract
+milvus-http:
+  port: 19121
+  uris:
+  - /
+milvus-tcp:
+  port: 19530
+  uris: []
+nginx-ingress-controller:
+  port: 9005
+  uris:
+  - /api/nginx-ingress-controller
+object-detection:
+  port: 9528
+  uris:
+  - /api/object-detection/v1/ping
+ocr-parser-private:
+  port: 8091
+  uris:
+  - /api/ocr-parse
+ossgatewaymanager-private:
+  port: 9002
+  uris:
+  - /api/ossgateway
+ossgatewaymanager-public:
+  port: 9000
+  uris:
+  - /api/ossgateway
+osspolicy-private:
+  port: 9901
+  uris:
+  - /api/osspolicy
+osspolicy-public:
+  port: 9900
+  uris:
+  - /api/osspolicy
+pipelinesensitivescan-public:
+  port: 9000
+  uris:
+  - /api/pipelinesensitivescan
+portal-management:
+  port: 9614
+  uris:
+  - /api/portal-management
+proton-oss-gateway:
+  port: 9000
+  uris:
+  - /api/ossgateway
+proximate-access-private:
+  port: 30930
+  uris:
+  - /api/proximate-access
+proximate-access-public:
+  port: 30930
+  uris:
+  - /api/proximate-access
+recommend:
+  port: 9528
+  uris:
+  - /api/recommend
+recommendation-anyrobot:
+  port: 10003
+  uris: []
+session:
+  port: 8113
+  uris:
+  - /af/api/session/
+sheet-policy:
+  port: 9800
+  uris:
+  - /api/sheet-policy
+sheet-private:
+  port: 9801
+  uris:
+  - /api/sheet
+sheet-public:
+  port: 9800
+  uris:
+  - /api/sheet
+similar-recommend:
+  port: 9528
+  uris:
+  - /api/similar-recommend
+site-agent:
+  port: 8000
+  uris:
+  - /api/site-agent
+site-mgmt:
+  port: 8000
+  uris:
+  - /api/site-mgmt
+smart-search-frontend:
+  port: 19988
+  uris:
+  - /smart-search
+sp-certmgm-web:
+  port: 32000
+  uris:
+  - /api/sp-certmgm-web/
+sp-remote-deploy:
+  port: 31000
+  uris:
+  - /api/sp-remote-deploy
+spreadsheet-extractor:
+  port: 8002
+  uris:
+  - /api/spreadsheet-extractor
+spreadsheet-parser:
+  port: 8001
+  uris:
+  - /api/spreadsheet-parser
+studio-web-service:
+  port: 18080
+  uris:
+  - /interface/studioweb/
+  - /api/studioweb/
+  - /api/studio-web-service/
+studio-web-static:
+  port: 18800
+  uris:
+  - /studio
+transformation:
+  port: 9800
+  uris:
+  - /api/transformation
+translator-server:
+  port: 50051
+  uris: []
+webconsole-redirect:
+  port: 18801
+  uris:
+  - /
+webconsoleinterface:
+  port: 18802
+  uris:
+  - /widget
+  - /console/widget
+  - /console/interface
+webconsolestatic:
+  port: 18801
+  uris:
+  - /console
+  - /oauthlogin
+  - /oauthlogout
+  - /widget/shareweb-plugins
+  - /console/widget/shareweb-plugins
+webconsolethrift:
+  port: 18803
+  uris:
+  - /console/api
+webmobile:
+  port: 4018
+  uris:
+  - /anyshare/m/
+webportal:
+  port: 4017
+  uris:
+  - /anyshare/
+webservice:
+  port: 4016
+  uris:
+  - /anyshare/oauth2
+  - /anyshare/mobile-client
+  - /link
+  - /static
+  - /sso
+  - /api/client
+
+{{- end }}

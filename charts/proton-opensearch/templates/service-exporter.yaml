@@ -1,0 +1,33 @@
+{{- if (eq .Values.config.nodeGroup "master") }}
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ template "opensearch-exporter.name" . }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ template "opensearch-exporter.name" . }}
+    cluster: {{ .Values.config.clusterName }}
+  annotations:
+    prometheus.io/scrape: "true"
+    #prometheus.io/scheme: "http"
+    prometheus.io/path: "/metrics"
+    prometheus.io/port: "{{ .Values.service.exporter.port }}"
+spec:
+{{- if .Values.service.enableDualStack }}
+  ipFamilies:
+  - IPv6
+  - IPv4
+  ipFamilyPolicy: PreferDualStack
+{{- end }}
+  selector:
+    app: {{ template "opensearch-exporter.name" . }}
+    cluster: {{ .Values.config.clusterName }}
+  type: {{ .Values.service.exporter.type }}
+  ports:
+    - name: exporter
+      port: {{ .Values.service.exporter.port }}
+      targetPort: exporter
+{{- if eq .Values.service.exporter.type "NodePort" }}
+      nodePort: {{ .Values.service.exporter.nodePort }}
+{{- end }}
+{{- end }}

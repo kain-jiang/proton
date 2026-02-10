@@ -1,0 +1,74 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+- none
+
+pool:
+  name: ICT-Test
+  demands:
+    - agent.name -equals ICT_PyTest_x86_agent
+
+variables:
+  - name: CONTROLLER_VERSION
+    value: '1.1.0'
+  - name: MASTER_VERSION
+    value: ${CONTROLLER_VERSION}-$(Build.SourceBranchName)
+  - name: RELEASE_VERSION
+    value: $(Build.SourceBranchName)
+steps:
+- checkout: self
+
+- task: CmdLine@2
+  displayName: 执行mongo测试用例
+  continueOnError: true
+  inputs:
+    script: |
+      set -xe
+      echo '$(system.defaultworkingdirectory)'
+      cd $(system.defaultworkingdirectory)
+      cd at-pytest
+      pip3 install -i https://pypi.tuna.tsinghua.edu.cn/simple requests paramiko allure-pytest pymongo==4.2.0
+      if [[ $(Build.SourceBranchName) =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]];then
+        if [[ $(Build.SourceBranchName) != ${CONTROLLER_VERSION} ]]; then
+          exit 1
+        fi
+        python3 -m pytest --maxfail 1 --host HOST --password PASSWORD --CRDVersion $(RELEASE_VERSION) --alluredir ../allure-results --clean-alluredir --junit-xml='$(Build.SourcesDirectory)'/mongo.xml
+      else
+        python3 -m pytest --maxfail 1 --host HOST --password PASSWORD --CRDVersion $(MASTER_VERSION) --alluredir ../allure-results --clean-alluredir --junit-xml='$(Build.SourcesDirectory)'/mongo.xml
+      fi
+
+- task: CmdLine@2
+  displayName: 生成测试报告
+  inputs:
+    script: |
+      set -xe
+      echo '$(System.DefaultWorkingDirectory)'
+      allure generate allure-results/ --clean
+- task: PublishTestResults@2
+  displayName: 'Publish Test XML Report'
+  inputs:
+    testResultsFormat: 'JUnit'
+    testResultsFiles: '*.xml'
+    mergeTestResults: true
+
+- task: CmdLine@2
+  displayName: 更新构建标识号
+  inputs:
+    script: |
+      echo '##vso[build.updatebuildnumber]$(System.TeamProject)-$(Build.Repository.Name)-$(Build.SourceBranchName)-$(Build.BuildNumber)-$(Build.BuildId)'
+
+- task: FtpUpload@2
+  displayName: 上传测试报告
+  inputs:
+    credentialsOption: 'serviceEndpoint'
+    serverEndpoint: 'TestReportFTP'
+    rootDirectory: 'allure-report/'
+    filePatterns: '**'
+    remoteDirectory: '/$(Build.BuildNumber)/'
+    clean: false
+    cleanContents: false
+    preservePaths: true
+    trustSSL: false

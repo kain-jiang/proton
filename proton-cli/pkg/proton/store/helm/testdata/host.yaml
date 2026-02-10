@@ -1,0 +1,18 @@
+image:
+  registry: registry.example.org
+replicaCount: 2
+depServices:
+  rds:
+    host: rds.example.org
+    port: 3306
+    username: hello
+    password: world
+storage:
+  storageClassName: csi-disk
+  capacity: 16Mi
+resources:
+  store:
+    limits:
+      cpu: 2
+    requests:
+      cpu: 1

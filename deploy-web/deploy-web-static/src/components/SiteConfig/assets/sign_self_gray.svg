@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="114px" height="145px" viewBox="0 0 114 145" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 63 (92445) - https://sketch.com -->
+    <title>自签名证书</title>
+    <desc>Created with Sketch.</desc>
+    <defs>
+        <rect id="path-1" x="0" y="0.189386616" width="363" height="160" rx="8"></rect>
+        <linearGradient x1="92.8826469%" y1="30.1397834%" x2="20.9780461%" y2="27.4900396%" id="linearGradient-3">
+            <stop stop-color="#E1E1E1" stop-opacity="0.6" offset="0%"></stop>
+            <stop stop-color="#DADADA" stop-opacity="0" offset="100%"></stop>
+        </linearGradient>
+        <linearGradient x1="50%" y1="0%" x2="50%" y2="100%" id="linearGradient-4">
+            <stop stop-color="#E3E2E2" offset="0%"></stop>
+            <stop stop-color="#EDEDED" stop-opacity="0" offset="100%"></stop>
+        </linearGradient>
+    </defs>
+    <g id="页面-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="自签名证书" transform="translate(-249.000000, 0.000000)">
+            <mask id="mask-2" fill="white">
+                <use xlink:href="#path-1"></use>
+            </mask>
+            <g id="蒙版"></g>
+            <g id="编组-23" mask="url(#mask-2)">
+                <g transform="translate(249.000000, -108.000000)">
+                    <path d="M108.5,26 C143.570082,26 172,54.4299184 172,89.5 C172,124.570082 143.570082,153 108.5,153 C73.4299184,153 45,124.570082 45,89.5 C45,54.4299184 73.4299184,26 108.5,26 Z M108.5,40 C81.1619049,40 59,62.1619049 59,89.5 C59,116.838095 81.1619049,139 108.5,139 C135.838095,139 158,116.838095 158,89.5 C158,62.1619049 135.838095,40 108.5,40 Z" id="形状结合备份-7" stroke="none" fill="url(#linearGradient-3)" fill-rule="evenodd" transform="translate(108.500000, 89.500000) rotate(-141.000000) translate(-108.500000, -89.500000) "></path>
+                    <circle id="椭圆形备份-2" stroke="none" fill="url(#linearGradient-4)" fill-rule="nonzero" cx="33.5" cy="210.689387" r="26.5"></circle>
+                    <path d="M35.3529412,198.189387 L63.5882353,198.189387 L73,207.611609 L73,248.833831 C73,250.129387 71.9411765,251.189387 70.6470588,251.189387 L35.3529412,251.189387 C34.0588235,251.189387 33,250.129387 33,248.833831 L33,200.544942 C33,199.249387 34.0588235,198.189387 35.3529412,198.189387 Z" id="路径备份" stroke="none" fill="#FFFFFF" fill-rule="nonzero"></path>
+                    <polygon id="路径备份-2" stroke="none" fill="#F2F2F2" fill-rule="nonzero" points="62 198.189387 62 209.189387 73 209.189387"></polygon>
+                    <path d="M33,200.544942 C33,199.249387 34.0588235,198.189387 35.3529412,198.189387 L63.5882353,198.189387 L73,207.611609 L73,248.833831 C73,250.129387 71.9411765,251.189387 70.6470588,251.189387 L35.3529412,251.189387 C34.0588235,251.189387 33,250.129387 33,248.833831 L33,200.544942 Z" id="路径备份-3" stroke="#DCDCDC" stroke-width="2" fill="none"></path>
+                    <polyline id="路径备份-4" stroke="#DCDCDC" stroke-width="2" fill="none" points="69 208.189387 62 208.189387 62 201.189387"></polyline>
+                    <g id="编组备份-4" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" transform="translate(12.000000, 203.189387)" stroke-linejoin="round">
+                        <path d="M7.55405405,2.91666667 L5.69459459,1.05 C4.76486486,0.116666667 3.37027027,0.116666667 2.44054054,1.05 L2.20810811,1.28333333 C1.27837838,2.21666667 1.27837838,3.61666667 2.20810811,4.55 L4.06756757,6.41666667" id="路径" stroke="#DCDCDC" stroke-width="2"></path>
+                        <polygon id="路径" stroke="#DCDCDC" stroke-width="2" fill="#F2F2F2" fill-rule="nonzero" points="3.48648649 7 33.7027027 37.3333333 43 42 38.3513514 32.6666667 8.13513514 2.33333333"></polygon>
+                        <line x1="38.3513514" y1="32.6666667" x2="33.7027027" y2="37.3333333" id="路径" stroke="#DCDCDC" stroke-width="2" fill="#FFFFFF" fill-rule="nonzero"></line>
+                        <line x1="11.6216216" y1="5.83333333" x2="3.48648649" y2="14" id="路径" stroke="#DCDCDC" stroke-width="2"></line>
+                        <line x1="0" y1="10.5" x2="11.6216216" y2="22.1666667" id="路径" stroke="#DCDCDC" stroke-width="2"></line>
+                    </g>
+                    <g id="编组备份-5" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" transform="translate(0.000000, 239.189387)">
+                        <line x1="5.90909091" y1="0" x2="5.90909091" y2="12" id="路径" stroke="#DBDBDB" stroke-width="2"></line>
+                        <line x1="0" y1="6" x2="13" y2="6" id="路径" stroke="#DBDBDB" stroke-width="2"></line>
+                    </g>
+                    <g id="编组备份-6" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" transform="translate(89.000000, 218.189387)">
+                        <line x1="5.90909091" y1="0" x2="5.90909091" y2="13" id="路径" stroke="#DBDBDB" stroke-width="2"></line>
+                        <line x1="0" y1="7.09090909" x2="13" y2="7.09090909" id="路径" stroke="#DBDBDB" stroke-width="2"></line>
+                    </g>
+                    <g id="编组备份-7" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" transform="translate(23.000000, 158.189387)">
+                        <line x1="9.5" y1="0" x2="9.5" y2="18" id="路径" stroke="#DBDBDB" stroke-width="2"></line>
+                        <line x1="0" y1="9.6" x2="19" y2="9.6" id="路径" stroke="#DBDBDB" stroke-width="2"></line>
+                    </g>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

@@ -1,0 +1,152 @@
+# 命名空间
+namespace: resource
+
+# 环境变量：语言/时区
+env:
+  language: en_US.UTF-8
+  timezone: Asia/Shanghai
+
+# kafka副本数
+replicaCount: 3
+
+# 节点选择器
+nodeSelector: {}
+
+# 反亲和性设置
+antiAffinity:
+  enabled: true
+  rule: "soft" # 可选参数 "hard", "soft"
+
+# 镜像
+image:
+  registry: acr.aishu.cn
+  pullPolicy: IfNotPresent # 可选参数 Always, IfNotPresent, Never
+  kafka:
+    repository: proton/proton-kafka
+    tag: 5.4.1-feature-arp-721025
+  exporter:
+    repository: public/kafka-exporter
+    tag: v1.6.0
+
+# 依赖
+depServices:
+  zookeeper:
+    host: zookeeper-headless.resource
+    port: 2181
+    sasl:
+      enabled: true
+      username: kafka
+      password: ""  # REQUIRED: set at deploy time
+    ssl:
+      enabled: false
+      secret:
+        name: zookeeper-ssl
+        trustStoreName: truststore.jks
+        trustStorePassWordName: truststorepassword 
+        keyStoreName: keystore.jks
+        keyStorePassWordName: keystorepassword
+
+# 服务端口
+service:
+  enableDualStack: false
+  kafka:
+    port: 9097
+  external:
+    enabled: true
+    ports:
+      - name: EXTERNAL
+        port: 9098
+        nodePortBase: 31000
+        enableSSL: false
+      - name: EXTERNAL-TLS
+        port: 9099
+        nodePortBase: 31100
+        enableSSL: true
+      # - name: EXTERNAL2
+      #   port: 9099
+      #   ip: 10.4.108.114
+      #   nodePortBase: 31100
+  jmxExporter:
+    port: 9995
+  exporter:
+    type: ClusterIP # 可选参数 ClusterIP, NodePort, LoadBalancer
+    port: 9308
+    nodePort: 31918
+
+# 应用配置
+config:
+  clusterName: ""
+  enableSSL: true
+  kafkaENV:
+    KAFKA_HEAP_OPTS: -Xmx1G -Xms1G
+    # KAFKA_NUM_PARTITIONS: 1
+    # KAFKA_DEFAULT_REPLICATION_FACTOR: 1
+    # KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR:1
+    KAFKA_DELETE_TOPIC_ENABLE: true
+    KAFKA_FETCH_MAX_BYTES: "20971520" # 20MB
+    KAFKA_MAX_PARTITION_FETCH_BYTES: "20971520" # 20MB
+    KAFKA_MAX_REQUEST_SIZE: "20971520" # 20MB
+    KAFKA_MESSAGE_MAX_BYTES: "20971520" # 20MB
+    KAFKA_REPLICA_FETCH_MAX_BYTES: "20971520" # 20MB
+    KAFKA_SOCKET_REQUEST_MAX_BYTES: "20971520" # 20MB
+    KAFKA_LOG_RETENTION_HOURS: 168
+    KAFKA_LOG_RETENTION_BYTES: -1
+    KAFKA_LOG_MESSAGE_TIMESTAMP_TYPE: LogAppendTime
+    KAFKA_LOG_ROLL_HOURS: 24
+  sasl:
+    enabled: true
+    # sasl.mechanism support value: PLAIN, SCRAM-SHA-256, SCRAM-SHA-512
+    mechanism: "PLAIN"
+    user:
+      # ! Notice: In Non-multi-tenant scenes when use sasl/scram, "default" should be the default tenant, Topic with the prefix "default." There are "Producer" and "Consumer" permissions. 
+      - username: anyrobot
+        password: ""  # REQUIRED: set at deploy time
+        # *The default value of aclTopicPrefix is the value of "{username}.", should match the regex "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,8}[a-zA-Z0-9]$"
+        # aclTopicPrefix: 
+  exporter:
+    verbosity: 0 # 日志级别, 可选参数 0, 1, 2, 其中0=INFO, 1=DEBUG, 2=TRACE
+    enableSaramaLog: false
+
+# 加密信息
+secret:
+  secretName: "" # if secretName is empty, default is {{ template "kafka.defaultSSLSecretName" . }}
+  trustStoreName: truststore.jks
+  trustStorePassWordName: truststorepassword
+  keyStoreName: keystore.jks
+  keyStorePassWordName: keystorepassword
+  keyPassWordName: keypassword
+  certName: cert.pem
+  keyName: key.pem
+  caName: ca.pem
+
+# 数据持久化存储配置
+storage:
+  storageClassName: ""
+  capacity: 10Gi
+  local:
+    0:
+      host: node-108-114
+      path: /sysvol/kafka/kafka_data
+    1:
+      host: node-108-117
+      path: /sysvol/kafka/kafka_data
+    2:
+      host: node-108-124
+      path: /sysvol/kafka/kafka_data
+
+# 资源限额
+resources:
+  kafka:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: 1000m
+      memory: 2Gi
+  exporter:
+    requests:
+      cpu: 100m
+      memory: 100Mi
+    limits:
+      cpu: 500m
+      memory: 500Mi

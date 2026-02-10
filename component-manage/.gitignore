@@ -1,0 +1,45 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, build with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+.output
+
+# VSCode
+/.vscode
+
+# GoLand
+/.idea
+
+# Fleet
+/.fleet
+
+# Junit
+junit-results.xml
+lint-results.xml
+
+# Coverage
+coverage.html
+coverage.xml
+coverage.txt
+coverage.out
+coverage.json
+
+# Swag
+# /docs
+
+# UT
+/ut-result
+
+# nix build
+/result
+
+# air
+/tmp

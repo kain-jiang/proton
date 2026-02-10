@@ -1,0 +1,554 @@
+apiVersion: 1
+groups:
+    - orgId: 1
+      name: MariaDB
+      folder: AlertRule
+      interval: 1m
+      rules:
+        - uid: cejw7mjjt105cc
+          title: MariaDB Wsrep != Synced
+          condition: C
+          data:
+            - refId: A
+              relativeTimeRange:
+                from: 300
+                to: 0
+              datasourceUid: P1C01134CD6DBEE56
+              model:
+                adhocFilters: []
+                datasource:
+                    type: prometheus
+                    uid: P1C01134CD6DBEE56
+                editorMode: code
+                expr: mysql_global_status_wsrep_local_state
+                instant: true
+                interval: ""
+                intervalMs: 15000
+                legendFormat: '{{name}}'
+                maxDataPoints: 43200
+                range: false
+                refId: A
+            - refId: C
+              datasourceUid: __expr__
+              model:
+                conditions:
+                    - evaluator:
+                        params:
+                            - 4
+                        type: ne
+                      operator:
+                        type: and
+                      query:
+                        params:
+                            - C
+                      reducer:
+                        params: []
+                        type: last
+                      type: query
+                datasource:
+                    type: __expr__
+                    uid: __expr__
+                expression: A
+                intervalMs: 1000
+                maxDataPoints: 43200
+                refId: C
+                type: threshold
+          dashboardUid: E-05
+          panelId: 74
+          noDataState: OK
+          execErrState: Error
+          for: 1m
+          annotations:
+            __dashboardUid__: E-05
+            __panelId__: "74"
+          isPaused: false
+          notification_settings:
+            receiver: grafana-default-email
+    - orgId: 1
+      name: Node
+      folder: AlertRule
+      interval: 1m
+      rules:
+        - uid: fejxkdskc21hcf
+          title: Node Disk Partition Usage > 80%
+          condition: E
+          data:
+            - refId: C
+              relativeTimeRange:
+                from: 300
+                to: 0
+              datasourceUid: P1C01134CD6DBEE56
+              model:
+                adhocFilters: []
+                datasource:
+                    type: prometheus
+                    uid: P1C01134CD6DBEE56
+                editorMode: code
+                expr: max(node_filesystem_size_bytes{node=~'.*',app='proton-monitor-ds',fstype=~"ext.*|xfs",mountpoint!~"^/var/lib/kubelet.*"})by(node,mountpoint,device)
+                format: table
+                instant: true
+                interval: ""
+                intervalFactor: 1
+                intervalMs: 15000
+                legendFormat: ""
+                maxDataPoints: 43200
+                range: false
+                refId: C
+            - refId: A
+              relativeTimeRange:
+                from: 300
+                to: 0
+              datasourceUid: P1C01134CD6DBEE56
+              model:
+                adhocFilters: []
+                datasource:
+                    type: prometheus
+                    uid: P1C01134CD6DBEE56
+                editorMode: code
+                expr: max(node_filesystem_size_bytes{node=~'.*',app='proton-monitor-ds',fstype=~"ext.*|xfs",mountpoint!~"^/var/lib/kubelet.*"} - node_filesystem_avail_bytes {node=~'.*',fstype=~"ext.*|xfs",mountpoint!~"^/var/lib/kubelet.*"})by(node,mountpoint,device)
+                format: table
+                instant: true
+                interval: 10s
+                intervalFactor: 1
+                intervalMs: 15000
+                legendFormat: ""
+                maxDataPoints: 43200
+                range: false
+                refId: A
+            - refId: B
+              relativeTimeRange:
+                from: 300
+                to: 0
+              datasourceUid: P1C01134CD6DBEE56
+              model:
+                adhocFilters: []
+                datasource:
+                    type: prometheus
+                    uid: P1C01134CD6DBEE56
+                editorMode: code
+                expr: (1-(node_filesystem_avail_bytes{node=~'.*',app='proton-monitor-ds',fstype=~"ext.*|xfs",mountpoint!~"^/var/lib/kubelet.*"} / node_filesystem_size_bytes{node=~'.*',fstype=~"ext.*|xfs",mountpoint!~"^/var/lib/kubelet.*"}))*100 - 0
+                format: table
+                instant: true
+                interval: ""
+                intervalFactor: 1
+                intervalMs: 15000
+                legendFormat: ""
+                maxDataPoints: 43200
+                range: false
+                refId: B
+            - refId: D
+              datasourceUid: __expr__
+              model:
+                conditions:
+                    - evaluator:
+                        params: []
+                        type: gt
+                      operator:
+                        type: and
+                      query:
+                        params:
+                            - D
+                      reducer:
+                        params: []
+                        type: last
+                      type: query
+                datasource:
+                    type: __expr__
+                    uid: __expr__
+                expression: A
+                intervalMs: 1000
+                maxDataPoints: 43200
+                reducer: last
+                refId: D
+                type: reduce
+            - refId: E
+              datasourceUid: __expr__
+              model:
+                conditions:
+                    - evaluator:
+                        params:
+                            - 80
+                        type: gt
+                      operator:
+                        type: and
+                      query:
+                        params:
+                            - E
+                      reducer:
+                        params: []
+                        type: last
+                      type: query
+                datasource:
+                    type: __expr__
+                    uid: __expr__
+                expression: B
+                intervalMs: 1000
+                maxDataPoints: 43200
+                refId: E
+                type: threshold
+          dashboardUid: B-01
+          panelId: 164
+          noDataState: NoData
+          execErrState: Error
+          for: 1m
+          annotations:
+            __dashboardUid__: B-01
+            __panelId__: "164"
+          isPaused: false
+          notification_settings:
+            receiver: grafana-default-email
+        - uid: fek1a23yi8glcf
+          title: OOM-Killer logs > 0 in 10min
+          condition: C
+          data:
+            - refId: A
+              queryType: statsRange
+              relativeTimeRange:
+                from: 600
+                to: 0
+              datasourceUid: PBDA9EBF9061FF016
+              model:
+                datasource:
+                    type: victoriametrics-logs-datasource
+                    uid: PBDA9EBF9061FF016
+                editorMode: code
+                expr: 'message:"oom-killer" | stats count() '
+                hide: false
+                instant: true
+                intervalMs: 1000
+                legendFormat: ""
+                maxDataPoints: 43200
+                queryType: statsRange
+                refId: A
+            - refId: B
+              datasourceUid: __expr__
+              model:
+                conditions:
+                    - evaluator:
+                        params:
+                            - 0
+                            - 0
+                        type: gt
+                      operator:
+                        type: and
+                      query:
+                        params: []
+                      reducer:
+                        params: []
+                        type: avg
+                      type: query
+                datasource:
+                    name: Expression
+                    type: __expr__
+                    uid: __expr__
+                expression: A
+                hide: false
+                intervalMs: 1000
+                maxDataPoints: 43200
+                reducer: last
+                refId: B
+                type: reduce
+            - refId: C
+              datasourceUid: __expr__
+              model:
+                conditions:
+                    - evaluator:
+                        params:
+                            - 0
+                            - 0
+                        type: gt
+                      operator:
+                        type: and
+                      query:
+                        params: []
+                      reducer:
+                        params: []
+                        type: avg
+                      type: query
+                datasource:
+                    name: Expression
+                    type: __expr__
+                    uid: __expr__
+                expression: B
+                hide: false
+                intervalMs: 1000
+                maxDataPoints: 43200
+                refId: C
+                type: threshold
+          noDataState: OK
+          execErrState: Error
+          for: 1m
+          isPaused: false
+          notification_settings:
+            receiver: grafana-default-email
+        - uid: eep7vdewwm7lse
+          title: CPU IDLE < 10%
+          condition: C
+          data:
+            - refId: A
+              relativeTimeRange:
+                from: 600
+                to: 0
+              datasourceUid: P1C01134CD6DBEE56
+              model:
+                disableTextWrap: false
+                editorMode: builder
+                expr: avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m]))
+                fullMetaSearch: false
+                includeNullMetadata: true
+                instant: true
+                intervalMs: 1000
+                legendFormat: __auto
+                maxDataPoints: 43200
+                range: false
+                refId: A
+                useBackend: false
+            - refId: C
+              datasourceUid: __expr__
+              model:
+                conditions:
+                    - evaluator:
+                        params:
+                            - 0.1
+                        type: lt
+                      operator:
+                        type: and
+                      query:
+                        params:
+                            - C
+                      reducer:
+                        params: []
+                        type: last
+                      type: query
+                datasource:
+                    type: __expr__
+                    uid: __expr__
+                expression: A
+                intervalMs: 1000
+                maxDataPoints: 43200
+                refId: C
+                type: threshold
+          noDataState: NoData
+          execErrState: Error
+          for: 1m
+          annotations: {}
+          labels: {}
+          isPaused: false
+          notification_settings:
+            receiver: grafana-default-email
+        - uid: eepawx375f3eoc
+          title: Available RAM < 10%
+          condition: C
+          data:
+            - refId: A
+              relativeTimeRange:
+                from: 600
+                to: 0
+              datasourceUid: P1C01134CD6DBEE56
+              model:
+                editorMode: code
+                expr: node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes
+                instant: true
+                intervalMs: 1000
+                legendFormat: __auto
+                maxDataPoints: 43200
+                range: false
+                refId: A
+            - refId: C
+              datasourceUid: __expr__
+              model:
+                conditions:
+                    - evaluator:
+                        params:
+                            - 0.1
+                        type: lt
+                      operator:
+                        type: and
+                      query:
+                        params:
+                            - C
+                      reducer:
+                        params: []
+                        type: last
+                      type: query
+                datasource:
+                    type: __expr__
+                    uid: __expr__
+                expression: A
+                intervalMs: 1000
+                maxDataPoints: 43200
+                refId: C
+                type: threshold
+          noDataState: NoData
+          execErrState: Error
+          for: 1m
+          annotations: {}
+          labels: {}
+          isPaused: false
+          notification_settings:
+            receiver: grafana-default-email
+        - uid: aepe2uz8sz1tsf
+          title: Time Spent Doing I/O > 85%
+          condition: C
+          data:
+            - refId: A
+              relativeTimeRange:
+                from: 600
+                to: 0
+              datasourceUid: P1C01134CD6DBEE56
+              model:
+                editorMode: code
+                expr: irate(node_disk_io_time_seconds_total{device=~"sd.*"}[5m])
+                instant: true
+                intervalMs: 1000
+                legendFormat: __auto
+                maxDataPoints: 43200
+                range: false
+                refId: A
+            - refId: C
+              datasourceUid: __expr__
+              model:
+                conditions:
+                    - evaluator:
+                        params:
+                            - 0.85
+                        type: gt
+                      operator:
+                        type: and
+                      query:
+                        params:
+                            - C
+                      reducer:
+                        params: []
+                        type: last
+                      type: query
+                datasource:
+                    type: __expr__
+                    uid: __expr__
+                expression: A
+                intervalMs: 1000
+                maxDataPoints: 43200
+                refId: C
+                type: threshold
+          noDataState: NoData
+          execErrState: Error
+          for: 1m
+          annotations: {}
+          labels: {}
+          isPaused: false
+          notification_settings:
+            receiver: grafana-default-email
+        - uid: cepeqbwuc2m0wb
+          title: Pod Container Restarts Hourly ≥ 4
+          condition: C
+          data:
+            - refId: A
+              relativeTimeRange:
+                from: 600
+                to: 0
+              datasourceUid: P1C01134CD6DBEE56
+              model:
+                disableTextWrap: false
+                editorMode: builder
+                expr: increase(kube_pod_container_status_restarts_total[1h])
+                fullMetaSearch: false
+                includeNullMetadata: true
+                instant: true
+                intervalMs: 1000
+                legendFormat: __auto
+                maxDataPoints: 43200
+                range: false
+                refId: A
+                useBackend: false
+            - refId: C
+              datasourceUid: __expr__
+              model:
+                conditions:
+                    - evaluator:
+                        params:
+                            - 4
+                        type: gt
+                      operator:
+                        type: and
+                      query:
+                        params:
+                            - C
+                      reducer:
+                        params: []
+                        type: last
+                      type: query
+                datasource:
+                    type: __expr__
+                    uid: __expr__
+                expression: A
+                intervalMs: 1000
+                maxDataPoints: 43200
+                refId: C
+                type: threshold
+          noDataState: NoData
+          execErrState: Error
+          annotations: {}
+          labels: {}
+          isPaused: false
+          notification_settings:
+            receiver: grafana-default-email
+    - orgId: 1
+      name: OpenSearch
+      folder: AlertRule
+      interval: 1m
+      rules:
+        - uid: bephjfvzd3dhcf
+          title: OpenSearch Node Shards Allocation > 90%
+          condition: C
+          data:
+            - refId: A
+              relativeTimeRange:
+                from: 600
+                to: 0
+              datasourceUid: P1C01134CD6DBEE56
+              model:
+                disableTextWrap: false
+                editorMode: code
+                expr: opensearch_node_shards_total{node!=""} / ignoring(node) group_left opensearch_clustersettings_stats_max_shards_per_node
+                fullMetaSearch: false
+                includeNullMetadata: true
+                instant: true
+                intervalMs: 1000
+                legendFormat: __auto
+                maxDataPoints: 43200
+                range: false
+                refId: A
+                useBackend: false
+            - refId: C
+              datasourceUid: __expr__
+              model:
+                conditions:
+                    - evaluator:
+                        params:
+                            - 0.9
+                        type: gt
+                      operator:
+                        type: and
+                      query:
+                        params:
+                            - C
+                      reducer:
+                        params: []
+                        type: last
+                      type: query
+                datasource:
+                    type: __expr__
+                    uid: __expr__
+                expression: A
+                intervalMs: 1000
+                maxDataPoints: 43200
+                refId: C
+                type: threshold
+          noDataState: NoData
+          execErrState: Error
+          for: 1m
+          annotations: {}
+          labels: {}
+          isPaused: false
+          notification_settings:
+            receiver: grafana-default-email

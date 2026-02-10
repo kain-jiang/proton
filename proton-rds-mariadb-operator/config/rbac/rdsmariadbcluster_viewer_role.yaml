@@ -1,0 +1,20 @@
+# permissions for end users to view rdsmariadbclusters.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: rdsmariadbcluster-viewer-role
+rules:
+- apiGroups:
+  - rds.proton.aishu.cn
+  resources:
+  - rdsmariadbclusters
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - rds.proton.aishu.cn
+  resources:
+  - rdsmariadbclusters/status
+  verbs:
+  - get

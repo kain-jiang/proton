@@ -1,0 +1,108 @@
+# Default values for deploy-service.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+namespace: "anyshare"
+pnamespace: "proton"
+rnamespace: "resource"
+
+replicaCount: 1
+
+# 初始化的访问地址信息
+initAccessAddress:
+  enable_http: false
+  access_type: internal
+  access_addr: https://127.0.0.1
+
+env:
+  language: en_US.UTF-8
+  timezone: Asia/Shanghai
+  tornadoProcess: 10
+  debugLevel: INFO
+
+image:
+  registry: "acr.aishu.cn"
+  repository: ict/deploy-service
+  tag: mission.latest
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podSecurityContext:
+  {}
+  # fsGroup: 2000
+
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 5000
+  runAsGroup: 5000
+
+hostAliases:
+  host: "127.0.0.1"
+  hostname: "chartmuseum.aishu.cn"
+
+service:
+  enableDualStack: false
+  type: ClusterIP
+  language: zh_CN
+  oauthOn: false
+
+resources:
+  limits:
+    cpu: 8
+    memory: 2Gi
+  requests:
+    cpu: 0
+    memory: 0
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+depServices:
+  proton-policy-engine:
+    host: proton-policy-engine-proton-policy-engine-cluster.resource
+    port: 9800
+  ossgateway:
+    deployTrait:
+      version: "unknown"
+  rds:
+    host: rdsHost
+    password: rdsPassword
+    port: 3330
+    user: anyshare
+    type: MYSQL
+    system_id: ""
+  redis:
+    connectType: sentinel
+    enableSSL: false
+    connectInfo:
+      username: root
+      password: fake_password
+      host: ""
+      port: 26379
+      masterHost: ""
+      masterPort: 26379
+      slaveHost: ""
+      slavePort: 26379
+      sentinelHost: proton-redis-proton-redis-sentinel.resource.svc.cluster.local
+      sentinelPort: 26379
+      sentinelUsername: root
+      sentinelPassword: fake_password
+      masterGroupName: mymaster
+    secretName: ""
+    caName: ""
+    certName: ""
+    keyName: ""
+  deploy-core:
+    namespace: ""

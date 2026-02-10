@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vip-configmap
+  namespace: {{ .Values.namespace }}
+data:
+  vip.conf: |
+    {{ .Values.vip.ip }} {{ .Values.vip.port }} {{ .Values.namespace }}/{{ .Values.vip.serviceName }}

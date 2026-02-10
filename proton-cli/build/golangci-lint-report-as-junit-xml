@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# Run golangci-lint and output to file as junit-xml.
+
+set -o errexit
+set -o nounset
+set -o pipefail
+
+PROTON_ROOT=$(dirname "${BASH_SOURCE[0]}")/..
+
+source "${PROTON_ROOT}/build/lib/init.sh"
+
+proton::golangci-lint::verify_version
+proton::golangci-lint::run::junit-xml

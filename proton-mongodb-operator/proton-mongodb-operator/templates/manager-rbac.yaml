@@ -1,0 +1,71 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "proton-mongodb-operator.fullname" . }}-manager-role
+  labels:
+  {{- include "proton-mongodb-operator.labels" . | nindent 4 }}
+rules:
+- apiGroups:
+  - ""
+  - apps
+  - batch
+  resources:
+  - configmaps
+  - deployments
+  - persistentvolumeclaims
+  - persistentvolumes
+  - pods
+  - pods/exec
+  - secrets
+  - services
+  - statefulsets
+  - cronjobs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - mongodb.proton.aishu.cn
+  resources:
+  - mongodboperators
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - mongodb.proton.aishu.cn
+  resources:
+  - mongodboperators/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - mongodb.proton.aishu.cn
+  resources:
+  - mongodboperators/status
+  verbs:
+  - get
+  - patch
+  - update
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "proton-mongodb-operator.fullname" . }}-manager-rolebinding
+  labels:
+  {{- include "proton-mongodb-operator.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: '{{ include "proton-mongodb-operator.fullname" . }}-manager-role'
+subjects:
+- kind: ServiceAccount
+  name: '{{ include "proton-mongodb-operator.fullname" . }}-controller-manager'
+  namespace: '{{ .Release.Namespace }}'

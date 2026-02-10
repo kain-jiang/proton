@@ -1,0 +1,45 @@
+{
+    "bip": "172.33.0.1/16",
+    "data-root": "/data/docker",
+    "default-ulimits": {
+        "as": {
+            "Hard": -1,
+            "Name": "as",
+            "Soft": -1
+        },
+        "cpu": {
+            "Hard": -1,
+            "Name": "cpu",
+            "Soft": -1
+        },
+        "memlock": {
+            "Hard": -1,
+            "Name": "memlock",
+            "Soft": -1
+        },
+        "nofile": {
+            "Hard": 1048576,
+            "Name": "nofile",
+            "Soft": 1048576
+        },
+        "nproc": {
+            "Hard": -1,
+            "Name": "nproc",
+            "Soft": -1
+        }
+    },
+    "exec-opts": [
+        "native.cgroupdriver=systemd"
+    ],
+    "insecure-registries": [
+        "node-45-73:5000",
+        "registry.aishu.cn:15000"
+    ],
+    "log-driver": "json-file",
+    "log-opts": {
+        "max-file": "3",
+        "max-size": "10m"
+    },
+    "max-concurrent-downloads": 1000,
+    "max-concurrent-uploads": 1000
+}

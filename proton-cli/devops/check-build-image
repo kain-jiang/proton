@@ -1,0 +1,17 @@
+#!/bin/bash
+
+set -o errexit
+set -o pipefail
+set -o nounset
+
+PROTON_ROOT=$(realpath $(dirname "${BASH_SOURCE[0]}")/..)
+
+source "${PROTON_ROOT}/build/lib/init.sh"
+
+got=$1
+want=$(proton::build-image::tag)
+
+if [[ "${got}" != "${want}" ]]; then
+  echo "##vso[task.logissue type=warning]The build-image is outdated. Tag should be ${want} not ${got}"
+  echo "##vso[task.logissue type=warning]Please update build-image by build/update-build-image"
+fi

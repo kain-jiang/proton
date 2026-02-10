@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="114px" height="146px" viewBox="0 0 114 146" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>编组 7</title>
+    <defs>
+        <linearGradient x1="100%" y1="16.139519%" x2="10.7206029%" y2="16.139519%" id="linearGradient-1">
+            <stop stop-color="#B4C9FB" stop-opacity="0" offset="0%"></stop>
+            <stop stop-color="#CBDAFC" stop-opacity="0.353372914" offset="100%"></stop>
+            <stop stop-color="#DBE6FD" stop-opacity="0.6" offset="100%"></stop>
+        </linearGradient>
+        <linearGradient x1="50%" y1="0%" x2="50%" y2="100%" id="linearGradient-2">
+            <stop stop-color="#E8EFFF" offset="0%"></stop>
+            <stop stop-color="#E8EFFF" stop-opacity="0" offset="100%"></stop>
+        </linearGradient>
+    </defs>
+    <g id="页面-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="编组-7" transform="translate(0.000000, 0.189930)">
+            <path d="M77.3486406,21.7787954 C88.0632221,30.4552924 101.301911,33.9228459 114.000444,32.5035231 L114.000208,46.5714792 C98.1893345,47.9479271 81.8460693,43.4353753 68.5381552,32.6588389 C57.7702845,23.9391891 50.6006338,12.4230861 47.2278461,0.000491656646 L61.8911074,0.000560310638 C64.8421992,8.26634907 70.0289382,15.8514172 77.3486406,21.7787954 Z" id="形状结合" fill="url(#linearGradient-1)"></path>
+            <g id="编组-3" transform="translate(0.000000, 51.810070)">
+                <line x1="5.90909091" y1="81" x2="5.90909091" y2="93" id="路径备份-5" stroke="#BFD1FD" stroke-width="2"></line>
+                <line x1="0" y1="87" x2="13" y2="87" id="路径备份-6" stroke="#BFD1FD" stroke-width="2"></line>
+                <g id="编组备份-12" transform="translate(89.000000, 60.000000)" stroke="#BFD1FD" stroke-width="2">
+                    <line x1="5.90909091" y1="0" x2="5.90909091" y2="13" id="路径"></line>
+                    <line x1="0" y1="7.09090909" x2="13" y2="7.09090909" id="路径"></line>
+                </g>
+                <g id="编组备份-13" transform="translate(23.000000, 0.000000)" stroke="#BFD1FD" stroke-width="2">
+                    <line x1="9.5" y1="0" x2="9.5" y2="18" id="路径"></line>
+                    <line x1="0" y1="9.6" x2="19" y2="9.6" id="路径"></line>
+                </g>
+                <rect id="矩形" fill="url(#linearGradient-2)" fill-rule="nonzero" x="20" y="38" width="40" height="40" rx="2"></rect>
+                <path d="M51.0381551,26 C61.255423,26 69.5381551,34.2827321 69.5381551,44.5 C69.5381551,48.8467498 68.0390457,52.8433637 65.5296367,56.0010321 L65.5381551,56 L51.8731133,76.7331669 C51.5691836,77.1943015 50.9489764,77.3217414 50.4878418,77.0178117 C50.3746464,76.9432057 50.2778029,76.8463622 50.2031969,76.7331669 L36.5381551,56 C34.0369485,52.842521 32.5381551,48.8462915 32.5381551,44.5 C32.5381551,34.2827321 40.8208872,26 51.0381551,26 Z" id="形状结合" stroke="#82A7FC" stroke-width="2" fill="#FFFFFF"></path>
+                <circle id="椭圆形" stroke="#82A7FC" stroke-width="2" fill="#A3D4FF" cx="51.5" cy="44.5" r="7.5"></circle>
+                <path d="M58.3418615,73.8665711 L65.9049443,73.8665711 C66.6276428,73.8665711 67.2762157,74.2080862 67.5381551,74.726561 L72.9401883,85.9476761 C73.1155767,86.2948345 72.8921504,86.685706 72.4411517,86.820712 C72.3399041,86.8510204 72.2322171,86.8665711 72.1235829,86.8665711 L30.8761817,86.8665711 C30.3922799,86.8665711 30,86.5646118 30,86.1921261 C30,86.1085044 30.0202022,86.0256119 30.0595763,85.9476761 L35.1266607,74.726561 C35.3886001,74.2080862 36.037173,73.8665711 36.7598716,73.8665711 L43.4467727,73.8665711" id="路径" stroke="#82A7FC" stroke-width="2" stroke-linecap="round"></path>
+            </g>
+        </g>
+    </g>
+</svg>

@@ -1,0 +1,42 @@
+- Command: execute
+  args:
+    transaction: false
+    Statements:
+    - >
+      CREATE TABLE IF NOT EXISTS task_proton_component_migrate (
+          id INT AUTO_INCREMENT COMMENT 'primary key id',
+          cname VARCHAR(100) COMMENT 'component connect object name',
+          ctype VARCHAR(100) COMMENT 'component type',
+          sid INT COMMENT 'system id, index system',
+          coptions MEDIUMBLOB,
+          cattribute MEDIUMBLOB,
+          INDEX ctype (ctype),
+          INDEX cname (cname),
+          INDEX sid (sid),
+          UNIQUE KEY (sid, ctype, cname),
+          PRIMARY KEY (id)
+      ) COMMENT 'proton component multil info';
+    - >
+      INSERT INTO
+          `task_proton_component_migrate` (
+              `cname`,
+              `ctype`,
+              `sid`,
+              `coptions`,
+              `cattribute`
+          )
+      SELECT
+          `cname`,
+          `ctype`,
+          `sid`,
+          `coptions`,
+          `cattribute`
+      FROM `task_proton_component`;
+    - >
+      RENAME TABLE `task_proton_component` TO `old_task_proton_component`,
+      `task_proton_component_migrate` TO `task_proton_component`;
+    - >
+      DROP TABLE IF EXISTS `old_task_proton_component`;
+
+
+# tidb 不支持修改列为主键和自增属性

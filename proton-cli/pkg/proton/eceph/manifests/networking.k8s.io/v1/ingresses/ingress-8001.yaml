@@ -1,0 +1,34 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-8001
+  namespace: default
+  annotations:
+    kubernetes.io/ingress.class: nginx-eceph
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "1000"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "1000"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "1000"
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/server-snippet: |
+      set $real_request_method $request_method;
+      if ($http_x_aishu_real_method = PUT ){
+        set $real_request_method $http_x_aishu_real_method;
+      }
+      if ($http_x_aishu_real_method = DELETE ){
+        set $real_request_method $http_x_aishu_real_method;
+      }
+      if ($request_method != POST ){
+        set $real_request_method $request_method;
+      }
+      proxy_method $real_request_method;
+spec:
+  rules:
+    - http:
+        paths:
+          - backend:
+              service:
+                name: proton-eceph-config-web
+                port:
+                  number: 8001
+            path: /
+            pathType: ImplementationSpecific

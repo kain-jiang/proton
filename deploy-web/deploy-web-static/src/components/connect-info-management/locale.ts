@@ -1,0 +1,51 @@
+import { i18nDeploy as i18n } from "../../core/mediator";
+
+export default i18n([
+    ["添加可选服务", "新增可選服務", "Add available service"],
+    ["消息队列（MQ）", "消息隊列（MQ）", "Message Queuing (MQ)"],
+    ["关系型数据库（RDS）", "關係型資料庫（RDS）", "Relational database (RDS)"],
+    ["添加-${service}", "新增-${service}", "Add-${service}"],
+    ["编辑-${service}", "編輯-${service}", "Edit-${service}"],
+    [
+        "修改成功，配置将在服务更新后生效。请前往【服务管理-服务部署】页面更新服务。",
+        "修改成功，設定將在服務更新後生效。請前往【服務管理-服務部署】頁面更新服務。",
+        "Modified. This configuration will be effective after the service updates. You can update the following services on [Service Management-Service Deployment].",
+    ],
+    ["立即前往", "立即前往", "Go"],
+    ["提示", "提示", "Notes"],
+    [
+        "添加${service}连接信息成功",
+        "新增${service}連接資訊成功",
+        "Add the connection information of ${service} successfully",
+    ],
+    [
+        "设置${service}连接信息成功",
+        "設定${service}連接資訊成功",
+        "Set the connection information of ${service} successfully",
+    ],
+    ["保存配置中...", "儲存設定中...", "Saving configuration..."],
+    ["错误", "錯誤", "Error"],
+    ["确定", "確定", "OK"],
+    [
+        "获取${errServices}连接信息失败",
+        "獲取${errServices}連接資訊失敗",
+        "Failed to get the connection information of ${errServices}",
+    ],
+    ["搜索与分析引擎", "搜尋與分析引擎", "Search and Analytics Engine"],
+    ["共${total}条", "共${total}條", "Total ${total} Item(s)"],
+    ["连接信息名称", "連接資訊名稱", "Connection Information Name"],
+    ["连接信息类型", "連接資訊類型", "Connection Information Type"],
+    ["系统空间", "系統空間", "System Space"],
+    ["系统空间ID", "系統空間ID", "System Space ID"],
+    ["操作", "操作", "Action"],
+    ["编辑", "編輯", "Edit"],
+    ["实例信息", "實例資訊", "Instance Information"],
+    ["连接信息名称", "連接資訊名稱", "Connection Information Name"],
+    ["请选择系统空间", "請選擇系統空間", "Please select a System Space"],
+    ["添加或更新服务", "添加或更新服務", "Add or Update Service"],
+    [
+        "添加或更新-${service}",
+        "添加或更新-${service}",
+        "Add or Update-${service}",
+    ],
+]);

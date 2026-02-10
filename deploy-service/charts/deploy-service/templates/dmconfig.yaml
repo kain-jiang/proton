@@ -1,0 +1,13 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "deploy-service.fullname" . }}-dmconfig
+  namespace: {{ .Values.namespace }}
+data:
+  dm_svc.conf: |
+    TIME_ZON=(480)
+    LANGUAGE=(cn)
+    DM=({{ .Values.depServices.rds.host }})
+    [DM]
+    LOGIN_MODE=(1)

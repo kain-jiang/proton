@@ -1,0 +1,42 @@
+# Code Spell Checker's dictionary
+# https://marketplace.visualstudio.com/items?itemName=streetsidesoftware.code-spell-checker
+
+# Golang
+GOARCH
+GOPRIVATE
+GOPROXY
+GOSUMDB
+
+# tools
+sshpass
+skopeo
+
+# yum
+basearch
+gpgcheck
+
+# Kubernetes
+apiserver
+
+# Calico Project
+flexvol
+
+# CoreDNS
+coredns
+
+# Harbor
+chartrepo # RESTful API
+
+# MongoDB
+mongoshake
+
+# Nebula
+graphd
+metad
+storaged
+
+# AISHU
+aishu
+
+# proton-opensource
+opensource

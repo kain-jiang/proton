@@ -1,0 +1,20 @@
+#!/bin/bash
+
+set -o errexit
+set -o pipefail
+set -o nounset
+
+PROTON_ROOT=$(realpath $(dirname "${BASH_SOURCE[0]}")/..)
+
+source "${PROTON_ROOT}/build/lib/init.sh"
+
+REGISTRY="acr.aishu.cn"
+REPOSITORY="proton/proton-cli-build-image"
+
+image="${REGISTRY}/${REPOSITORY}:$(proton::build-image::tag)"
+
+proton::log::status "Building image ${image}"
+docker buildx build -t ${image} -f ${PROTON_ROOT}/build/dev/Dockerfile.build ${PROTON_ROOT}
+
+proton::log::status "Push image to docker://${image}"
+docker push ${image}

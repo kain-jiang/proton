@@ -1,0 +1,12 @@
+{{- if .Values.config.enable }}
+{{- if semverCompare ">=1.20.0-0" .Capabilities.KubeVersion.GitVersion -}}           
+apiVersion: networking.k8s.io/v1
+kind: IngressClass
+metadata:
+  labels:
+    app.kubernetes.io/component: controller
+  name: {{ include "ingressClassName" . }}
+spec:
+  controller: k8s.io/{{ include "ingressClassName" . }}
+{{- end }}
+{{- end }}

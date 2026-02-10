@@ -1,0 +1,6 @@
+- Command: execute
+  args:
+    transaction: false
+    Statements:
+      - >
+        ALTER TABLE task_proton_component ADD COLUMN id INT AUTO_INCREMENT PRIMARY KEY;

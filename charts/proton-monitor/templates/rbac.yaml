@@ -1,0 +1,57 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: proton-monitor
+  namespace: {{ .Values.namespace }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: proton-monitor
+  namespace: {{ .Values.namespace }}
+rules:
+  - apiGroups: [""]
+    resources:
+      - namespaces
+      - services
+      - endpoints
+      - configmaps
+      - pods
+      - nodes
+      - ingresses
+      - nodes/proxy
+      - nodes/metrics
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - extensions
+      - networking.k8s.io
+    resources:
+      - ingresses
+      - ingresses/status
+    verbs:
+      - get
+      - list
+      - watch
+  - nonResourceURLs:
+      - "/metrics"
+      - "/metrics/cadvisor"
+    verbs:
+      - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: proton-monitor
+  namespace: {{ .Values.namespace }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: proton-monitor
+subjects:
+  - kind: ServiceAccount
+    name: proton-monitor
+    namespace: {{ .Values.namespace }}

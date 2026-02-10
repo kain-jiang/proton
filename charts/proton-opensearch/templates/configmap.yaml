@@ -1,0 +1,68 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "opensearch.name" . }}-cm
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ template "opensearch.name" . }}
+    cluster: {{ .Values.config.clusterName }}
+data:
+  opensearch.yml: |
+    cluster.name: "{{ .Values.config.clusterName }}"
+    path.data: "/usr/share/opensearch/data/data"
+    path.logs: "/usr/share/opensearch/data/logs"
+{{- if .Values.storage.repo.nfs.enabled }}
+    path.repo: "/usr/share/opensearch/repo"
+{{- end }}
+    node.roles: {{ template "opensearch.roles" . }}
+    node.attr.box_type: "{{ template "opensearch.boxType" . }}"
+    network.bind_host: "0.0.0.0"
+    discovery.seed_hosts: "{{ template "opensearch.seedHosts" . }}"
+{{- if (eq .Values.config.nodeGroup "master") }}
+    cluster.initial_master_nodes: "{{ template "opensearch.masterNodes" . }}"
+{{- end }}
+    script.painless.regex.enabled: true
+
+{{ with .Values.settings -}}
+{{ toYaml . | indent 4 }}
+{{- end }}
+
+    plugins.security.disabled: false
+    plugins.security.restapi.roles_enabled: ["all_access", "security_rest_api_access"]
+    plugins.security.allow_default_init_securityindex: true
+    plugins.security.enable_snapshot_restore_privilege: true
+    plugins.security.check_snapshot_restore_write_privileges: true
+    plugins.security.nodes_dn:
+{{ toYaml .Values.config.nodesDN | indent 6 }}
+
+    plugins.security.ssl.transport.enabled: true
+    plugins.security.ssl.transport.enforce_hostname_verification: false
+    plugins.security.ssl.transport.pemkey_filepath: "/usr/share/opensearch/config/os-certs/node-key.pem"
+    plugins.security.ssl.transport.pemcert_filepath: "/usr/share/opensearch/config/os-certs/node.pem"
+    plugins.security.ssl.transport.pemtrustedcas_filepath: "/usr/share/opensearch/config/os-certs/root-ca.pem"
+
+{{- if not .Values.config.enableSSL }}
+    plugins.security.ssl.http.enabled: false
+{{- else }}
+    plugins.security.ssl.http.enabled: true
+    plugins.security.ssl.http.pemkey_filepath: "/usr/share/opensearch/config/os-certs/node-key.pem"
+    plugins.security.ssl.http.pemcert_filepath: "/usr/share/opensearch/config/os-certs/node.pem"
+    plugins.security.ssl.http.pemtrustedcas_filepath: "/usr/share/opensearch/config/os-certs/root-ca.pem"
+{{- end }}
+
+  hanlp-remote.xml: |
+    <?xml version="1.0" encoding="UTF-8"?>
+    <!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+    <properties>
+        <comment>HanLP Analyzer 扩展配置</comment>
+
+        <!--用户可以在这里配置远程扩展字典 -->
+{{- if .Values.config.hanlpRemote.extDict }}
+        <entry key="remote_ext_dict">{{ .Values.config.hanlpRemote.extDict }}</entry>
+{{- end }}
+
+        <!--用户可以在这里配置远程扩展停止词字典-->
+{{- if .Values.config.hanlpRemote.extStopwords }}
+        <entry key="remote_ext_stopwords">{{ .Values.config.hanlpRemote.extStopwords }}</entry>
+{{- end }}
+    </properties>

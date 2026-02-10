@@ -1,0 +1,156 @@
+namespace: default
+
+replicaCount: 3
+
+image:
+  registry: acr.aishu.cn
+  repository: proton/proton-etcd
+  tag: v3.5.9-1
+
+  pullPolicy: IfNotPresent
+  debug: false
+
+statefulset:
+  updateStrategy: OnDelete
+  podManagementPolicy: Parallel
+
+storage:
+  # storageClassName: "proton-local-volume-delete"
+  capacity: 2Gi
+  local:
+    0:
+      host: k8s-master
+      path: "/data/etcd/"
+    1:
+      host: 10-2-188-46
+      path: "/data/etcd/"
+    2:
+      host: 10-2-188-47
+      path: "/data/etcd/"
+
+etcd:
+ ## Initial cluster state. Allowed values: 'new' or 'existing'
+ ## If this values is not set, the default values below are set:
+ ## - 'new': when installing the chart ('helm install ...')
+ ## - 'existing': when upgrading the chart ('helm upgrade ...')
+ ##
+  initialClusterState: ""
+
+allowNoneAuthentication: true
+
+## ConfigMap that includes the etcd.conf.yml file
+## example:
+## data:
+# #  etcd.conf.yaml:  |-
+##     quota-backend-bytes: 104857600
+# configFileConfigMap:
+
+## ConfigMap that includes extra environment variables
+## example:
+## data:
+##    ETCD_QUOTA_BACKEND_BYTES: "104857600"
+# envVarsConfigMap:
+
+auth:
+  rbac:
+    enabled: false
+    # rootPassword:
+
+  client:
+    ## Switch to enable host authentication using TLS certificates. Requires existing secret.
+    ##
+    enableAuthentication: true
+    ## Name of the existing secret containing cert files for client communication.
+    ##
+    existingSecret: etcdssl-secret
+    ## Name of the file containing the client certificate.
+    ##
+    certFilename: peer.crt
+    ## Name of the file containing the client certificate private key.
+    ##
+    certKeyFilename: peer.key
+    ## Name of the file containing the client CA certificate.
+    ## If not specified and `enableAuthentication: true` or `rbac.enabled: true`, the default is is `ca.crt`.
+    ##
+    caFilename: ""
+
+  peer:
+    ## Switch to enable host authentication using TLS certificates. Requires existing secret.
+    ##
+    enableAuthentication: false
+    ## Name of the existing secret containing cert files for peer communication.
+    ##
+    # existingSecret: name-of-existing-secret
+    ## Name of the file containing the peer certificate.
+    ##
+    certFilename: cert.pem
+    ## Name of the file containing the peer certificate private key.
+    ##
+    certKeyFilename: key.pem
+    ## Name of the file containing the peer CA certificate.
+    ## If not specified and `enableAuthentication: true` or `rbac.enabled: true`, the default is is `ca.crt`.
+    ##
+    caFilename: ""
+
+securityContext:
+  enabled: true
+  fsGroup: 1001
+  runAsUser: 1001
+
+clusterDomain: cluster.local
+
+config:
+  heartbeatInterval: 1000
+  electionTimeout: 5000
+  maxrequestbytes: "104857600" #100M
+
+## Service parameters
+##
+service:
+  enableDualStack: false
+  type: ClusterIP
+  ## etcd client port
+  ##
+  port: 2379
+  ## etcd peer port
+  ##
+  peerPort: 2380
+  ## Specify the nodePort(s) value(s) for the LoadBalancer and NodePort service types.
+  ## ref: https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport
+  ##
+  nodePorts:
+    clientPort: ""
+    peerPort: ""
+  annotations: {}
+
+resources:
+  limits: {}
+  #   cpu: 500m
+  #   memory: 1Gi
+  requests: {}
+  #   cpu: 250m
+  #   memory: 256Mi
+
+livenessProbe:
+  enabled: true
+  initialDelaySeconds: 60
+  periodSeconds: 30
+  timeoutSeconds: 5
+  successThreshold: 1
+  failureThreshold: 5
+
+readinessProbe:
+  enabled: true
+  initialDelaySeconds: 60
+  periodSeconds: 10
+  timeoutSeconds: 5
+  successThreshold: 1
+  failureThreshold: 5
+
+podAnnotations: {}
+
+nodeSelector: {}
+
+tolerations: []
+
+priorityClassName: ""

@@ -1,0 +1,205 @@
+- Command: execute
+  args:
+    transaction: false
+    Statements:
+    - >
+      CREATE TABLE IF NOT EXISTS task_app_config_template_index_migrate (
+          id INT AUTO_INCREMENT COMMENT 'primary key id',
+          tid INT NOT NULL COMMENT 'application config template id',
+          label VARCHAR(50) NOT NULL COMMENT 'application config label for index',
+          PRIMARY KEY (id),
+          INDEX tid (tid),
+          INDEX label (label) USING HASH
+      ) COMMENT 'application config template label index';
+
+      CREATE TABLE IF NOT EXISTS task_job_lock_migrate (
+          id INT AUTO_INCREMENT COMMENT 'primary key id',
+          sid INT COMMENT 'system id',
+          aname VARCHAR(100) COMMENT 'application identity ',
+          jid INT COMMENT 'the locker job',
+          PRIMARY KEY (id),
+          UNIQUE KEY (sid, aname)
+      ) COMMENT 'application job lock';
+
+      CREATE TABLE IF NOT EXISTS task_app_lang_migrate (
+          id INT AUTO_INCREMENT COMMENT 'primary key id',
+          alang CHAR(10) COMMENT 'application lang index',
+          aname VARCHAR(100) COMMENT 'application identity ',
+          alias VARCHAR(100) COMMENT 'application lang name',
+          PRIMARY KEY (id),
+          INDEX alang (alang, aname)
+      ) COMMENT 'application lang resource, it will be cache in service. query when cache miss.';
+
+      CREATE TABLE IF NOT EXISTS task_compose_job_migrate (
+          jid INT AUTO_INCREMENT COMMENT 'compose job id',
+          jname VARCHAR(100) COMMENT 'job name defined by user',
+          mversion VARCHAR(128) COMMENT 'manifests version if set by manifest control',
+          mdescription VARCHAR(1000),
+          sid INT COMMENT 'system id',
+          status INT COMMENT 'job status',
+          processed INT COMMENT 'job process',
+          total INT COMMENT 'job total task number',
+          config MEDIUMBLOB,
+          create_time INT NOT NULL COMMENT 'instance create time',
+          start_time INT NOT NULL COMMENT 'instance execute start time',
+          end_time INT NOT NULL COMMENT 'instance execute end time',
+          PRIMARY KEY (jid),
+          INDEX jid (jid),
+          INDEX jname (jname)
+      ) COMMENT 'proton component multil info';
+
+      CREATE TABLE IF NOT EXISTS task_compose_job_task_migrate (
+          id INT AUTO_INCREMENT COMMENT 'primary key id',
+          jid INT COMMENT 'compose job id',
+          jtindex INT COMMENT 'compose job task index ',
+          ajid INT COMMENT 'application job id',
+          PRIMARY KEY (id),
+          INDEX jindex (jid, jtindex)
+      ) COMMENT 'proton component multil info';
+
+      CREATE TABLE IF NOT EXISTS task_compose_manifests_migrate (
+          id INT AUTO_INCREMENT COMMENT 'primary key id',
+          mname VARCHAR(100) COMMENT 'manifests identify',
+          mversion VARCHAR(128) COMMENT 'manifests version',
+          manifests MEDIUMBLOB COMMENT 'manifests content',
+          mdescription VARCHAR(1000),
+          PRIMARY KEY (id),
+          UNIQUE KEY (mname, mversion),
+          INDEX manifests (mname, mversion)
+      ) COMMENT 'manifest store.';
+
+      CREATE TABLE IF NOT EXISTS task_work_compose_manifests_migrate (
+          id INT AUTO_INCREMENT COMMENT 'primary key id',
+          jid INT COMMENT 'compose job id',
+          mname VARCHAR(100) COMMENT 'job name defined by user',
+          mversion VARCHAR(128) COMMENT 'manifests version',
+          sid INT COMMENT 'system id',
+          mdescription VARCHAR(1000),
+          status INT COMMENT 'job status',
+          PRIMARY KEY (id),
+          UNIQUE KEY (mname, sid)
+      ) COMMENT 'manifest worked list.';
+
+    - >
+      INSERT INTO
+          `task_app_config_template_index_migrate` (`tid`, `label`)
+      SELECT `tid`, `label`
+      FROM
+          `task_app_config_template_index`;
+
+      INSERT INTO
+          `task_job_lock_migrate` (`sid`, `aname`, `jid`)
+      SELECT `sid`, `aname`, `jid`
+      FROM `task_job_lock`;
+
+      INSERT INTO
+          `task_app_lang_migrate` (`alang`, `aname`, `alias`)
+      SELECT `alang`, `aname`, `alias`
+      FROM `task_app_lang`;
+
+      INSERT INTO
+          `task_compose_job_migrate` (
+              `jid`,
+              `jname`,
+              `mversion`,
+              `mdescription`,
+              `sid`,
+              `status`,
+              `processed`,
+              `total`,
+              `config`,
+              `create_time`,
+              `start_time`,
+              `end_time`
+          )
+      SELECT
+          `jid`,
+          `jname`,
+          `mversion`,
+          `mdescription`,
+          `sid`,
+          `status`,
+          `processed`,
+          `total`,
+          `config`,
+          `create_time`,
+          `start_time`,
+          `end_time`
+      FROM `task_compose_job`;
+
+      INSERT INTO
+          `task_compose_job_task_migrate` (`jid`, `jtindex`, `ajid`)
+      SELECT `jid`, `jtindex`, `ajid`
+      FROM `task_compose_job_task`;
+
+      INSERT INTO
+          `task_compose_manifests_migrate` (
+              `mname`,
+              `mversion`,
+              `manifests`,
+              `mdescription`
+          )
+      SELECT
+          `mname`,
+          `mversion`,
+          `manifests`,
+          `mdescription`
+      FROM `task_compose_manifests`;
+
+      INSERT INTO
+          `task_work_compose_manifests_migrate` (
+              `jid`,
+              `mname`,
+              `mversion`,
+              `sid`,
+              `mdescription`,
+              `status`
+          )
+      SELECT
+          `jid`,
+          `mname`,
+          `mversion`,
+          `sid`,
+          `mdescription`,
+          `status`
+      FROM `task_work_compose_manifests`;
+
+    - >
+      RENAME TABLE `task_app_config_template_index` TO `old_task_app_config_template_index`,
+      `task_app_config_template_index_migrate` TO `task_app_config_template_index`;
+
+      RENAME TABLE `task_job_lock` TO `old_task_job_lock`,
+      `task_job_lock_migrate` TO `task_job_lock`;
+
+      RENAME TABLE `task_app_lang` TO `old_task_app_lang`,
+      `task_app_lang_migrate` TO `task_app_lang`;
+
+      RENAME TABLE `task_compose_job` TO `old_task_compose_job`,
+      `task_compose_job_migrate` TO `task_compose_job`;
+
+      RENAME TABLE `task_compose_job_task` TO `old_task_compose_job_task`,
+      `task_compose_job_task_migrate` TO `task_compose_job_task`;
+
+      RENAME TABLE `task_compose_manifests` TO `old_task_compose_manifests`,
+      `task_compose_manifests_migrate` TO `task_compose_manifests`;
+
+      RENAME TABLE `task_work_compose_manifests` TO `old_task_work_compose_manifests`,
+      `task_work_compose_manifests_migrate` TO `task_work_compose_manifests`;
+
+    - >
+      DROP TABLE IF EXISTS `old_task_app_config_template_index`;
+
+      DROP TABLE IF EXISTS `old_task_job_lock`;
+
+      DROP TABLE IF EXISTS `old_task_app_lang`;
+
+      DROP TABLE IF EXISTS `old_task_compose_job`;
+
+      DROP TABLE IF EXISTS `old_task_compose_job_task`;
+
+      DROP TABLE IF EXISTS `old_task_compose_manifests`;
+
+      DROP TABLE IF EXISTS `old_task_work_compose_manifests`;
+            
+      
+# tidb 不支持修改列为主键和自增属性, 通过重建表的方式解决

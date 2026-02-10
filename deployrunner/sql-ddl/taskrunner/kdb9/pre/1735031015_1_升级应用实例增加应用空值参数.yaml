@@ -1,0 +1,8 @@
+- Command: execute
+  args:
+    transaction: false
+    Statements:
+      - >
+        ALTER TABLE  IF EXISTS task_application_instance ADD COLUMN IF NOT EXISTS atrait BYTEA;
+      - >
+        ALTER TABLE  IF EXISTS task_application_instance ADD COLUMN IF NOT EXISTS otype INT;

@@ -1,0 +1,47 @@
+{
+  "Version": 2,
+  "Root": "",
+  "State": "",
+  "TempDir": "",
+  "PluginDir": "",
+  "GRPC": {
+    "Address": "",
+    "TCPAddress": "",
+    "TCPTLSCA": "",
+    "TCPTLSCert": "",
+    "TCPTLSKey": "",
+    "UID": 0,
+    "GID": 0,
+    "MaxRecvMsgSize": 0,
+    "MaxSendMsgSize": 0
+  },
+  "TTRPC": {
+    "Address": "",
+    "UID": 0,
+    "GID": 0
+  },
+  "Debug": {
+    "Address": "",
+    "UID": 0,
+    "GID": 0,
+    "Level": "",
+    "Format": ""
+  },
+  "Metrics": {
+    "Address": "",
+    "GRPCHistogram": false
+  },
+  "DisabledPlugins": null,
+  "RequiredPlugins": null,
+  "Plugins": {
+    "io.containerd.grpc.v1.cri": {}
+  },
+  "OOMScore": 0,
+  "Cgroup": {
+    "Path": ""
+  },
+  "ProxyPlugins": null,
+  "Timeouts": null,
+  "Imports": null,
+  "StreamProcessors": null
+}

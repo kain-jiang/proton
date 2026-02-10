@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: {{ .Release.Name }}
+  {{- if .Release.Namespace }}
+  namespace: {{ .Release.Namespace }}
+  {{- else}}
+  namespace: {{ .Values.namespace }}
+  {{- end}}
+  labels:
+    k8s-app: {{ .Release.Name }}
+    version: {{ .Values.image.NodeExporter.tag }}
+spec:
+  selector:
+    matchLabels:
+      k8s-app: {{ .Release.Name }}
+      version: {{ .Values.image.NodeExporter.tag }}
+  updateStrategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        k8s-app: {{ .Release.Name }}
+        version: {{ .Values.image.NodeExporter.tag }}
+    spec:
+      containers:
+        - name: node-exporter
+          image: {{ .Values.image.registry }}/{{ .Values.image.NodeExporter.repository }}:{{ .Values.image.NodeExporter.tag }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: TZ
+              value: {{ .Values.env.timezone }}
+          args:
+            - --path.procfs=/host/proc
+            - --path.sysfs=/host/sys
+            - --web.listen-address=:{{ .Values.service.port }}
+          ports:
+            - name: metrics
+              containerPort: {{ .Values.service.port }}
+              hostPort: {{ .Values.service.port }}
+          readinessProbe:
+            httpGet:
+              path: /
+              port: {{ .Values.service.port }}
+            initialDelaySeconds: 5
+            timeoutSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: {{ .Values.service.port }}
+            initialDelaySeconds: 5
+            timeoutSeconds: 5
+          volumeMounts:
+            - name: proc
+              mountPath: /host/proc
+              readOnly:  true
+            - name: sys
+              mountPath: /host/sys
+              readOnly: true
+          resources:
+            requests:
+              cpu: {{ .Values.resources.requests.cpu }}
+              memory: {{ .Values.resources.requests.memory }}
+            limits:
+              cpu: {{ .Values.resources.limits.cpu }}
+              memory: {{ .Values.resources.limits.memory }}
+      hostNetwork: true
+      hostPID: true
+      volumes:
+        - name: proc
+          hostPath:
+            path: /proc
+        - name: sys
+          hostPath:
+            path: /sys

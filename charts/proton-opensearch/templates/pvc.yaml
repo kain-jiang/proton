@@ -1,0 +1,46 @@
+{{- if not .Values.storage.storageClassName }}
+{{- range $i, $e := untilStep 0 (int ($.Values.replicaCount)) 1 -}}
+{{- range $key, $value := $.Values.storage.local }}
+{{- if eq (toString ($i)) $key }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: data-{{ template "opensearch.name" $ }}-{{ $i }}
+  namespace: {{ $.Values.namespace }}
+spec:
+  accessModes: [ "ReadWriteOnce" ]
+  resources:
+    requests:
+      storage: {{ $.Values.storage.capacity }}
+  storageClassName: ""
+  selector:
+    matchLabels:
+      app: {{ template "opensearch.name" $ }}
+      cluster: {{ $.Values.config.clusterName }}
+      podIndex: "{{ $i }}"
+      path: data
+{{- if $.Values.storage.repo.nfs.enabled }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: repo-{{ template "opensearch.name" $ }}-{{ $i }}
+  namespace: {{ $.Values.namespace }}
+spec:
+  accessModes: [ "ReadWriteOnce" ]
+  resources:
+    requests:
+      storage: {{ $.Values.storage.capacity }}
+  storageClassName: ""
+  selector:
+    matchLabels:
+      app: {{ template "opensearch.name" $ }}
+      cluster: {{ $.Values.config.clusterName }}
+      podIndex: "{{ $i }}"
+      path: repo
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}

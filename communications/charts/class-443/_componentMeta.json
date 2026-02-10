@@ -1,0 +1,126 @@
+{
+  "conponentDefineType": "helm/service",
+  "name": "class-443",
+  "configSchema": {
+    "title": "class-443",
+    "description": "该nginx controller组件与deploy-serivce存在配置管理交叉,因此将http与https端口设置主要控制权限分割到访问地址管理功能,该端口为http/https某一个端口不启动时的默认值。",
+    "type": "object",
+    "properties": {
+      "resources": {
+        "type": "object",
+        "title": "容器资源控制",
+        "properties": {
+          "requests": {
+            "type": "object",
+            "description": "容器运行需要的最小资源分配",
+            "properties": {
+              "memory": {
+                "type": "string",
+                "title": "最低内存"
+              },
+              "cpu": {
+                "type": "string",
+                "title": "cpu"
+              }
+            }
+          },
+          "limits": {
+            "type": "object",
+            "description": "容器运行最大资源限制",
+            "properties": {
+              "memory": {
+                "type": "string",
+                "title": "内存"
+              },
+              "cpu": {
+                "type": "string",
+                "title": "cpu"
+              }
+            }
+          }
+        }
+      },
+      "service": {
+        "type": "object",
+        "properties": {
+          "network": {
+            "description": "组件运行网络模式,空字符串或不填写为默认值。hostport模式下可能会出现http,https和health端口冲突。hostnetwork上可能会出现以下配置接口冲突。端口冲突时可调整配置项",
+            "type": "string",
+            "enum": [
+              "",
+              "hostport",
+              "hostnetwork"
+            ]
+          },
+          "httpPort": {
+            "type": "number",
+            "description": "http服务端口,主控权为部署工作台访问地址控制,当访问地址启用http时,该端口实际由访问地址模块控制,否则为此值。",
+            "minimum": 0
+          },
+          "httpsPort": {
+            "type": "number",
+            "description": "https服务端口,主控权为部署工作台访问地址控制,当访问地址启用http时,该端口实际由访问地址模块控制,否则为此值。",
+            "minimum": 0
+          },
+          "healthzPort": {
+            "type": "number",
+            "description": "健康检查和监控指标端口,hostnetwork下需要确保该端口在主机未被占用",
+            "minimum": 0
+          },
+          "defaultServerPort": {
+            "type": "number",
+            "description": "default-server服务端口,不填写为默认值，器网络下开启需要确保该端口在主机未被占用",
+            "minimum": 0
+          },
+          "statusPort": {
+            "type": "number",
+            "description": "nginx状态服务端口,不填写为默认值，非容器网络下开启需要确保该端口在主机未被占用",
+            "minimum": 0
+          },
+          "streamPort": {
+            "type": "number",
+            "description": "stream服务端口,不填写为默认值，非容器网络下开启需要确保该端口在主机未被占用",
+            "minimum": 0
+          }
+        }
+      },
+      "config": {
+        "title": "是否创建ingress nginx controller，使用第三方controller时选false",
+        "type": "object",
+        "properties": {
+          "enable": {
+            "description": "是否创建ingress nginx controller，使用第三方controller时选false",
+            "type": "boolean",
+            "enum": [
+              true,
+              false
+            ]
+          }
+        }
+      }
+    }
+  },
+  "attributeSchema": {
+    "title": "class-443",
+    "description": "class-443需要的相关设置",
+    "type": "object",
+    "properties": {
+      "ingressClass": {
+        "description": "该nginx controller组件生成的ingress class name，多实例部署时需要设置成不一样的",
+        "type": "string",
+        "default": "class-443"
+      }
+    }
+  },
+  "images": [
+    "acr.aishu.cn/proton/nginx-ingress-controller:0.32.0",
+    "acr.aishu.cn/proton/nginx-ingress-controller:v1.3.1-1",
+    "acr.aishu.cn/proton/nginx-ingress-controller:v1.12.3-1",
+    "NEED REPLACED IN CI"
+  ],
+  "dependence": [
+    {
+      "name": "deploy-service"
+    }
+  ]
+}

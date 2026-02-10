@@ -1,0 +1,6 @@
+- Command: execute
+  args:
+    transaction: false
+    Statements:
+      - >
+        ALTER TABLE IF EXISTS task_proton_component ADD COLUMN IF NOT EXISTS id BIGSERIAL NOT NULL PRIMARY KEY;

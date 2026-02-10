@@ -1,0 +1,64 @@
+[build-system] 
+requires = ["hatchling"] 
+build-backend = "hatchling.build"
+
+[project] 
+name = "deploy-service"
+version = "0.0.1.dev"
+requires-python = ">=3.9"
+dependencies = [
+    "dbutilsx @ {root:uri}/deps/rds-sdk/DBUtilsX",
+    "rdsdriver @ {root:uri}/deps/rds-sdk/RDSDriver",
+    "tornado == 6.*",
+    "psutil == 5.*",
+    "pyyaml == 6.*",
+    "requests",
+    "tzlocal",
+    "pynsq == 0.9.*",
+    "kubernetes == 18.*",
+    "configparser == 5.*",
+    "M2Crypto == 0.41.*", # dnf install swig
+    "pyopenssl>=25.3.0",
+    "tenacity",
+    "nslookup == 1.*",
+    "IPy == 1.*",
+    "pycryptodomex == 3.*",
+    "cryptography >= 42.0.4",
+    "packaging>=25.0",
+]
+
+[dependency-groups]
+dev = [
+   "pyinstaller>=6.15.0",
+]
+
+[tool.uv]
+index-url = "https://mirrors.huaweicloud.com/repository/pypi/simple"
+
+[tool.hatch.build.targets.wheel]
+packages = ["."]
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+
+[tool.isort]
+profile = "black"
+src_paths = ["src", "test"]
+
+[tool.black]
+line-length = 120
+target-version = ['py39']
+include = '\.pyi?$'
+
+[tool.pylint]
+[tool.pylint."MESSAGES CONTROL"]
+disable = [
+    "invalid-name",
+    "missing-module-docstring",
+    "missing-function-docstring",
+    "missing-class-docstring",
+    "format", # handle by black
+    "wildcard-import",
+    "too-many-instance-attributes",
+]

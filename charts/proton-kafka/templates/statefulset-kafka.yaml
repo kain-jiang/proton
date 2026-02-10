@@ -1,0 +1,242 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ template "kafka.name" . }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ template "kafka.name" . }}
+spec:
+  serviceName: {{ template "kafka.name" . }}-headless
+  podManagementPolicy: Parallel
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ template "kafka.name" . }}
+  updateStrategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: {{ template "kafka.name" . }}
+    spec:
+{{- with .Values.nodeSelector }}
+      nodeSelector:
+{{ toYaml . | indent 8 }}
+{{- end }}
+      dnsConfig:
+        options:
+          - name: single-request-reopen
+          - name: use-vc
+      securityContext:
+        fsGroup: 1000
+        runAsUser: 1000
+      {{- if .Values.antiAffinity.enabled }}
+      affinity:
+        {{- if eq .Values.antiAffinity.rule "soft" }}
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                topologyKey: kubernetes.io/hostname
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - {{ template "kafka.name" . }}
+        {{- else if eq .Values.antiAffinity.rule "hard" }}
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - topologyKey: kubernetes.io/hostname
+              labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - {{ template "kafka.name" . }}
+        {{- end }}
+      {{- end }}
+      containers:
+        - name: kafka
+          image: {{ template "kafka.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: 
+            - /bin/bash
+            - -c
+            - |
+              #!/usr/bin/env bash -e
+              export KAFKA_LISTENERS="INTERNAL://0.0.0.0:{{ .Values.service.kafka.port }}"
+              export KAFKA_ADVERTISED_LISTENERS="INTERNAL://${HOSTNAME}.{{ template "kafka.headless-svc" . }}"
+              export KAFKA_LISTENER_SECURITY_PROTOCOL_MAP="INTERNAL:{{ template "kafka.internal-protocol" . }}"
+
+              {{- if .Values.service.external.enabled }}
+              {{- range $idx, $value := .Values.service.external.ports }}
+              export KAFKA_LISTENER_SECURITY_PROTOCOL_MAP="${KAFKA_LISTENER_SECURITY_PROTOCOL_MAP},{{ $value.name }}:{{ include "kafka.external-protocol" (dict "enableSSL" $value.enableSSL "enableSASL" $.Values.config.sasl.enabled) }}"
+              
+              PORT=$(({{ $value.nodePortBase }} + ${HOSTNAME##*-}))
+
+              IP={{ $value.ip }}
+              # Check if IP is empty, if so assign HOST_IP
+              if [[ -z "${IP}" ]]; then
+                IP="${HOST_IP}"
+              fi
+
+              # Check if IP is IPv6 and add brackets if needed
+              if [[ "${IP}" =~ : ]]; then
+                FORMATTED_IP="[${IP}]"
+                export KAFKA_LISTENERS="${KAFKA_LISTENERS},{{ $value.name }}://[::]:{{ $value.port }}"
+                export KAFKA_ADVERTISED_LISTENERS="${KAFKA_ADVERTISED_LISTENERS},{{ $value.name }}://${FORMATTED_IP}:${PORT}"
+              else
+                FORMATTED_IP="${IP}"
+                export KAFKA_LISTENERS="${KAFKA_LISTENERS},{{ $value.name }}://0.0.0.0:{{ $value.port }}"
+                export KAFKA_ADVERTISED_LISTENERS="${KAFKA_ADVERTISED_LISTENERS},{{ $value.name }}://${FORMATTED_IP}:${PORT}"
+              fi
+
+              {{- end }}
+              {{- end }}
+
+              start-kafka.sh
+          ports:
+            - name: kafka
+              containerPort: {{ .Values.service.kafka.port }}
+            {{- if .Values.service.external.enabled }}
+            {{- range $idx, $value := .Values.service.external.ports }}
+            - name: {{ lower $value.name }}
+              containerPort: {{ $value.port }}
+            {{- end }}
+            {{- end }}
+            - name: jmx-exporter
+              containerPort: {{ .Values.service.jmxExporter.port }}
+          env:
+            - name: HOST_IP
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: status.hostIP
+            - name: TZ
+              value: "{{ .Values.env.timezone }}"
+            - name: JMX_EXPORTER_PORT
+              value: "{{ .Values.service.jmxExporter.port }}"
+            - name: KAFKA_LOG_DIRS
+              value: "{{ template "kafka.data_dir" . }}/data"
+            - name: LOG_DIR
+              value: "{{ template "kafka.data_dir" . }}/logs"
+            - name: KAFKA_ZOOKEEPER_CONNECT
+              value: "{{ .Values.depServices.zookeeper.host }}:{{ .Values.depServices.zookeeper.port }}/{{ .Values.config.clusterName }}"
+            - name: KAFKA_PORT
+              value: "{{ .Values.service.kafka.port }}"
+            - name: ENABLED_ZOOKEEPER_SASL
+              value: "{{ .Values.depServices.zookeeper.sasl.enabled }}"
+            - name: ENABLED_KAFKA_SASL
+              value: "{{ .Values.config.sasl.enabled }}"
+            - name: ENABLED_ZOOKEEPER_SSL
+              value: "{{ .Values.depServices.zookeeper.ssl.enabled }}"
+            - name: ENABLED_KAFKA_SSL
+              value: "{{ .Values.config.enableSSL }}"
+            {{- if .Values.config.sasl.enabled }}
+            - name: KAFKA_SASL_ENABLED_MECHANISMS
+              value: "PLAIN,SCRAM-SHA-256,SCRAM-SHA-512"
+            - name: KAFKA_SASL_MECHANISM_INTER_BROKER_PROTOCOL
+              value: {{ .Values.config.sasl.mechanism | default "PLAIN" }}
+              {{- if hasPrefix "SCRAM-SHA" (upper .Values.config.sasl.mechanism) }}
+            - name: CUSTOM_INIT_SCRIPT
+              value: /opt/kafka/bin/init-acls.sh
+              {{- end }}
+            {{- end }}
+            - name: KAFKA_INTER_BROKER_LISTENER_NAME
+              value: "INTERNAL"
+            {{- if not .Values.config.kafkaENV.KAFKA_DEFAULT_REPLICATION_FACTOR }}
+            - name: KAFKA_DEFAULT_REPLICATION_FACTOR
+              value: "{{ template "kafka.default_replication_factor" . }}"
+            {{- end }}
+            {{- if not .Values.config.kafkaENV.KAFKA_NUM_PARTITIONS }}
+            - name: KAFKA_NUM_PARTITIONS
+              value: "{{ template "kafka.num_partitions" . }}"
+            {{- end }}
+            {{- if not .Values.config.kafkaENV.KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR }}
+            - name: KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR
+              value: "{{ template "kafka.offsets_topic_replication_factor" . }}"
+            {{- end }}
+            {{- range $key, $val :=.Values.config.kafkaENV }}
+            - name: {{ $key }}
+              value: "{{ $val }}"
+            {{- end }}
+          resources: {{- toYaml .Values.resources.kafka | nindent 12 }}
+          livenessProbe:
+            tcpSocket:
+              port: {{ .Values.service.kafka.port }}
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 5
+          readinessProbe:
+            tcpSocket:
+              port: {{ .Values.service.kafka.port }}
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 5
+          volumeMounts:
+            - name: data
+              mountPath: {{ template "kafka.data_dir" . }}
+            {{- if or .Values.depServices.zookeeper.sasl.enabled .Values.config.sasl.enabled }}
+            - name: sasl-config
+              mountPath: /opt/kafka/extconfig/saslconf
+            {{- end }}
+            {{- if .Values.depServices.zookeeper.ssl.enabled }}
+            - name: zookeeper-certs
+              mountPath: /opt/kafka/extconfig/zksslconf
+            {{- end }}
+            {{- if .Values.config.enableSSL }}
+            - name: ssl-config
+              mountPath: /opt/kafka/extconfig/sslconf
+            {{- end }}
+      volumes:
+        {{- if or .Values.depServices.zookeeper.sasl.enabled .Values.config.sasl.enabled }}
+        - name: sasl-config
+          configMap:
+            name: {{ template "kafka.name" . }}-cm
+        {{- end }}
+        {{- if .Values.depServices.zookeeper.ssl.enabled }}
+        - name: zookeeper-certs
+          secret:
+            secretName: {{ .Values.depServices.zookeeper.ssl.secret.name }}
+            items:
+            - key: {{ .Values.depServices.zookeeper.ssl.secret.trustStoreName }}
+              path: truststore.jks
+            - key: {{ .Values.depServices.zookeeper.ssl.secret.trustStorePassWordName }}
+              path: truststorepassword
+            - key: {{ .Values.depServices.zookeeper.ssl.secret.keyStoreName }}
+              path: keystore.jks
+            - key: {{ .Values.depServices.zookeeper.ssl.secret.keyStorePassWordName }}
+              path: keystorepassword
+        {{- end }}
+        {{- if .Values.config.enableSSL }}
+        - name: ssl-config
+          secret:
+            secretName: {{ .Values.secret.secretName | default (include "kafka.defaultSSLSecretName" .) }}
+            items:
+              - key: {{ .Values.secret.trustStoreName }}
+                path: truststore.jks
+              - key: {{ .Values.secret.trustStorePassWordName }}
+                path: truststorepassword
+              - key: {{ .Values.secret.keyStoreName }}
+                path: keystore.jks
+              - key: {{ .Values.secret.keyStorePassWordName }}
+                path: keystorepassword
+              - key: {{ .Values.secret.keyPassWordName }}
+                path: keypassword
+        {{- end }}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: [ ReadWriteOnce ]
+        {{- if .Values.storage.storageClassName }}
+        storageClassName: {{ .Values.storage.storageClassName }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.storage.capacity }}

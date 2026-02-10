@@ -1,0 +1,14 @@
+namespace: kube-system
+
+image:
+  registry: acr.aishu.cn
+  pullPolicy: IfNotPresent
+  NvidiaDevicePlugin:
+    repository: proton/nvidia-device-plugin
+    tag: v0.14.5-1
+
+config:
+  fallbackStrategies: ["named" , "single"]
+  timeSlicing:
+    replicas: 10
+

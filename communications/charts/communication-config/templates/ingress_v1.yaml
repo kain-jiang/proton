@@ -1,0 +1,59 @@
+{{- if semverCompare ">=1.19-0" .Capabilities.KubeVersion.GitVersion }}
+  {{- $ingressApiversion := "networking.k8s.io/v1" }}
+
+
+  {{- $service := include "communication-config.ingress-rules" . | fromYaml }}
+
+  {{- range $className, $ing  := $.Values.ingress }}
+   {{- $httpath := list }}
+    {{- if $ing.enable }}
+      {{ $services := ((concat $ing.services $ing.append_service) | toStrings | uniq )}}
+      {{-  range $svc:=  $services }}
+        {{- if not (has $svc $ing.offline_service)}}
+          {{- $backendSvc := index $service $svc }}
+          {{- $backend := dict "service" (dict "name" $svc "port" (dict "number" $backendSvc.port)) }}
+          {{- range $uri := $backendSvc.uris }}
+            {{- $ingressPath := dict "path" $uri "backend" $backend "pathType" "Prefix" }}
+            {{- $httpath = append $httpath $ingressPath}}
+          {{- end }}
+        {{- end }}
+      {{- end}}
+    {{- end }}
+
+
+    {{- if $httpath }}
+---
+{{- $thisClassName := $ing.class_name }}
+{{- $dynamicClassName := "class-443" }}
+{{- if eq $thisClassName $dynamicClassName }}
+{{- $depServices := ($.Values.depServices | default dict) }}
+{{- $class443Config := (index $depServices "class-443" | default dict) }}
+{{- $thisClassName = $class443Config.ingressClass | default $thisClassName }}
+{{- end }}
+apiVersion: {{ $ingressApiversion }}
+kind: Ingress
+metadata:
+  namespace: {{ $.Release.Namespace }}
+  name: {{ $className  }}
+  annotations:
+      {{- with $ing.annotations }}
+        {{- toYaml . | nindent 4 }}
+      {{- end }}
+spec:
+  ingressClassName: {{ $thisClassName | quote }}
+  rules:
+      {{- if $ing.hosts}}
+        {{- range $host := $ing.hosts }}
+  - host: {{ $host | quote }}
+    http:
+      paths:
+        {{- toYaml $httpath | nindent 6}}
+        {{- end }}
+      {{- else}}
+  - http:
+      paths:
+        {{- toYaml $httpath | nindent 6}}
+      {{- end }}
+    {{- end }}
+  {{- end}}
+{{- end }}

@@ -1,0 +1,198 @@
+[
+  {
+    "name": "ECNULL",
+    "description": "未知或未归类错误"
+  },
+  {
+    "name": "ErrParam",
+    "description": "参数错误"
+  },
+  {
+    "name": "ErrUniqueKey",
+    "description": "数据唯一键冲突"
+  },
+  {
+    "name": "ErrAppTypeNoDefined",
+    "description": "应用类型未定义"
+  },
+  {
+    "name": "ErrHelmChartAPIVersion",
+    "description": "helmchart版本错误"
+  },
+  {
+    "name": "ErrJobExecuting",
+    "description": "任务正在执行中的限制"
+  },
+  {
+    "name": "ErrJobCantStop",
+    "description": "任务不可暂停"
+  },
+  {
+    "name": "ErrConfigNotComfirm",
+    "description": "任务配置参数未确认"
+  },
+  {
+    "name": "ErrComponentUsing",
+    "description": "组件正在被使用的限制"
+  },
+  {
+    "name": "ErrApplicationFile",
+    "description": "应用定义文件错误"
+  },
+  {
+    "name": "ErrConfigValidate",
+    "description": "参数配置校验错误"
+  },
+  {
+    "name": "ErrNotFound",
+    "description": "相关数据不存在"
+  },
+  {
+    "name": "ErrHelmRepoNoFound",
+    "description": "helm仓库不存在"
+  },
+  {
+    "name": "ErrHelmChartNoFound",
+    "description": "helm chart不存在"
+  },
+  {
+    "name": "ErrSystemNofound",
+    "description": "system对象不存在"
+  },
+  {
+    "name": "ErrComponentVersionLess",
+    "description": "组件版本过低"
+  },
+  {
+    "name": "ErrComponentNotFound",
+    "description": "组件不存在"
+  },
+  {
+    "name": "ErrComponentDup",
+    "description": "组件重复"
+  },
+  {
+    "name": "ErrAPPlicationComponentTortuous",
+    "description": "应用定义中的组件存在循环依赖"
+  },
+  {
+    "name": "ErrComponentTypeNotDefined",
+    "description": "组件定义不存在"
+  },
+  {
+    "name": "ErrComponentInstanceRevission",
+    "description": "组件实例数据版本不一致"
+  },
+  {
+    "name": "ErrComponentDecodeError",
+    "description": "组件数据反序列化失败"
+  },
+  {
+    "name": "ErrJobOwnerError",
+    "description": "不具备任务对象所有权"
+  },
+  {
+    "name": "ErrApplicationStillUse",
+    "description": "应用仍在使用限制"
+  },
+  {
+    "name": "ErrHelmRepoUnknow",
+    "description": "未知helm仓库相关错误"
+  },
+  {
+    "name": "ECTimeout",
+    "description": "超时错误"
+  },
+  {
+    "name": "ECJobCancel",
+    "description": "任务取消"
+  },
+  {
+    "name": "ECContextEnd",
+    "description": "协程上下文结束"
+  },
+  {
+    "name": "ECHelmChartNotFound",
+    "description": "helm chart不存在"
+  },
+  {
+    "name": "ECHelmReleaseNotFound",
+    "description": "helm release不存在"
+  },
+  {
+    "name": "ECHelmReleaseForceUpdate",
+    "description": "强制更新helm release"
+  },
+  {
+    "name": "ECHelmRun",
+    "description": "helm安装或更新运行中失败"
+  },
+  {
+    "name": "ECHelmTimeout",
+    "description": "helm安装或更新超时"
+  },
+  {
+    "name": "ECHelmK8s",
+    "description": "helm在操作k8s时错误"
+  },
+  {
+    "name": "ECHelmK8SORRender",
+    "description": "helm chart渲染失败"
+  },
+  {
+    "name": "ECTemplate",
+    "description": "helm chart检查渲染失败"
+  },
+  {
+    "name": "ECParseChart",
+    "description": "helm chart内容解析错误"
+  },
+  {
+    "name": "ECExit",
+    "description": "进程结束退出"
+  },
+  {
+    "name": "ECComponentDefined",
+    "description": "组件定义错误"
+  },
+  {
+    "name": "ECK8sUnknow",
+    "description": "未知或未归类k8s错误"
+  },
+  {
+    "name": "ECNetUnknow",
+    "description": "未知或未归类网络错误"
+  },
+  {
+    "name": "ECSQLUnknow",
+    "description": "未知或未归类关系数据库错误"
+  },
+  {
+    "name": "ECHTTPAPIRawError",
+    "description": "外部HTTP原始错误"
+  },
+  {
+    "name": "ECBaseNode",
+    "description": "内部使用基本节点错误"
+  },
+  {
+    "name": "ECNoAvailableWorker",
+    "description": "任务执行队列已满"
+  },
+  {
+    "name": "ECNoAuthorized",
+    "description": "无权限"
+  },
+  {
+    "name": "ECInvalidAuthorized",
+    "description": "认证失败"
+  },
+  {
+    "name": "ECColumnExists",
+    "description": "数据库列已存在"
+  },
+  {
+    "name": "ErrApplicationNotFound",
+    "description": "应用不存在"
+  }
+]

@@ -1,0 +1,85 @@
+{{- if .Values.service.nsqadmin.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{template "proton-mq-nsq.name" . }}-nsqadmin
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{template "proton-mq-nsq.name" . }}-nsqadmin
+      component: nsqadmin
+  template:
+    metadata:
+      labels:
+        app: {{template "proton-mq-nsq.name" . }}-nsqadmin
+        component: nsqadmin
+    spec:
+      securityContext:
+        runAsUser: 5000
+        runAsGroup: 5000
+        fsGroup: 1099
+      containers:
+      - name: nsqadmin
+        image: {{ .Values.image.registry }}{{ .Values.image.nsq.repository }}:{{ .Values.image.nsq.tag }}
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+        - name: http
+          containerPort: 4171
+      {{- with .Values.resources }}
+        resources:
+{{ toYaml . | indent 10 }}
+      {{- end }}
+        livenessProbe:
+          httpGet:
+            path: /ping
+            port: http
+          initialDelaySeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /ping
+            port: http
+          initialDelaySeconds: 5
+        env:
+        {{- range $key, $val := .Values.env }}
+        - name: {{ $key }}
+          value: {{ $val | quote }}
+        {{- end}}
+        command:
+          - nsqadmin
+          - --lookupd-http-address={{ template "proton-mq-nsq.name" . }}-nsqlookupd.{{ .Values.namespace }}:{{ .Values.service.nsqlookupd.httpPort }}
+          - --log-level={{ .Values.service.logLevel }}
+      terminationGracePeriodSeconds: 5
+{{- end }}
+{{- if .Values.service.nsqadmin.enabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "proton-mq-nsq.name" . }}-nsqadmin
+  namespace: {{ .Values.namespace }}
+  labels:
+    name: {{ template "proton-mq-nsq.name" . }}-nsqadmin
+    component: nsqadmin
+spec:
+{{- if .Values.service.enableDualStack }}
+  ipFamilies:
+  - IPv6
+  - IPv4
+  ipFamilyPolicy: PreferDualStack
+{{- end }}
+  selector:
+    app: {{ template "proton-mq-nsq.name" . }}-nsqadmin
+    component: nsqadmin
+  ports:
+  - name: http
+    port: {{ .Values.service.nsqadmin.httpPort }}
+    targetPort: 4171
+    {{- if eq .Values.service.type "NodePort" }}
+    {{- if .Values.service.nsqadmin.httpNodePort }}
+    nodePort: {{ toYaml .Values.service.nsqadmin.httpNodePort }}
+    {{- end }}
+    {{- end }}
+  type: {{ .Values.service.type }}
+{{- end }}

@@ -1,0 +1,58 @@
+
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  creationTimestamp: null
+  name: mutating-webhook-configuration
+webhooks:
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    caBundle: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUMrekNDQWVPZ0F3SUJBZ0lKQUpNa3JGSzV6ZzJGTUEwR0NTcUdTSWIzRFFFQkN3VUFNQlF4RWpBUUJnTlYKQkFNTUNXeHZZMkZzYUc5emREQWVGdzB5TWpFeE1qUXdNelF3TURaYUZ3MHpNakV4TWpFd016UXdNRFphTUJReApFakFRQmdOVkJBTU1DV3h2WTJGc2FHOXpkRENDQVNJd0RRWUpLb1pJaHZjTkFRRUJCUUFEZ2dFUEFEQ0NBUW9DCmdnRUJBTFhOdHFHYWJpVVd6Z3pGQyt5eklRUmpJWVdmWWF6S2Q1cjJlTXJ4VEluZlNDVDZqTDlpRlNYNjk2VmcKaXI2ak84OHg0MUhpTEJDaWo3NHBiQWRmbjhrdEVFZjJGb1hOSDJBQTAxUmJ0RHNyRndFbVhwSGZxeWFtdGRZQwp6MHZlTVhlZjBrTmlZQU9GajZXS2xSRGdGa0xENUJmcGkzMWFSVHp0aXNnNTZMZlR5N3BHYmQ5bTNCN2xjMjhhCk5TUmFsOXZFR1ByTUhueDJiSnhUdDdNNVBqdGIyRXMvOGZmKzhJeTVGeFI2ZGNFS3pMc3N4aisyYkZtd0htN0cKdjNHM25CZjJicmc2MEo2d1hIbWJRRUpVQzg3K3hYa3lsNExFSWQxakJ5dGJiZEJXRXcrUWFPeDFVbzFldHNLbQpuTVpKdTBvNFJzN1NTVWkzMk1QL0tvMDM0Z2tDQXdFQUFhTlFNRTR3SFFZRFZSME9CQllFRkpScENGTnR2b2wyClFycHJ2RkJ5a09JY05CeXBNQjhHQTFVZEl3UVlNQmFBRkpScENGTnR2b2wyUXJwcnZGQnlrT0ljTkJ5cE1Bd0cKQTFVZEV3UUZNQU1CQWY4d0RRWUpLb1pJaHZjTkFRRUxCUUFEZ2dFQkFEcnVIdDFGUC82Skp0RzFPTkxHWkhyVwpkOGdWMG5Cc0ZxRWE4SDB5RFZqVGFZcjEyZ2dxcy96LzdZeWIwc1g0bXpQMmZUMG9WWFFWV2xXQkV2cG5wUU1VClFzMitCUnQ5eDBxN3lFUE9vR3NtOFJqOGtFQ1dXT1kvdmNJQlZsZmtZUmtxU1IrSlprWEJrcUZzSzN1MkEvT3AKVlhmeHhST2w3cHJyRS9kQnVIL0pRZFg4QUV6ejNOZExBdUxBUGhHTWpKcEFwMjhVY0dYV09Qck1ZTnpWYXd6NgpOTEZ4dXdlaHIwWFhwb0xxMzhnSFF0RUtIRjBKSFEwMUVUV0ZHWFduWU51UVdDMUVGOVo5b3BvT2ZvVk1WY3RNCmdRMEJlSFVWdlViUkFRbStCR2hqUnlSSjRIODhoOWJCNlo3aktUM0c4VGFRTFFWY01xZHdMZGhYYnhtUjhWdz0KLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=
+    service:
+      name: webhook-service
+      namespace: system
+      path: /mutate-rds-proton-aishu-cn-v1-rdsmariadbcluster
+  failurePolicy: Fail
+  name: mrdsmariadbcluster.kb.io
+  rules:
+  - apiGroups:
+    - rds.proton.aishu.cn
+    apiVersions:
+    - v1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - rdsmariadbclusters
+  sideEffects: None
+
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  creationTimestamp: null
+  name: validating-webhook-configuration
+webhooks:
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    caBundle: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUMrekNDQWVPZ0F3SUJBZ0lKQUpNa3JGSzV6ZzJGTUEwR0NTcUdTSWIzRFFFQkN3VUFNQlF4RWpBUUJnTlYKQkFNTUNXeHZZMkZzYUc5emREQWVGdzB5TWpFeE1qUXdNelF3TURaYUZ3MHpNakV4TWpFd016UXdNRFphTUJReApFakFRQmdOVkJBTU1DV3h2WTJGc2FHOXpkRENDQVNJd0RRWUpLb1pJaHZjTkFRRUJCUUFEZ2dFUEFEQ0NBUW9DCmdnRUJBTFhOdHFHYWJpVVd6Z3pGQyt5eklRUmpJWVdmWWF6S2Q1cjJlTXJ4VEluZlNDVDZqTDlpRlNYNjk2VmcKaXI2ak84OHg0MUhpTEJDaWo3NHBiQWRmbjhrdEVFZjJGb1hOSDJBQTAxUmJ0RHNyRndFbVhwSGZxeWFtdGRZQwp6MHZlTVhlZjBrTmlZQU9GajZXS2xSRGdGa0xENUJmcGkzMWFSVHp0aXNnNTZMZlR5N3BHYmQ5bTNCN2xjMjhhCk5TUmFsOXZFR1ByTUhueDJiSnhUdDdNNVBqdGIyRXMvOGZmKzhJeTVGeFI2ZGNFS3pMc3N4aisyYkZtd0htN0cKdjNHM25CZjJicmc2MEo2d1hIbWJRRUpVQzg3K3hYa3lsNExFSWQxakJ5dGJiZEJXRXcrUWFPeDFVbzFldHNLbQpuTVpKdTBvNFJzN1NTVWkzMk1QL0tvMDM0Z2tDQXdFQUFhTlFNRTR3SFFZRFZSME9CQllFRkpScENGTnR2b2wyClFycHJ2RkJ5a09JY05CeXBNQjhHQTFVZEl3UVlNQmFBRkpScENGTnR2b2wyUXJwcnZGQnlrT0ljTkJ5cE1Bd0cKQTFVZEV3UUZNQU1CQWY4d0RRWUpLb1pJaHZjTkFRRUxCUUFEZ2dFQkFEcnVIdDFGUC82Skp0RzFPTkxHWkhyVwpkOGdWMG5Cc0ZxRWE4SDB5RFZqVGFZcjEyZ2dxcy96LzdZeWIwc1g0bXpQMmZUMG9WWFFWV2xXQkV2cG5wUU1VClFzMitCUnQ5eDBxN3lFUE9vR3NtOFJqOGtFQ1dXT1kvdmNJQlZsZmtZUmtxU1IrSlprWEJrcUZzSzN1MkEvT3AKVlhmeHhST2w3cHJyRS9kQnVIL0pRZFg4QUV6ejNOZExBdUxBUGhHTWpKcEFwMjhVY0dYV09Qck1ZTnpWYXd6NgpOTEZ4dXdlaHIwWFhwb0xxMzhnSFF0RUtIRjBKSFEwMUVUV0ZHWFduWU51UVdDMUVGOVo5b3BvT2ZvVk1WY3RNCmdRMEJlSFVWdlViUkFRbStCR2hqUnlSSjRIODhoOWJCNlo3aktUM0c4VGFRTFFWY01xZHdMZGhYYnhtUjhWdz0KLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=
+    service:
+      name: webhook-service
+      namespace: system
+      path: /validate-rds-proton-aishu-cn-v1-rdsmariadbcluster
+  failurePolicy: Fail
+  name: vrdsmariadbcluster.kb.io
+  rules:
+  - apiGroups:
+    - rds.proton.aishu.cn
+    apiVersions:
+    - v1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - rdsmariadbclusters
+  sideEffects: None

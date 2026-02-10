@@ -1,0 +1,91 @@
+{{- if (eq .Values.config.nodeGroup "master") }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "opensearch-exporter.name" . }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ template "opensearch-exporter.name" . }}
+    cluster: {{ .Values.config.clusterName }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ template "opensearch-exporter.name" . }}
+      cluster: {{ .Values.config.clusterName }}
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: {{ template "opensearch-exporter.name" . }}
+        cluster: {{ .Values.config.clusterName }}
+    spec:
+{{- with .Values.nodeSelector }}
+      nodeSelector:
+{{ toYaml . | indent 8 }}
+{{- end }}
+      dnsConfig:
+        options:
+          - name: single-request-reopen
+          - name: use-vc
+      restartPolicy: Always
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+      containers:
+        - name: exporter
+          image: {{ template "opensearch-exporter.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:
+            - /bin/sh
+            - -cx
+            - |
+              #!/bin/sh
+              ./opensearch-exporter-server \
+              --log.format=logfmt \
+              --log.level={{ .Values.config.exporter.logLevel }} \
+              --opensearch.uri={{ template "opensearch-exporter.opensearch-uri" . }} \
+              {{- range .Values.config.exporter.collector }}
+              --{{ . }} \
+              {{- end }}
+              --opensearch.timeout={{ .Values.config.exporter.timeout }} \
+              --opensearch.ssl-skip-verify \
+              --web.listen-address=:{{ .Values.service.exporter.port }} \
+              --web.telemetry-path=/metrics
+          ports:
+            - name: exporter
+              containerPort: {{ .Values.service.exporter.port }}
+          env:
+            - name: TZ
+              value: "{{ .Values.env.timezone }}"
+            - name: OPENSEARCH_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.config.clusterName }}-exporter-auth
+                  key: username
+            - name: OPENSEARCH_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.config.clusterName }}-exporter-auth
+                  key: password
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: exporter
+            initialDelaySeconds: 10
+            timeoutSeconds: 10
+            periodSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: exporter
+            initialDelaySeconds: 10
+            timeoutSeconds: 10
+            periodSeconds: 5
+          resources:
+{{ toYaml .Values.resources.exporter | indent 12 }}
+{{- end }}

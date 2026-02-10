@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "configuration-management.fullname" . }}
+  namespace: {{ .Values.namespace }}
+data:
+  config.yaml: |
+    server:
+      in_cluster: true
+      port: 8008
+    configuration:
+      save_prefix: cms-release-config-
+      default_namespace: anyshare
+    log:
+      path: /var/log/cms
+      name: cms.log
+      level: debug
+

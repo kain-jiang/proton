@@ -1,0 +1,70 @@
+ApiVersion: v1
+Cr:
+  local:
+    Ha_ports:
+      Chartmuseum: 15001
+      Cr_manager: 15002
+      Registry: 15000
+      Rpm: 15003
+    Hosts:
+    - vm-14-71-centos
+    Ports:
+      Chartmuseum: 5001
+      Cr_manager: 5002
+      Registry: 5000
+      Rpm: 5003
+    Storage: /sysvol/proton_data/cr_data
+Cs:
+  Cs_controller_dir: ./service-package
+  Docker_data_dir: /sysvol/proton_data/cs_docker_data
+  Etcd_data_dir: /sysvol/proton_data/cs_etcd_data
+  Ha_port: 8443
+  Host_network:
+    Bip: 172.33.0.1/16
+    Ipv4_interface: ""
+    Ipv6_interface: ""
+    Pod_network_cidr: 192.169.0.0/16
+    Service_cidr: 10.96.0.0/12
+  Master:
+  - vm-14-71-centos
+  addons: []
+Nodes:
+- IP4: 10.4.14.71
+  IP6: ""
+  Name: vm-14-71-centos
+OpenSearch: null
+OrientDB: null
+Proton_etcd: null
+Proton_mariadb: null
+Proton_mongodb: null
+Proton_mq_nsq: null
+Proton_policy_engine: null
+Proton_redis: null
+cms:
+  {}
+kafka:
+  Data_path: /sysvol/kafka
+  Env: null
+  Hosts:
+  - vm-14-71-centos
+  Resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 10m
+      memory: 16Mi
+  Version: 5.2.0
+zookeeper:
+  Data_path: /sysvol/zookeeper
+  Env: null
+  Hosts:
+  - vm-14-71-centos
+  Resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 10m
+      memory: 16Mi
+  Version: 5.2.0

@@ -1,0 +1,12 @@
+{
+  "name": "deploy-service",
+  "version": "1.2.6-mission",
+  "description": "A Helm chart for Kubernetes",
+  "apiVersion": "v1",
+  "appVersion": "1.2.6-mission.278",
+  "urls": [
+    "charts/deploy-service-1.2.6-mission.tgz"
+  ],
+  "created": "2022-01-12T17:19:06.494074595+08:00",
+  "digest": "41cbe4f9eea5fea74090d60706d9945a77f1b0c5ead22300901a7b391b261a9e"
+}

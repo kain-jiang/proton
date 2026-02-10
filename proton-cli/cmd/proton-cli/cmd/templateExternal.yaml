@@ -1,0 +1,264 @@
+apiVersion: v1
+
+deploy:
+  mode: cloud
+  devicespec: Managed-Cloud
+  namespace: resource
+
+cs:
+  provisioner: external
+
+cr:
+  external:
+    chart_repository: chartmuseum
+    image_repository: registry
+    registry:
+      host: registry.example.org
+      username: sample-username
+      password: sample-password
+    chartmuseum:
+      host: chartmuseum.example.org
+      username: sample-username
+      password: sample-password
+
+# proton-mariadb
+proton_mariadb:
+  replica_count: 1
+  # 申请的存储卷大小
+  storage_capacity: 
+  config:
+    innodb_buffer_pool_size: 8G
+    resource_requests_memory: 24G
+    resource_limits_memory: 24G
+  admin_user: FAKE_USERNAME
+  admin_passwd: FAKE_PASSWORD
+  storageClassName: csi-disk
+
+# mongodb
+proton_mongodb:
+  replica_count: 1
+  # 申请的存储卷大小
+  storage_capacity: 
+  admin_user: FAKE_USERNAME
+  admin_passwd: FAKE_PASSWORD
+  storageClassName: csi-disk
+
+# redis
+proton_redis:
+  replica_count: 1
+  # 申请的存储卷大小
+  storage_capacity: 
+  admin_user: FAKE_USERNAME
+  admin_passwd: FAKE_PASSWORD
+  storageClassName: csi-disk
+
+#proton-mq-nsq
+proton_mq_nsq:
+  replica_count: 1
+  # 申请的存储卷大小
+  storage_capacity: 
+  storageClassName: csi-disk
+
+# policy-engine
+# 不超过3个，最多支持 3 副本
+proton_policy_engine:
+  replica_count: 1
+  # 申请的存储卷大小
+  storage_capacity: 
+  storageClassName: csi-disk
+
+# policy-etcd
+# 不超过3个，最多支持 3 副本
+proton_etcd:
+  replica_count: 1
+  # 申请的存储卷大小
+  storage_capacity: 
+  storageClassName: csi-disk
+
+# opensearch
+opensearch:
+  # 申请的存储卷大小
+  storage_capacity: 
+  replica_count: 1
+  # mode 可以为 hot, master, warm
+  mode: master
+  config: # 可选配置(如果配置为空，请注意显式设置为{})， 键值对值为null代表移除配置，恢复默认
+    jvmOptions: -Xmx8g -Xms8g # JVM内存设置
+    hanlpRemoteextDict: http://ecoconfig-private.anyshare:32128/api/ecoconfig/v1/word-list/remote_ext_dict # 远程词库
+    hanlpRemoteextStopwords: http://ecoconfig-private.anyshare:32128/api/ecoconfig/v1/word-list/remote_ext_stopwords # 远程去停词
+  storageClassName: csi-disk
+  ## OpenSearch 的原生参数
+  ## Detail: "https://opensearch.org/docs/latest/security/configuration/yaml/#opensearchyml"
+  settings:
+    cluster.routing.allocation.disk.watermark.flood_stage: 70%
+    cluster.routing.allocation.disk.watermark.high: 65%
+    cluster.routing.allocation.disk.watermark.low: 60%
+## OpenSearch 需求的资源
+## reference: https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#resources
+#  resources:
+#    limits:
+#      cpu: 40
+#      memory: 64Gi
+#    requests:
+#      cpu: 40
+#      memory: 64Gi
+#  exporter_resources:
+#    limits:
+#      cpu: 200m
+#      memory: 800Mi
+#    requests:
+#      cpu: 200m
+#      memory: 800Mi
+
+# AnyShare configuration management service
+cms: {}
+
+# Component Management Service
+component_management: {}
+
+# Kubernetes plugin for Nvidia GPUs, not user configurable (yet)
+nvidia_device_plugin:  {}
+
+kafka:
+  # 申请的存储卷大小
+  storage_capacity: 
+  replica_count: 1
+  storageClassName: csi-disk
+# 根据 AnyRobot 性能测试的推荐资源配额
+# arch: arm, node:   1, cpu:  96, memory: 128
+#  env:
+#    KAFKA_HEAP_OPTS: -Xms9G -Xmx9G
+#  resources:
+#    limits:
+#      cpu: "4"
+#      memory: 10Gi
+#    requests:
+#      cpu: "4"
+#      memory: 10Gi
+#  exporter_resources:
+#    limits:
+#      cpu: 200m
+#      memory: 800Mi
+#    requests:
+#      cpu: 200m
+#      memory: 800Mi
+
+zookeeper:
+  # 申请的存储卷大小
+  storage_capacity: 
+  replica_count: 1
+  storageClassName: csi-disk
+  # 根据 AnyRobot 性能测试的推荐资源配额
+  # arch: arm, node:   1, cpu:  96, memory: 128
+  env:
+    JVMFLAGS: -Xms500m -Xmx500m
+  resources:
+    limits:
+      cpu: 1
+      memory: 2Gi
+    requests:
+      cpu: 100m
+      memory: 270Mi
+
+# # Proton 可观测服务使用的 Prometheus
+prometheus:
+  # 申请的存储卷大小
+  storage_capacity: 
+  # 托管 Kubernetes 环境 Prometheus 使用下列 Storage Class 作为持久化数据
+  storageClassName: standard
+
+# # Proton 可观测服务使用的 Grafana
+grafana:
+  # 申请的存储卷大小
+  storage_capacity: 
+  # 托管 Kubernetes 环境 Grafana 使用下列 Storage Class 作为持久化数据
+  storageClassName: standard
+
+# 基础组件连接信息统一管理，用到业务账号的内置组件除之前的配置外，还需在此处填写业务账号用户名和密码；
+# 组件外置时，所有信息在这里填写
+resource_connect_info:
+  rds:
+    source_type: external
+    rds_type: MySQL #DM8 MySQL GoldenDB TiDB KDB9
+    hosts: ""  # 外置组件地址，多个英文逗号分隔
+    port: 12345   #整型，多副本时，端口必须一样
+    username: ""
+    password: ""
+
+  mongodb:
+    source_type: external
+    hosts: ""  # 外置组件地址，多个英文逗号分隔
+    port: 12345
+    replica_set: "" #副本集名称
+    username: ""
+    password: ""
+    ssl: false #boolean 类型值，是否开启ssl，可选，默认不开启
+    auth_source: "" #登录验证数据库名称
+    # 其它可选参数
+    options:
+      key1: value1
+      key2: value2
+
+# redis三种模式
+# #external sentinel
+  # redis:
+  #   source_type: external
+  #   connect_type:sentinel
+  #   sentinel_hosts: "" # snetinel访问地址，多个时用英文逗号分隔
+  #   sentinel_port:   # 整型，多个节点时，端口必须一致
+  #   sentinel_username: ""
+  #   sentinel_password: ""
+  #   username: ""  #可选
+  #   password: ""  #可选
+  #   master_group_name: "" #
+# #external master_slave
+  # redis:
+  #   source_type: external
+  #   connect_type: master-slave
+  #   master_hosts: "" # 主节点访问地址，多个时用英文逗号分隔
+  #   master_port:  #整型数字，多个master时，端口必须一样
+  #   slave_hosts: "" # 从节点访问地址，多个时用英文逗号分隔
+  #   slave_port:  #整型，多个slave时，端口必须一样
+  #   username: ""
+  #   password: ""
+# #external standalone
+  # redis:
+  #   source_type: external
+  #   connect_type: standalone
+  #   hosts: "" #
+  #   port:     # 整型
+  #   username: ""
+  #   password: ""
+
+  # external mq
+  mq:
+    source_type: external
+    mq_type: kafka # nsq tonglink htp20 kafka bmq
+    mq_hosts: "" #mq工作节点访问地址，多个时用英文逗号分隔
+    mq_port: 12345  #整型，多副本时，端口必须保持一样
+    mq_lookupd_hosts: "" #mq管理节点访问地址，多个时用英文逗号分隔；非nsq不填
+    mq_lookupd_port:  #多副本时，端口必须保持一样；非nsq不填
+    auth:   # 当前只有kafka支持配置auth，其它中间件不填
+      username: ""
+      password: ""
+      mechanism: "PLAIN" # SCRAM-SHA-512 SCRAM-SHA-256 PLAIN
+
+  # external opensearch
+  opensearch:
+    source_type: external
+    hosts: "" #服务访问地址，多个时用英文逗号分隔
+    port:   #整型，多副本时，端口必须保持一样
+    username: ""
+    password: ""
+    version: 7.10.0 # 5.6.4 7.10.0
+
+  policy_engine:
+    source_type: external
+    hosts: "" #服务访问地址，多个时用英文逗号分隔
+    port: 12345  #整型，多副本时，端口必须保持一样
+
+  etcd:
+    source_type: external
+    hosts:  "" #节点访问地址，多个时用英文逗号分隔
+    port: 12345   #整型，多副本时，端口必须保持一样
+    secret: ""

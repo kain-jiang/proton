@@ -1,0 +1,24 @@
+# permissions for end users to edit rdsmariadbclusters.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: rdsmariadbcluster-editor-role
+rules:
+- apiGroups:
+  - rds.proton.aishu.cn
+  resources:
+  - rdsmariadbclusters
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - rds.proton.aishu.cn
+  resources:
+  - rdsmariadbclusters/status
+  verbs:
+  - get

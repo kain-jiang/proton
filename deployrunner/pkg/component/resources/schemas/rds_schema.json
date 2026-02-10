@@ -1,0 +1,84 @@
+{
+    "title": "关系型数据库",
+    "description": "关系型数据库组件配置",
+    "type": "object",
+    "oneOf": [
+        {
+            "title": "内置关系数据库",
+            "description": "内置数据库",
+            "type": "object",
+            "required": [
+                "user",
+                "password",
+                "source_type"
+            ],
+            "properties": {
+                "source_type": {
+                    "type": "string",
+                    "enum": [
+                        "Proton_MariaDB"
+                    ],
+                    "const": "Proton_MariaDB"
+                },
+                "password": {
+                    "type": "string",
+                    "description": "数据库账户密码"
+                },
+                "user": {
+                    "type": "string",
+                    "description": "数据库账户"
+                }
+            }
+        },
+        {
+            "title": "外置关系数据库",
+            "description": "外置数据库类型",
+            "type": "object",
+            "required": [
+                "type",
+                "source_type",
+                "host",
+                "port",
+                "user",
+                "password"
+            ],
+            "properties": {
+                "source_type": {
+                    "type": "string",
+                    "enum": [
+                        "External_Database"
+                    ],
+                    "const": "External_Database"
+                },
+                "type": {
+                    "type": "string",
+                    "enum": [
+                        "MariaDB",
+                        "MySQL",
+                        "GoldenDB",
+                        "DM8",
+                        "TiDB"
+                    ],
+                    "default": "MariaDB"
+                },
+                "host": {
+                    "type": "string",
+                    "description": "数据库连接地址"
+                },
+                "password": {
+                    "type": "string",
+                    "description": "数据库账户密码"
+                },
+                "port": {
+                    "type": "integer",
+                    "description": "数据库连接端口",
+                    "minimum": 1
+                },
+                "user": {
+                    "type": "string",
+                    "description": "数据库账户"
+                }
+            }
+        }
+    ]
+}

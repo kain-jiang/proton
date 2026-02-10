@@ -1,0 +1,53 @@
+@eisoo-red:                #de3427;//dashboard用色，红色1级警告、失败/禁用、按钮悬浮以及关键/错误icon
+@eisoo-orange:             #fb8c00;//dashboard用色，橙色2级警告，停止等信息
+@eisoo-yellow:             #fecb01;//黄色3级警告
+@eisoo-green:              #2aa879;//运行等信息
+@eisoo-blue:               #49aeff;//蓝色4级警告
+@eisoo-white:              #ffffff;// 白色，用于按钮、背景色等
+@eisoo-base-disable:       #bdbcbd;
+@eisoo-service-green:      #52c41b;//运行中dot颜色
+@eisoo-service-red:        #e60012;//运行失败dot颜色
+@eisoo-success:            #2de4df;//上传/安装成功dot颜色
+@eisoo-failure:            #b2b2b2;//上传/安装失败dot颜色
+
+.point(@color) {
+    content: ' ';
+    display: flex;
+    width: 14px;
+    height: 14px;
+    border: 7px solid @color;
+    border-radius: 7px;
+    margin-right: 5px;
+    align-items: center;
+}
+.blue-point::before {
+    .point(@eisoo-blue);
+}
+.green-point::before {
+    .point(@eisoo-green);
+}
+.red-point::before {
+    .point(@eisoo-red);
+}
+.gray-point::before {
+    .point(@eisoo-base-disable);
+}
+.orange-point::before {
+    .point(@eisoo-orange);
+}
+.yellow-point::before {
+    .point(@eisoo-yellow);
+}
+// 服务管理
+.service-green-point::before {
+    .point(@eisoo-service-green);
+}
+.service-red-point::before {
+    .point(@eisoo-service-red);
+}
+.success-point::before {
+    .point(@eisoo-success);
+}
+.failure-point::before {
+    .point(@eisoo-failure);
+}

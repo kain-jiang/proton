@@ -1,0 +1,74 @@
+#命名空间
+namespace: default
+
+#环境变量：语言/时区
+env:
+  language: en_US.UTF-8
+  timezone: Asia/Shanghai
+
+#副本数
+replicaCount: 3
+
+#镜像
+image:
+  registry: acr.aishu.cn
+  pullPolicy: IfNotPresent
+  engine:
+    repository: proton/proton-policy-engine
+    tag: 2.4.4
+  etcd:
+    repository: proton/proton-etcd
+    tag: 1.4.2
+  exporter:
+    repository: proton/policy-engine-exporter
+    tag: 1.1.1
+  postUpgradeJob:
+    repository: proton/proton-migrate-etcd
+    tag: 1.0.0
+
+# 配置
+config:
+  lang: zh_CN
+  logLevel: error
+  archiveInterval: 60 #分钟
+
+#端口
+service:
+  enableDualStack: false
+  #type: ClusterIP/NodePort
+  type: ClusterIP
+  port: 8180 #30180
+
+#存储
+storage:
+  storageClassName: ""
+  capacity: 10Gi
+  local:
+    0:
+      host: node0
+      path: "/sysvol/policy-engine/policy-engine-0"
+    1:
+      host: node0
+      path: "/sysvol/policy-engine/policy-engine-1"
+    2:
+      host: node0
+      path: "/sysvol/policy-engine/policy-engine-2"
+
+# 资源限额
+resources:
+  requests:
+    cpu: 500m
+    memory: 512Mi
+  #limits:
+  #  cpu: 4
+  #  memory: 8Gi
+
+depServices:
+  etcd:
+    endpoints: https://proton-etcd-0.proton-etcd-headless.resource.svc.cluster.local:2379,https://proton-etcd-1.proton-etcd-headless.resource.svc.cluster.local:2379,https://proton-etcd-2.proton-etcd-headless.resource.svc.cluster.local:2379
+    tlsConfig:
+      requireSSL: false
+      secretName: etcdssl-secret
+      certName: server-cert
+      keyName: server-key
+      caName: ca

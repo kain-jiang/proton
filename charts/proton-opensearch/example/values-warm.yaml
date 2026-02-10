@@ -1,0 +1,93 @@
+namespace: opensearch
+
+env:
+  language: en_US.UTF-8
+  timezone: Asia/Shanghai
+
+replicaCount: 1
+
+image:
+  registry: datacentertest.azurecr.cn
+  pullPolicy: IfNotPresent
+  #pullPolicy: Always
+  opensearch:
+    repository: proton/proton-opensearch
+    tag: 1.0.2
+
+# only master will create the services
+service:
+  http:
+    type: ClusterIP # ClusterIP, NodePort
+    port: 9200
+    nodePort: 30920
+  read:
+    type: ClusterIP # ClusterIP, NodePort
+    port: 9200
+    nodePort: 30921
+  write:
+    type: ClusterIP # ClusterIP, NodePort
+    port: 9200
+    nodePort: 30922
+  transport:
+    type: ClusterIP # ClusterIP, NodePort
+    port: 9300
+    nodePort: 30930
+
+sysctlInitContainer:
+  enabled: true
+
+config:
+  clusterName: "opensearch"
+  nodeGroup: "warm" # 可选参数 master, hot, warm
+  roles:
+    data: true
+    ingest: false
+    remoteClusterClient: true
+  memoryLock: false
+  autoCreateIndex: true
+  reindexRemoteWhitelist: ""
+  jvmMemory: 512 # 单位MB
+  enableSSL: false
+  nodesDN:
+    - "CN=proton-node@aishu.cn,OU=Proton,O=aishu,L=Shanghai,ST=Shanghai,C=CN"
+
+# OpenSearch原生参数，可自行扩展
+settings:
+  bootstrap.system_call_filter: true
+  http.max_content_length: "100mb"
+
+secret:
+  secretName: "" # if secretName is empty, default is <clusterName>-certs
+  caName: root-ca.pem
+  nodeCertName: node.pem
+  nodeKeyName: node-key.pem
+  clientCertName: client.pem
+  clientKeyName: client-key.pem
+
+storage:
+  capacity: 10Gi
+  storageClassName: "default"
+  local:
+    0:
+      host: node0
+      path: /sysvol/opensearch/opensearch-warm
+    1:
+      host: node1
+      path: /sysvol/opensearch/opensearch-warm
+    2:
+      host: node2
+      path: /sysvol/opensearch/opensearch-warm
+  repo:
+    enabled: false
+    type: nfs
+    nfs:
+      server: 10.4.98.144
+      path: /sysvol/opensearch/opensearch-repo
+
+resources:
+  requests:
+    cpu: "0"
+    memory: "0"
+  # limits:
+  #   cpu: "1000m"
+  #   memory: "2Gi"

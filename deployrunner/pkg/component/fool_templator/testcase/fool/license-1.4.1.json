@@ -1,0 +1,79 @@
+{
+    "name": "license",
+    "version": "1.4.1",
+    "componentDefineType": "fool",
+    "configSchema": null,
+    "attributeSchema": null,
+    "Dendence": null,
+    "spec": null,
+    "timeout": 0,
+    "deploys": [
+        {
+            "name": "l-icense",
+            "replica": {
+                "defaultReplica": 1
+            },
+            "containers": [
+                {
+                    "name": "license",
+                    "command": [
+                        "/license7_service/license7_service"
+                    ],
+                    "ports": [
+                        8090
+                    ],
+                    "image": {
+                        "registry": "acr.aichu.cn",
+                        "imag": "as/license",
+                        "tag": "m5.1.235449-1.4.1"
+                    },
+                    "startupProbe": {
+                        "httpGet": {
+                            "path": "/api/license/health",
+                            "port": 8090,
+                            "scheme": "HTTP"
+                        },
+                        "failureThreshold": 5,
+                        "initialDelaySeconds": 30,
+                        "periodSeconds": 10,
+                        "successThreshold": 1,
+                        "terminationGracePeriodSeconds": 30,
+                        "timeoutSeconds": 5
+                    },
+                    "readinessProbe": {
+                        "httpGet": {
+                            "path": "/api/license/health",
+                            "port": 8090,
+                            "scheme": "HTTP"
+                        },
+                        "failureThreshold": 5,
+                        "initialDelaySeconds": 30,
+                        "periodSeconds": 10,
+                        "successThreshold": 1,
+                        "timeoutSeconds": 5
+                    },
+                    "resources": {
+                        "custom": false,
+                        "requests": {
+                            "memory": "60Mi",
+                            "cpu": "0.1"
+                        }
+                    }
+                }
+            ],
+            "service": [
+                {
+                    "name": "license-host",
+                    "ports": [
+                        {
+                            "name": "port",
+                            "port": 8090,
+                            "targetPort": 8090,
+                            "protocol": "TCP"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

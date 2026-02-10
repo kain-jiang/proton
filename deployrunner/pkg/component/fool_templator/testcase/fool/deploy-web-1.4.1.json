@@ -1,0 +1,188 @@
+{
+    "name": "deploy-web",
+    "version": "1.4.1",
+    "componentDefineType": "fool",
+    "configSchema": null,
+    "attributeSchema": null,
+    "Dendence": null,
+    "spec": null,
+    "timeout": 0,
+    "deploys": [
+        {
+            "name": "deploy-1web",
+            "replica": {
+                "defaultReplica": 1
+            },
+            "containers": [
+                {
+                    "name": "service",
+                    "command": [
+                        "node"
+                    ],
+                    "args": [
+                        "/AnyShare/DeployWebService/build/bundle.js"
+                    ],
+                    "image": {
+                        "registry": "acr.aichu.cn",
+                        "imag": "as/deploy-web-service",
+                        "tag": "1.4.1"
+                    },
+                    "ports": [
+                        18080
+                    ],
+                    "livenessProbe": {
+                        "httpGet": {
+                            "path": "/health/alive",
+                            "port": 18080,
+                            "scheme": "HTTP"
+                        },
+                        "failureThreshold": 5,
+                        "initialDelaySeconds": 30,
+                        "periodSeconds": 10,
+                        "successThreshold": 1,
+                        "terminationGracePeriodSeconds": 30,
+                        "timeoutSeconds": 5
+                    },
+                    "readinessProbe": {
+                        "httpGet": {
+                            "path": "/health/ready",
+                            "port": 18080,
+                            "scheme": "HTTP"
+                        },
+                        "failureThreshold": 5,
+                        "initialDelaySeconds": 30,
+                        "periodSeconds": 10,
+                        "successThreshold": 1,
+                        "timeoutSeconds": 5
+                    },
+                    "resources": {
+                        "custom": false,
+                        "requests": {
+                            "memory": "60Mi",
+                            "cpu": "0.1"
+                        }
+                    }
+                },
+                {
+                    "name": "static",
+                    "command": [
+                        "nginx"
+                    ],
+                    "args": [
+                        "-g",
+                        "daemon off;"
+                    ],
+                    "image": {
+                        "registry": "acr.aishu.cn",
+                        "imag": "as/deploy-web-static",
+                        "tag": "1.4.1"
+                    },
+                    "ports": [
+                        18800
+                    ],
+                    "livenessProbe": {
+                        "httpGet": {
+                            "path": "/health/alive",
+                            "scheme": "HTTP",
+                            "port": 18800
+                        },
+                        "failureThreshold": 5,
+                        "initialDelaySeconds": 30,
+                        "periodSeconds": 10,
+                        "successThreshold": 1,
+                        "terminationGracePeriodSeconds": 30,
+                        "timeoutSeconds": 5
+                    },
+                    "readinessProbe": {
+                        "httpGet": {
+                            "path": "/health/ready",
+                            "scheme": "HTTP",
+                            "port": 18800
+                        },
+                        "failureThreshold": 5,
+                        "initialDelaySeconds": 30,
+                        "periodSeconds": 10,
+                        "successThreshold": 1,
+                        "timeoutSeconds": 5
+                    },
+                    "resources": {
+                        "custom": false,
+                        "requests": {
+                            "memory": "60Mi",
+                            "cpu": "0.1"
+                        }
+                    }
+                },
+                {
+                    "name": "tproxy",
+                    "command": [
+                        "node"
+                    ],
+                    "args": [
+                        "/AnyShare/DeployWebTProxy/index.js"
+                    ],
+                    "image": {
+                        "registry": "acr.aishu.cn",
+                        "imag": "as/deploy-web-static",
+                        "tag": "1.4.1"
+                    },
+                    "ports": [
+                        18008
+                    ],
+                    "livenessProbe": {
+                        "tcpSocket": {
+                            "port": 18008
+                        },
+                        "failureThreshold": 5,
+                        "initialDelaySeconds": 30,
+                        "periodSeconds": 10,
+                        "successThreshold": 1,
+                        "terminationGracePeriodSeconds": 30,
+                        "timeoutSeconds": 5
+                    },
+                    "readinessProbe": {
+                        "tcpSocket": {
+                            "port": 18008
+                        },
+                        "failureThreshold": 5,
+                        "initialDelaySeconds": 30,
+                        "periodSeconds": 10,
+                        "successThreshold": 1,
+                        "timeoutSeconds": 5
+                    },
+                    "resources": {
+                        "custom": false,
+                        "requests": {
+                            "memory": "60Mi",
+                            "cpu": "0.1"
+                        }
+                    }
+                }
+            ],
+            "service": [
+                {
+                    "name": "deploy-web-static",
+                    "ports": [
+                        {
+                            "name": "staticport",
+                            "port": 18800,
+                            "targetPort": 18800,
+                            "protocol": "TCP"
+                        }
+                    ]
+                },
+                {
+                    "name": "deploy-web-service",
+                    "ports": [
+                        {
+                            "name": "serviceport",
+                            "port": 18080,
+                            "targetPort": 18080,
+                            "protocol": "TCP"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

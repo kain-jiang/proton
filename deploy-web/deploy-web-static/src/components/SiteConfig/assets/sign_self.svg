@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="114px" height="145px" viewBox="0 0 114 145" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 60.1 (88133) - https://sketch.com -->
+    <title>编组 4</title>
+    <desc>Created with Sketch.</desc>
+    <defs>
+        <linearGradient x1="92.8826469%" y1="30.1397834%" x2="20.9780461%" y2="27.4900396%" id="linearGradient-1">
+            <stop stop-color="#DBE6FD" stop-opacity="0.6" offset="0%"></stop>
+            <stop stop-color="#B4C9FB" stop-opacity="0" offset="100%"></stop>
+        </linearGradient>
+        <linearGradient x1="50%" y1="0%" x2="50%" y2="100%" id="linearGradient-2">
+            <stop stop-color="#E8EFFF" offset="0%"></stop>
+            <stop stop-color="#E8EFFF" stop-opacity="0" offset="100%"></stop>
+        </linearGradient>
+    </defs>
+    <g id="页面-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="证书备份-3" transform="translate(-584.000000, -222.000000)">
+            <g id="编组-14" transform="translate(335.000000, 222.000000)">
+                <g id="形状结合备份-7">
+                    <g id="编组-4" transform="translate(249.000000, -108.000000)">
+                        <path d="M108.5,26 C143.570082,26 172,54.4299184 172,89.5 C172,124.570082 143.570082,153 108.5,153 C73.4299184,153 45,124.570082 45,89.5 C45,54.4299184 73.4299184,26 108.5,26 Z M108.5,40 C81.1619049,40 59,62.1619049 59,89.5 C59,116.838095 81.1619049,139 108.5,139 C135.838095,139 158,116.838095 158,89.5 C158,62.1619049 135.838095,40 108.5,40 Z" id="形状结合备份-7" fill="url(#linearGradient-1)" transform="translate(108.500000, 89.500000) rotate(-141.000000) translate(-108.500000, -89.500000) "></path>
+                        <g id="编组-13" transform="translate(0.000000, 158.000000)">
+                            <circle id="椭圆形备份-2" fill="url(#linearGradient-2)" fill-rule="nonzero" cx="33.5" cy="52.6893866" r="26.5"></circle>
+                            <path d="M35.3529412,40.1893866 L63.5882353,40.1893866 L73,49.6116088 L73,90.8338311 C73,92.1293866 71.9411765,93.1893866 70.6470588,93.1893866 L35.3529412,93.1893866 C34.0588235,93.1893866 33,92.1293866 33,90.8338311 L33,42.5449422 C33,41.2493866 34.0588235,40.1893866 35.3529412,40.1893866 Z" id="路径备份" fill="#FFFFFF" fill-rule="nonzero"></path>
+                            <polygon id="路径备份-2" fill="#A3D4FF" fill-rule="nonzero" points="62 40.1893866 62 51.1893866 73 51.1893866"></polygon>
+                            <path d="M33,42.5449422 C33,41.2493866 34.0588235,40.1893866 35.3529412,40.1893866 L63.5882353,40.1893866 L73,49.6116088 L73,90.8338311 C73,92.1293866 71.9411765,93.1893866 70.6470588,93.1893866 L35.3529412,93.1893866 C34.0588235,93.1893866 33,92.1293866 33,90.8338311 L33,42.5449422 Z" id="路径备份-3" stroke="#82A7FC" stroke-width="2"></path>
+                            <polyline id="路径备份-4" stroke="#82A7FC" stroke-width="2" points="69 50.1893866 62 50.1893866 62 43.1893866"></polyline>
+                            <g id="编组备份-4" transform="translate(12.000000, 45.189387)" stroke="#82A7FC" stroke-linejoin="round" stroke-width="2">
+                                <path d="M7.55405405,2.91666667 L5.69459459,1.05 C4.76486486,0.116666667 3.37027027,0.116666667 2.44054054,1.05 L2.20810811,1.28333333 C1.27837838,2.21666667 1.27837838,3.61666667 2.20810811,4.55 L4.06756757,6.41666667" id="路径"></path>
+                                <polygon id="路径" fill="#A3D4FF" fill-rule="nonzero" points="3.48648649 7 33.7027027 37.3333333 43 42 38.3513514 32.6666667 8.13513514 2.33333333"></polygon>
+                                <line x1="38.3513514" y1="32.6666667" x2="33.7027027" y2="37.3333333" id="路径" fill="#FFFFFF" fill-rule="nonzero"></line>
+                                <line x1="11.6216216" y1="5.83333333" x2="3.48648649" y2="14" id="路径"></line>
+                                <line x1="0" y1="10.5" x2="11.6216216" y2="22.1666667" id="路径"></line>
+                            </g>
+                            <g id="编组备份-5" transform="translate(0.000000, 81.189387)" stroke="#BFD1FD" stroke-width="2">
+                                <line x1="5.90909091" y1="0" x2="5.90909091" y2="12" id="路径"></line>
+                                <line x1="0" y1="6" x2="13" y2="6" id="路径"></line>
+                            </g>
+                            <g id="编组备份-6" transform="translate(89.000000, 60.189387)" stroke="#BFD1FD" stroke-width="2">
+                                <line x1="5.90909091" y1="0" x2="5.90909091" y2="13" id="路径"></line>
+                                <line x1="0" y1="7.09090909" x2="13" y2="7.09090909" id="路径"></line>
+                            </g>
+                            <g id="编组备份-7" transform="translate(23.000000, 0.189387)" stroke="#BFD1FD" stroke-width="2">
+                                <line x1="9.5" y1="0" x2="9.5" y2="18" id="路径"></line>
+                                <line x1="0" y1="9.6" x2="19" y2="9.6" id="路径"></line>
+                            </g>
+                        </g>
+                    </g>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

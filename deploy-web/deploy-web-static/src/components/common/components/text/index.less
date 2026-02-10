@@ -1,0 +1,15 @@
+.es-text{
+    display: inline-flex;
+    align-items: center;
+}
+.es-text-ellipsis{
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    word-break: keep-all;
+    vertical-align: middle;
+    display: inline-block;
+    &.es-text-max-width{
+        max-width: 100%;
+    }
+}

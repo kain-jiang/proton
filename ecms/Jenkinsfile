@@ -1,0 +1,228 @@
+node('x86_64') {
+    stage 'Checkout'
+        sh "rm -rf ${WORKSPACE}/ecms/*"
+        checkout([
+            $class : 'GitSCM',
+            branches: [[name: '*/${BRANCH_NAME}']],
+            doGenerateSubmoduleConfigurations: false,
+            extensions: [
+                [
+                $class: 'RelativeTargetDirectory',
+                relativeTargetDir: './ecms'
+                ]
+            ],
+            submoduleCfg: [],
+            userRemoteConfigs: [
+                [
+                credentialsId: 'bea73795-697a-49a6-a202-345c1aa588a0',
+                url: 'https://devops.aishu.cn/AISHUDevOps/ICT/_git/proton-ecms'
+                ]
+            ]
+            ])
+
+    stage 'Build'
+        dir("${WORKSPACE}/ecms") {
+            GIT_COMMIT = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
+            sh "sed -i 's|000000|${BRANCH_NAME}.${GIT_COMMIT}|g' src/config/ecms.conf"
+        }
+        withDockerContainer(args: "-v ${WORKSPACE}/ecms:/ecms", image: 'acr.aishu.cn/ict/slb_builder:7') {
+            sh 'python /pyinstaller-3.5/pyinstaller.py -D --name=ecms --distpath=/ecms/output /ecms/src/server.py'
+            sh "mkdir -p /root/rpmbuild/SPECS; mkdir -p /root/rpmbuild/SOURCES; mkdir -p /ecms/package"
+            sh "cp -rpf /ecms/src/boost /ecms/package/; cp -rpf /ecms/src/config /ecms/package/; mv /ecms/output/ecms /ecms/package/bin"
+            sh "cd /ecms; tar czf package.tar.gz package;mv package.tar.gz /root/rpmbuild/SOURCES/;cp -rpf /ecms/ecms.spec /root/rpmbuild/SPECS/"
+            sh "sed -i 's/ECMS_VERSION/${ECMS_VERSION}/g' /root/rpmbuild/SPECS/ecms.spec"
+            sh "cd /root/rpmbuild/SPECS/;rpmbuild -bb ecms.spec"
+            sh "cp -rpf /root/rpmbuild/RPMS/x86_64/ecms-*.rpm /ecms/output"
+            archiveArtifacts artifacts: 'ecms/output/ecms-*.rpm', allowEmptyArchive: false
+        }
+        withDockerContainer(args: "-v ${WORKSPACE}/ecms:/ecms", image: 'acr.aishu.cn/ict/redoc-api:1.0') {
+            sh '/usr/local/bin/node /node_modules/redoc-cli/index.js bundle --options.requiredPropsFirst --options.jsonSampleExpandLevel=all \
+            --options.disableSearch --options.pathInMiddlePanel --options.menuToggle --options.theme.colors.primary.main=#E60F19 --title="ECMS" \
+            -t /ecms/api/template.hbs /ecms/api/ecms.json -o /ecms/api/ecms.html'
+        }
+
+    stage 'Package artifacts'
+        dir("${WORKSPACE}/ecms/output") {
+            if (BRANCH_NAME =~ "^ICT.*") {
+                FTP_BRANCH_TYPE = "feature"
+            } else if (BRANCH_NAME =~ /^(\d+).(\d+).(\d+)$/) {
+                FTP_BRANCH_TYPE = "release"
+            } else {
+                FTP_BRANCH_TYPE = "develop"
+            }
+            REMOTE_FTP_DIR = "ECMS/host/${BRANCH_NAME}/amd64/"
+        }
+
+    if (BRANCH_NAME == "develop") {
+        def job_name_parts = env.JOB_NAME.tokenize('/') as String[]
+        MY_DIR_NAME = job_name_parts[0]
+        MY_JOB_NAME = job_name_parts[1]
+        stage 'Upload Metrix Report'
+        dir("${WORKSPACE}/ecms/report") {
+            ftpPublisher alwaysPublishFromMaster: false,
+            continueOnError: false,
+            failOnError: false,
+            publishers: [
+                [configName: 'FTP_ICT_REPORT',
+                    transfers: [
+                        [
+                            asciiMode: false,
+                            cleanRemote: false, excludes: '',
+                            flatten: false,
+                            makeEmptyDirs: false,
+                            noDefaultExcludes: false,
+                            patternSeparator: '[, ]+',
+                            remoteDirectory: "/report/${MY_DIR_NAME}/${MY_JOB_NAME}/${new Date().format('yyyyMMdd-HHmmss')}-${BUILD_NUMBER}",
+                            remoteDirectorySDF: false,
+                            sourceFiles: "*"
+                        ]
+                    ],
+                    usePromotionTimestamp: false,
+                    useWorkspaceInPromotion: false,
+                    verbose: true
+                ]
+            ]
+        }
+        build job: 'M_JenkinsMetrix', parameters: [string(name: 'subsystem', value: 'Proton')], propagate: false, wait: false
+    }
+
+    stage 'Upload To FTP'
+        dir("${WORKSPACE}/ecms/api") {
+            ftpPublisher alwaysPublishFromMaster: false,
+            continueOnError: false,
+            failOnError: false,
+            publishers: [
+                [configName: 'FTP_ICT',
+                    transfers: [
+                        [
+                            asciiMode: false,
+                            cleanRemote: false, excludes: '',
+                            flatten: false,
+                            makeEmptyDirs: false,
+                            noDefaultExcludes: false,
+                            patternSeparator: '[, ]+',
+                            remoteDirectory: "${REMOTE_FTP_DIR}",
+                            remoteDirectorySDF: false,
+                            sourceFiles: "ecms.html"
+                        ]
+                    ],
+                    usePromotionTimestamp: false,
+                    useWorkspaceInPromotion: false,
+                    verbose: true
+                ]
+            ]
+        }
+
+        dir("${WORKSPACE}/ecms/output") {
+            ftpPublisher alwaysPublishFromMaster: false,
+            continueOnError: false,
+            failOnError: false,
+            publishers: [
+                [configName: 'FTP_ICT',
+                    transfers: [
+                        [
+                            asciiMode: false,
+                            cleanRemote: false, excludes: '',
+                            flatten: false,
+                            makeEmptyDirs: false,
+                            noDefaultExcludes: false,
+                            patternSeparator: '[, ]+',
+                            remoteDirectory: "${REMOTE_FTP_DIR}",
+                            remoteDirectorySDF: false,
+                            sourceFiles: "*.rpm"
+                        ]
+                    ],
+                    usePromotionTimestamp: false,
+                    useWorkspaceInPromotion: false,
+                    verbose: true
+                ]
+            ]
+        }
+        ECMS_RPM_PATH = "ftp://ftp-ict.aishu.cn/proton/ECMS/host/${BRANCH_NAME}/amd64/ecms-${ECMS_VERSION}-${BUILD_NUMBER}.el7.x86_64.rpm"
+        RPM_REPO = "ftp://ftp-ict.aishu.cn/repo/centos7-x86_64.repo"
+        build job: 'PROTON_YUM_REPO_UPDATE', parameters: [string(name: 'BRANCH', value: "${FTP_BRANCH_TYPE}"), string(name: 'ARCH', value: 'x86_64'), string(name: 'URL_RPM', value: "${ECMS_RPM_PATH}"), string(name: 'URL_REPO', value: "${RPM_REPO}")], propagate: false, wait: false
+
+}
+
+node('aarch64') {
+    stage 'Checkout'
+        sh "rm -rf ${WORKSPACE}/ecms/*"
+        checkout([
+            $class : 'GitSCM',
+            branches: [[name: '*/${BRANCH_NAME}']],
+            doGenerateSubmoduleConfigurations: false,
+            extensions: [
+                [
+                $class: 'RelativeTargetDirectory',
+                relativeTargetDir: './ecms'
+                ]
+            ],
+            submoduleCfg: [],
+            userRemoteConfigs: [
+                [
+                credentialsId: 'bea73795-697a-49a6-a202-345c1aa588a0',
+                url: 'https://devops.aishu.cn/AISHUDevOps/ICT/_git/proton-ecms'
+                ]
+            ]
+            ])
+
+
+    stage 'Build'
+        dir("${WORKSPACE}/ecms") {
+            GIT_COMMIT = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
+            sh "sed -i 's|000000|${BRANCH_NAME}.${GIT_COMMIT}|g' src/config/ecms.conf"
+        }
+        withDockerContainer(args: "-v ${WORKSPACE}/ecms:/ecms", image: 'acr.aishu.cn/ict/slb_builder_aarch64:7') {
+            sh 'python /pyinstaller-3.5/pyinstaller.py -D --name=ecms --distpath=/ecms/output /ecms/src/server.py'
+            sh "mkdir -p /root/rpmbuild/SPECS; mkdir -p /root/rpmbuild/SOURCES; mkdir -p /ecms/package"
+            sh "cp -rpf /ecms/src/boost /ecms/package/; cp -rpf /ecms/src/config /ecms/package/; mv /ecms/output/ecms /ecms/package/bin"
+            sh "cd /ecms; tar czf package.tar.gz package;mv package.tar.gz /root/rpmbuild/SOURCES/;cp -rpf /ecms/ecms.spec /root/rpmbuild/SPECS/"
+            sh "sed -i 's/ECMS_VERSION/${ECMS_VERSION}/g' /root/rpmbuild/SPECS/ecms.spec"
+            sh "cd /root/rpmbuild/SPECS/;rpmbuild -bb ecms.spec"
+            sh "cp -rpf /root/rpmbuild/RPMS/aarch64/ecms-*.rpm /ecms/output"
+            archiveArtifacts artifacts: 'ecms/output/ecms-*.rpm', allowEmptyArchive: false
+        }
+
+    stage 'Package artifacts'
+        dir("${WORKSPACE}/ecms/output") {
+            if (BRANCH_NAME =~ "^ICT.*") {
+                FTP_BRANCH_TYPE = "feature"
+            } else if (BRANCH_NAME =~ /^(\d+).(\d+).(\d+)$/) {
+                FTP_BRANCH_TYPE = "release"
+            } else {
+                FTP_BRANCH_TYPE = "develop"
+            }
+            REMOTE_FTP_DIR = "ECMS/host/${BRANCH_NAME}/aarch64/"
+        }
+    
+    stage 'Upload To FTP'
+        dir("${WORKSPACE}/ecms/output") {
+            ftpPublisher alwaysPublishFromMaster: false, 
+            continueOnError: false, 
+            failOnError: false, 
+            publishers: [
+                [configName: 'FTP_ICT', 
+                    transfers: [
+                        [
+                            asciiMode: false, 
+                            cleanRemote: false, excludes: '', 
+                            flatten: false, 
+                            makeEmptyDirs: false, 
+                            noDefaultExcludes: false, 
+                            patternSeparator: '[, ]+', 
+                            remoteDirectory: "${REMOTE_FTP_DIR}", 
+                            remoteDirectorySDF: false, 
+                            sourceFiles: "*.rpm"
+                        ]
+                    ], 
+                    usePromotionTimestamp: false, 
+                    useWorkspaceInPromotion: false, 
+                    verbose: true
+                ]
+            ]
+        }
+        ECMS_RPM_PATH = "ftp://ftp-ict.aishu.cn/proton/ECMS/host/${BRANCH_NAME}/aarch64/ecms-${ECMS_VERSION}-${BUILD_NUMBER}.el7.aarch64.rpm"
+        RPM_REPO = "ftp://ftp-ict.aishu.cn/repo/centos7-aarch64.repo"
+        build job: 'PROTON_YUM_REPO_UPDATE', parameters: [string(name: 'BRANCH', value: "${FTP_BRANCH_TYPE}"), string(name: 'ARCH', value: 'aarch64'), string(name: 'URL_RPM', value: "${ECMS_RPM_PATH}"), string(name: 'URL_REPO', value: "${RPM_REPO}")], propagate: false, wait: false
+
+}

@@ -1,0 +1,427 @@
+apiVersion: v1
+
+deploy:
+  mode: standard
+  devicespec: AS10000
+  namespace: resource
+
+nodes:
+  - name: node1
+    ip4: xxx
+    #ip6: xxx
+    # internal_ip 是已经存在的节点内部 IP，即 ECeph 的内部 IP。仅在部署 ECeph 时需要填写。
+    internal_ip: xxx
+  - name: node2
+    ip4: xxx
+    #ip6: xxx
+    internal_ip: xxx
+  - name: node3
+    ip4: xxx
+    #ip6: xxx
+    internal_ip: xxx
+
+# 此chrony项目为新增，用于管理Chrony NTP时间源配置，详情请参考实施指导手册
+chrony:
+  # mode可选三种模式，usermanaged代表用户手动管理，localmaster代表随机选择一个内部master节点作为时间服务器，externalntp代表使用外部时间服务器
+  mode: usermanaged
+  # mode为externalntp时，可以在下方填入一个且只允许填写一个需要指定的自定义时间源服务器
+  # mode为localmaster时，server为空或一个master节点名，由系统自动填写，非必要禁止填写和更改server中的该节点名
+  # mode为usermanaged时，server为空，proton-cli将不更改Chrony配置，原有proton-cli配置文件脱离管理，请自行决定要应用哪些配置
+  server:
+    - 0.pool.ntp.org
+
+eceph:
+  # 如果此项为true，则本次apply时跳过对ECeph的更新操作，ECeph沿用上次配置，本次变更的任何值无效。
+  # 不能在未初始化集群或未安装ECeph时将此项设置为true。此项会在每次apply之后重置为false。
+  skip_eceph_update: false
+  hosts:
+    - vm-xx-xx-centos
+    - vm-xx-xx-centos
+    - vm-xx-xx-centos
+  # 单节点keepalived为选填，多节点场景keepalived必填，使用keepalived时必须要有内部ip
+  # 虚拟ip不能与节点的实际ip相同，且必须和实际内外部ip在同一以掩码标识的网段
+  keepalived:
+    internal: 10.**.**.**/24
+    external: 10.**.**.**/24
+  # tls为 ECeph 的数字证书信息，选填，不填会自动以当前时间为名称生成新的证书
+  # certificate-data和key-data为base64编码，编码内容包括形如-----BEGIN CERTIFICATE-----的证书头部
+  tls:
+    secret:
+    certificate-data:
+    key-data:
+
+cs:
+  provisioner: local
+  master:
+    # Kubernetes master 节点
+    - node1
+    - node2
+    - node3
+
+  # ipFamilies 定义 Proton CS 提供的 Kubernetes 所使用的网络协议栈，支持 IPv4 和
+  # IPv6。支持同时使用两种网络协议栈。
+  #
+  # 双栈：
+  # ipFamilies:
+  #   - IPv4
+  #   - IPv6
+  ipFamilies:
+    - IPv4
+
+  ha_port: 8443
+
+  host_network:
+    bip: 172.33.0.1/16 #网桥所使用的 IP,需要加子网掩码
+    pod_network_cidr: 192.169.0.0/16 #K8s Pod Network,必须是一个合法的网段,双栈情况使用英文逗号分隔ipv4与ipv6的cidr(192.169.0.0/16,fc00:b36f:c1c3:2000::/64)
+    service_cidr: 10.96.0.0/12 #K8s service_cidr Network,必须是一个合法的网段,双栈情况使用英文逗号分隔ipv4与ipv6的cidr(10.96.0.0/12,fc01:b36f:c1c3:1000::/108)
+    #ipv4_interface: ens160                        # ipv4 ip所在网卡名称 部署双栈时需要指定
+    #ipv6_interface: ens160                        # ipv6 ip所在网卡名称 部署双栈时需要指定
+  cs_controller_dir: ./service-package
+  etcd_data_dir: /sysvol/proton_data/cs_etcd_data
+  docker_data_dir: /sysvol/proton_data/cs_docker_data
+
+cr:
+  local:
+    hosts:
+      - node1
+      - node2
+    ports:
+      chartmuseum: 5001
+      registry: 5000
+      rpm: 5003
+      cr_manager: 5002
+    ha_ports:
+      chartmuseum: 15001
+      registry: 15000
+      rpm: 15003
+      cr_manager: 15002
+    storage: /sysvol/proton_data/cr_data
+
+# proton-monitor configuration
+proton_monitor:
+  # Required fields
+  hosts:
+    - node1
+    - node2  # If you want to run on multiple nodes
+  data_path: /sysvol/proton_data/monitor  # Required absolute path for data storage
+
+  # Optional storage configuration
+  storage:
+    capacity: 10Gi
+    storageClassName: ""  # Use default storage class if empty
+    # Note: No need to specify local storage configuration
+    # It will be automatically generated from hosts and data_path
+
+  # Optional component configurations
+  config:
+    # Fluent Bit configuration
+    fluentbit:
+      port: 2020
+      namespaces:
+        - default
+        - kube-system
+        - resource
+        - proton-mongodb-operator-system
+        - proton-rds-mariadb-operator-system
+      remoteLogServers:
+        - host: "log-server-1"
+          port: 8080
+          uri: "/insert/jsonline?_stream_fields=stream&_msg_field=log&_time_field=time"
+        - host: "log-server-2"
+          port: 9090
+          uri: "/api/logs"
+
+    # DCGM Exporter configuration
+    dcgmExporter:
+      port: 9400
+
+    # Node Exporter configuration
+    nodeExporter:
+      port: 9101
+
+    # VMagent configuration
+    vmagent:
+      scrape_interval: 15s
+      scrape_timeout: 10s
+      k8sEtcdCerts: k8s-etcd-certs
+      port: 8429
+      remoteWrite:
+        host: 127.0.0.1
+        port: 8428
+        path: /api/v1/write
+        extraServers:
+          - url: "http://third-party1:8428/api/v1/write"
+          - url: "http://third-party2:8428/api/v1/write"
+
+    # VMetrics configuration
+    vmetrics:
+      retention: 10d
+      port: 8428
+
+    # VLogs configuration
+    vlogs:
+      retention: 10d
+      port: 8425
+
+    # Grafana configuration
+    grafana:
+      port: 3000
+      nodePort: 30003
+      smtp:
+        host: smtp.office365.com:587
+        user: admin@aishu.cn
+        password: passwd
+        skip_verify: false
+        from: admin@aishu.cn
+        from_name: Grafana
+        startTLS_policy: Mandatory
+        enable_tracing: false
+
+  # Resource requirements for components
+  resources:
+    fluentbit:
+      requests:
+        cpu: 10m
+        memory: 30Mi
+      limits:
+        cpu: 1
+        memory: 500Mi
+    dcgmExporter:
+      requests:
+        cpu: 10m
+        memory: 30Mi
+      limits:
+        cpu: 1
+        memory: 500Mi
+    nodeExporter:
+      requests:
+        cpu: 10m
+        memory: 30Mi
+      limits:
+        cpu: 1
+        memory: 500Mi
+    grafana:
+      requests:
+        cpu: 100m
+        memory: 100Mi
+      limits:
+        cpu: 1
+        memory: 1000Mi
+    vmetrics:
+      requests:
+        cpu: 500m
+        memory: 600Mi
+      limits:
+        cpu: 1000m
+        memory: 2Gi
+    vlogs:
+      requests:
+        cpu: 500m
+        memory: 600Mi
+      limits:
+        cpu: 1000m
+        memory: 2Gi
+    vmagent:
+      requests:
+        cpu: 500m
+        memory: 600Mi
+      limits:
+        cpu: 1000m
+        memory: 2Gi
+
+# proton-mariadb
+proton_mariadb:
+  hosts:
+    - node1
+    - node2
+    - node3
+  config:
+    innodb_buffer_pool_size: 8G
+    resource_requests_memory: 24G
+    resource_limits_memory: 24G
+  admin_user: FAKE_USERNAME
+  admin_passwd: FAKE_PASSWORD
+  data_path: /sysvol/mariadb
+
+# mongodb
+proton_mongodb:
+  hosts:
+    - node1
+    - node2
+    - node3
+  admin_user: FAKE_USERNAME
+  admin_passwd: FAKE_PASSWORD
+  data_path: /sysvol/mongodb/mongodb_data
+
+# redis
+proton_redis:
+  hosts:
+    - node1
+    - node2
+    - node3
+  admin_user: FAKE_USERNAME
+  admin_passwd: FAKE_PASSWORD
+  data_path: /sysvol/redis/redis_data
+
+#proton-mq-nsq
+proton_mq_nsq:
+  hosts:
+    - node1
+    - node2
+    - node3
+  data_path: /sysvol/mq-nsq/mq-nsq_data
+
+# policy-engine
+# 不超过3个，最多支持 3 副本
+proton_policy_engine:
+  hosts:
+    - node1
+    - node2
+    - node3
+  data_path: /sysvol/policy-engine/policy-engine_data
+
+# policy-etcd
+# 不超过3个，最多支持 3 副本
+proton_etcd:
+  hosts:
+    - node1
+    - node2
+    - node3
+  data_path: /sysvol/proton-etcd/proton-etcd_data
+
+# opensearch
+opensearch:
+  hosts:
+    - node1
+  # mode 可以为 hot, master, warm
+  mode: master
+  config: # 可选配置(如果配置为空，请注意显式设置为{})， 键值对值为null代表移除配置，恢复默认
+    jvmOptions: -Xmx8g -Xms8g # JVM内存设置
+    hanlpRemoteextDict: http://ecoconfig-private.anyshare:32128/api/ecoconfig/v1/word-list/remote_ext_dict # 远程词库
+    hanlpRemoteextStopwords: http://ecoconfig-private.anyshare:32128/api/ecoconfig/v1/word-list/remote_ext_stopwords # 远程去停词
+  data_path: /anyshare/opensearch
+  # OpenSearch 的原生参数
+  # Detail: "https://opensearch.org/docs/latest/security/configuration/yaml/#opensearchyml"
+  settings:
+    cluster.routing.allocation.disk.watermark.flood_stage: 70%
+    cluster.routing.allocation.disk.watermark.high: 65%
+    cluster.routing.allocation.disk.watermark.low: 60%
+## OpenSearch 需求的资源
+## reference: https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#resources
+#  resources:
+#    limits:
+#      cpu: 40
+#      memory: 64Gi
+#    requests:
+#      cpu: 40
+#      memory: 64Gi
+#  exporter_resources:
+#    limits:
+#      cpu: 200m
+#      memory: 800Mi
+#    requests:
+#      cpu: 200m
+#      memory: 800Mi
+
+# AnyShare configuration management service
+cms: {}
+
+# Component Management Service
+component_management: {}
+
+# Kubernetes plugin for Nvidia GPUs, not user configurable (yet)
+nvidia_device_plugin:  {}
+
+kafka:
+  hosts:
+    - node1
+  data_path: /sysvol/kafka/kafak_data
+# 根据 AnyRobot 性能测试的推荐资源配额
+# arch: arm, node:   1, cpu:  96, memory: 128
+#  env:
+#    KAFKA_HEAP_OPTS: -Xms9G -Xmx9G
+#  resources:
+#    limits:
+#      cpu: "4"
+#      memory: 10Gi
+#    requests:
+#      cpu: "4"
+#      memory: 10Gi
+#  exporter_resources:
+#    limits:
+#      cpu: 200m
+#      memory: 800Mi
+#    requests:
+#      cpu: 200m
+#      memory: 800Mi
+
+zookeeper:
+  hosts:
+    - node1
+    - node2
+    - node3
+  data_path: /sysvol/zookeeper/zookeeper_data
+  # 根据 AnyRobot 性能测试的推荐资源配额
+  # arch: arm, node:   1, cpu:  96, memory: 128
+  env:
+    JVMFLAGS: -Xms500m -Xmx500m
+  resources:
+    limits:
+      cpu: 1
+      memory: 2Gi
+    requests:
+      cpu: 100m
+      memory: 270Mi
+# Proton 可观测服务使用的 Prometheus
+prometheus:
+  # 一体机环境 Prometheus 运行在下列节点
+  hosts:
+    - node1
+    - node2
+  # 一体机环境 Prometheus 使用每个节点的下列路径作为数据目录
+  data_path: /sysvol/prometheus
+
+# Proton 可观测服务使用的 Grafana
+grafana:
+  # 一体机环境 Grafana 运行在下列节点
+  hosts:
+    - node1
+  # 一体机环境 Grafana 使用每个节点的下列路径作为数据目录
+  data_path: /sysvol/grafana
+
+# AnyData 使用的 Nebula Graph，Nebula不支持托管云部署
+nebula:
+  hosts:
+    - node1
+    - node2
+    - node3
+  data_path: /sysvol/nebula
+  # 未指定密码时，生成随机密码。部署完成后通过 proton-cli get conf 获取。
+  # password: 12450
+
+# 基础组件连接信息统一管理，用到业务账号的内置组件除之前的配置外，还需在此处填写业务账号用户名和密码；
+resource_connect_info:
+  rds:
+    source_type: internal
+    username: FAKE_USERNAME
+    password: FAKE_PASSWORD
+
+  mongodb:
+    source_type: internal
+    username: FAKE_USERNAME
+    password: FAKE_PASSWORD
+
+  redis:
+    source_type: internal
+
+  mq:
+    source_type: internal
+
+  opensearch:
+    source_type: internal
+
+  policy_engine:
+    source_type: internal
+
+  etcd:
+    source_type: internal

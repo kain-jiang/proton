@@ -1,0 +1,68 @@
+.sign-ca {
+    background-image: url('../assets/sign_ca.svg') !important;
+}
+
+.sign-self {
+    background-image: url('../assets/sign_self.svg') !important;
+}
+
+.sign-ca-gray {
+    background-image: url('../assets/sign_ca_gray.svg') !important;
+}
+
+.sign-self-gray {
+    background-image: url('../assets/sign_self_gray.svg') !important;
+}
+
+.expired {
+    color: rgba(80, 80, 80, .5);
+}
+
+.expired-title {
+    position: absolute;
+    top: 211px;
+    left: 120px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #E60012;
+    z-index: 1;
+}
+
+.card {
+    margin-left: 12px !important;
+    background-repeat: no-repeat !important;
+    background-position: top right !important;
+    padding-left: 20px;
+    -webkit-box-shadow: -1px 2px 20px -4px #e7e8e9;
+    box-shadow: -1px 2px 20px -4px #e7e8e9;
+
+    & .card-form-item {
+        margin-bottom: 0;
+    }
+
+    & .label {
+        color: inherit;
+    }
+
+    & .text {
+        display: inline-block;
+        height: 17px;
+        line-height: 17px;
+        max-width: 165px;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        padding-left: 5px;
+    }
+
+    & .cert-type {
+        display: table;
+        line-height: 30px;
+        font-weight: 600;
+        // margin-top: 24px;
+
+        & .cell {
+            display: table-cell;
+        }
+    }
+}

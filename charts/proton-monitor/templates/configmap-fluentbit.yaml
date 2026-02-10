@@ -1,0 +1,151 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fluentbit-config
+  namespace: {{ .Values.namespace }}
+data:
+  fluent-bit.conf: |-
+    [SERVICE]
+        HTTP_Server  On
+        HTTP_Listen  0.0.0.0
+        HTTP_PORT    {{ .Values.config.fluentbit.port }}
+        Flush         1
+        Log_Level     warn
+        Parsers_File  /fluent-bit/config/parsers.conf
+
+    # Kubernetes Container Logs
+    [INPUT]
+        Name              tail
+        Tag               kube.*
+        Path              /var/log/containers/*.log
+        DB                /var/lib/fluent-bit/flb_kube.db
+        Parser            docker
+        Docker_Mode       On
+        Mem_Buf_Limit     50MB
+        Refresh_Interval  10
+        Read_from_Head    true
+
+    [INPUT]
+        Name              tail
+        Path              /var/log/messages
+        DB                /var/lib/fluent-bit/flb_messages.db
+        Parser            syslog-rfc3164
+        Tag               host.messages
+        Refresh_Interval  10
+        Mem_Buf_Limit     50MB
+        Read_from_Head    true
+
+    # Kubernetes Metadata Filter
+    [FILTER]
+        Name                kubernetes
+        Match               kube.*
+        Kube_URL            https://kubernetes.default.svc.cluster.local:443
+        Kube_CA_File        /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        Kube_Token_File     /var/run/secrets/kubernetes.io/serviceaccount/token
+        Merge_Log           On
+        Buffer_Size         0
+        Use_Kubelet         true
+        Kubelet_Port        10250
+        tls.verify          Off
+        
+    # 使用正则表达式过滤器对主机日志进行拆分
+    [FILTER]
+        Name                parser
+        Match               host.*
+        Key_Name            log
+        Parser              syslog-extended
+        Reserve_Data        On
+        Preserve_Key        On
+
+    # 重命名字段，使其符合VictoriaLogs期望的格式
+    [FILTER]
+        Name                modify
+        Match               kube.*
+        Rename              log _msg
+        
+    # 过滤掉一些不重要的主机日志，减少日志量
+    [FILTER]
+        Name                grep
+        Match               host.*
+        Exclude             _msg session.*Succeeded
+
+
+    {{- if .Values.config.fluentbit.namespaces }}
+    # 命名空间过滤器 - 只保留指定命名空间的日志
+    [FILTER]
+        Name                grep
+        Match               kube.*
+        Regex               $kubernetes['namespace_name'] {{ range $i, $ns := .Values.config.fluentbit.namespaces }}{{ if $i }}|{{ end }}{{ $ns }}{{ end }}
+    {{- end }}
+
+    # Internal logs collection - Send to vlogs instances in StatefulSet replicas
+    {{- $vlogs_enabled := default true .Values.config.vlogs.enabled }}
+    {{- if $vlogs_enabled }}
+    {{- $replicas := int (default 1 .Values.replicas) }}
+    {{- range $i := until $replicas }}
+    [OUTPUT]
+        Name           http
+        Match          *
+        host           proton-monitor-{{ $i }}.proton-monitor
+        port           {{ $.Values.config.vlogs.port }}
+        uri            /insert/jsonline?_msg_field=log
+        format         json_lines
+        json_date_format iso8601
+        compress       gzip
+        retry_limit    5
+        workers        1
+    {{- end }}
+    {{- end }}
+    
+    # 标准输出调试已禁用，避免日志无限嵌套
+
+    # External logs collection - Send to remote log servers if configured
+    {{- if .Values.config.fluentbit.remoteLogServers }}
+    {{- range $server := .Values.config.fluentbit.remoteLogServers }}
+    [OUTPUT]
+        Name           http
+        Match          *
+        host           {{ $server.host }}
+        port           {{ $server.port }}
+        uri            {{ $server.uri }}
+        format         json_lines
+        json_date_format iso8601
+        compress       gzip
+        retry_limit    5
+        workers        2
+    {{- end }}
+    {{- end }}
+
+
+  parsers.conf: |-
+    [PARSER]
+        Name         docker
+        Format       json
+        Time_Key     time
+        Time_Format  %Y-%m-%dT%H:%M:%S.%L
+        Time_Keep    On
+
+    [PARSER]
+        Name         syslog
+        Format       regex
+        Regex        ^(?<time>[^ ]* {1,2}[^ ]* [^ ]*) (?<host>[^ ]*) (?<ident>[a-zA-Z0-9_/\.\-]*)(?:\[(?<pid>[0-9]+)\])?(?:[^\:]*\:)? *(?<message>.*)$
+        Time_Key     time
+        Time_Format  %b %d %H:%M:%S
+        Time_Keep    On
+
+    [PARSER]
+        Name         syslog-rfc3164
+        Format       regex
+        Regex        ^\<(?<pri>[0-9]+)\>(?<time>[^ ]* {1,2}[^ ]* [^ ]*) (?<host>[^ ]*) (?<ident>[a-zA-Z0-9_/\.\-]*)(?:\[(?<pid>[0-9]+)\])?(?:[^\:]*\:)? *(?<message>.*)$
+        Time_Key     time
+        Time_Format  %b %d %H:%M:%S
+        Time_Keep    On
+
+    [PARSER]
+        Name         syslog-extended
+        Format       regex
+        Regex        ^(?<time>[^ ]* {1,2}[^ ]* [^ ]*) (?<host>[^ ]*) (?<program>[a-zA-Z0-9_/\.\-]*)(?:\[(?<pid>[0-9]+)\])?(?:[^\:]*\:)? *(?<message>.*)$
+        Time_Key     time
+        Time_Format  %b %d %H:%M:%S
+        Time_Keep    On
+

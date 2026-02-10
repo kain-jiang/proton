@@ -1,0 +1,73 @@
+# Client service for connecting to the pod by headless service
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "policy-engine.name" . }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ template "policy-engine.name" . }}
+spec:
+{{- if .Values.service.enableDualStack }}
+  ipFamilies:
+  - IPv6
+  - IPv4
+  ipFamilyPolicy: RequireDualStack
+{{- end }}
+  publishNotReadyAddresses: True
+  selector:
+    app: {{ template "policy-engine.name" . }}
+  clusterIP: None
+  ports:
+  - name: engine
+    port: 8180
+    targetPort: engine
+---
+# Client service for connecting to any engine pod.
+{{- if eq .Values.service.type "ClusterIP" }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "policy-engine.name" . }}-cluster
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ template "policy-engine.name" . }}
+spec:
+{{- if .Values.service.enableDualStack }}
+  ipFamilies:
+  - IPv6
+  - IPv4
+  ipFamilyPolicy: PreferDualStack
+{{- end }}
+  selector:
+    app: {{ template "policy-engine.name" . }}
+  ports:
+  - name: engine
+    port: {{ .Values.service.port }}
+    targetPort: engine
+{{- end }}
+---
+# connect engine on node
+{{- if eq .Values.service.type "NodePort" }}
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ template "policy-engine.name" . }}-nodeport
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ template "policy-engine.name" . }}
+spec:
+{{- if .Values.service.enableDualStack }}
+  ipFamilies:
+  - IPv6
+  - IPv4
+  ipFamilyPolicy: PreferDualStack
+{{- end }}
+  selector:
+    app: {{ template "policy-engine.name" . }}
+  type: NodePort
+  ports:
+  - name: engine
+    port: {{ .Values.service.port }}
+    targetPort: engine
+    nodePort: {{ .Values.service.port }}
+{{- end }}

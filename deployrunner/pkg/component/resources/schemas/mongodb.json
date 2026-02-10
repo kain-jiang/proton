@@ -1,0 +1,98 @@
+{
+    "title": "mongodb",
+    "description": "mongodb",
+    "type": "object",
+    "oneOf": [
+        {
+            "title": "内置mongodb",
+            "description": "内置mongodb",
+            "type": "object",
+            "required": [
+                "source_type",
+                "user",
+                "password"
+            ],
+            "properties": {
+                "source_type": {
+                    "description": "使用内置mongodb,必须internal",
+                    "type": "string",
+                    "enum": [
+                        "internal"
+                    ],
+                    "const": "internal",
+                    "default": "internal"
+                },
+                "user": {
+                    "description": "数据库账户",
+                    "type": "string"
+                },
+                "password": {
+                    "description": "数据库账户密码,长度为9到31个字符",
+                    "type": "string",
+                    "minLength": 9,
+                    "maxLength": 31
+                }
+            }
+        },
+        {
+            "title": "外置mongodb",
+            "description": "外置mongodb",
+            "type": "object",
+            "required": [
+                "source_type",
+                "host",
+                "port",
+                "user",
+                "password",
+                "replicaSet",
+                "ssl",
+                "authSource"
+            ],
+            "properties": {
+                "source_type": {
+                    "description": "使用外置mongodb,必须为external",
+                    "type": "string",
+                    "enum": [
+                        "external"
+                    ],
+                    "const": "external",
+                    "default": "external"
+                },
+                "host": {
+                    "description": "数据哭连接地址,多个连接连接地址使用逗号分割,如test0,test1",
+                    "type": "string"
+                },
+                "port": {
+                    "description": "数据库连接端口",
+                    "type": "integer",
+                    "minimum": 1
+                },
+                "user": {
+                    "description": "账户,外置mongodb的账户必须为已创建用户",
+                    "type": "string"
+                },
+                "password": {
+                    "description": "账户密码",
+                    "type": "string"
+                },
+                "replicaSet": {
+                    "description": "mongodb副本集,如rs0",
+                    "type": "string"
+                },
+                "ssl": {
+                    "description": "是否启动ssl认证,暂不支持配置证书",
+                    "type": "boolean",
+                    "default": false
+                },
+                "authSource": {
+                    "description": "包含账户身份验证数据的mongodb数据库,某些客户端在该配置项为空时使用admin",
+                    "type": "string"
+                },
+                "options": {
+                    "description": "mongodb连接option配置",
+                    "type": "string"
+                }
+            }
+        }
+    ]
+}

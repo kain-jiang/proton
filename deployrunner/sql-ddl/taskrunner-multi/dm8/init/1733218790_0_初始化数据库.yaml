@@ -1,0 +1,22 @@
+- Command: execute
+  args:
+    transaction: false
+    Statements:
+      - >
+        CREATE TABLE IF NOT EXISTS task_proton_component (
+          id INT AUTO_INCREMENT,
+          cname VARCHAR(100),
+          ctype VARCHAR(100),
+          sid INT,
+          coptions BLOB ,
+          cattribute BLOB,
+          PRIMARY KEY(id)
+        )
+      - >
+        CREATE UNIQUE INDEX IF NOT EXISTS "task_proton_component_unique" ON task_proton_component(cname, ctype, sid);
+      - >
+        CREATE INDEX IF NOT EXISTS "task_proton_component_sid" ON task_proton_component(sid);
+      - >
+        CREATE INDEX IF NOT EXISTS task_proton_component_cname ON task_proton_component(cname);
+      - >
+        CREATE INDEX IF NOT EXISTS task_proton_component_ctype ON task_proton_component(ctype);

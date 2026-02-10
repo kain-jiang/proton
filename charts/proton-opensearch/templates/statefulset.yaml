@@ -1,0 +1,212 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ template "opensearch.name" . }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ template "opensearch.name" . }}
+    cluster: {{ .Values.config.clusterName }}
+    {{- if or (eq .Values.config.nodeGroup "master") (eq .Values.config.nodeGroup "hot") (eq .Values.config.nodeGroup "warm") }}
+    read: {{ .Values.config.clusterName }}-read
+    {{- end }}
+    {{- if or (eq .Values.config.nodeGroup "master") (eq .Values.config.nodeGroup "hot") }}
+    write: {{ .Values.config.clusterName }}-write
+    {{- end }}
+spec:
+  serviceName: {{ template "opensearch.name" . }}
+  podManagementPolicy: Parallel
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ template "opensearch.name" . }}
+      cluster: {{ .Values.config.clusterName }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "opensearch.name" . }}
+        cluster: {{ .Values.config.clusterName }}
+        {{- if or (eq .Values.config.nodeGroup "master") (eq .Values.config.nodeGroup "hot") (eq .Values.config.nodeGroup "warm") }}
+        read: {{ .Values.config.clusterName }}-read
+        {{- end }}
+        {{- if or (eq .Values.config.nodeGroup "master") (eq .Values.config.nodeGroup "hot") }}
+        write: {{ .Values.config.clusterName }}-write
+        {{- end }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+    spec:
+{{- with .Values.nodeSelector }}
+      nodeSelector:
+{{ toYaml . | indent 8 }}
+{{- end }}
+      dnsConfig:
+        options:
+          - name: single-request-reopen
+          - name: use-vc
+      securityContext:
+        fsGroup: 1000
+        runAsUser: 1000
+      terminationGracePeriodSeconds: 120
+      {{- if .Values.antiAffinity.enabled }}
+      affinity:
+        {{- if eq .Values.antiAffinity.rule "soft" }}
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                topologyKey: kubernetes.io/hostname
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - {{ template "opensearch.name" . }}
+                    - key: cluster
+                      operator: In
+                      values:
+                        - {{ .Values.config.clusterName }}
+        {{- else if eq .Values.antiAffinity.rule "hard" }}
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - topologyKey: kubernetes.io/hostname
+              labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - {{ template "opensearch.name" . }}
+                  - key: cluster
+                    operator: In
+                    values:
+                      - {{ .Values.config.clusterName }}
+        {{- end }}
+      {{- end }}
+      initContainers:
+        {{- if .Values.sysctlInitContainer.enabled }}
+        - name: config-sysctl
+          securityContext:
+            runAsUser: 0
+            privileged: true
+          image: {{ template "opensearch.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["sysctl", "-w", "vm.max_map_count=262144"]
+        {{- end }}
+      containers:
+        - name: opensearch
+          image: {{ template "opensearch.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          #command: ["sleep", "10000"]
+          ports:
+            - name: http
+              containerPort: 9200
+            - name: transport
+              containerPort: 9300
+          env:
+            - name: TZ
+              value: "{{ .Values.env.timezone }}"
+            - name: node.name
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: network.publish_host
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: OPENSEARCH_JAVA_OPTS
+              value: "{{ .Values.config.jvmOptions }}"
+            - name: DISABLE_INSTALL_DEMO_CONFIG
+              value: "true"
+            - name: DISABLE_PERFORMANCE_ANALYZER_AGENT_CLI
+              value: "true"
+            - name: DISABLE_THIRD_PLUGINS
+              value: "true"
+            - name: OPENSEARCH_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.config.clusterName }}-exporter-auth
+                  key: username
+            - name: OPENSEARCH_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.config.clusterName }}-exporter-auth
+                  key: password
+          startupProbe:
+{{ toYaml .Values.probes.startupProbe | indent 12 }}
+          livenessProbe:
+{{ toYaml .Values.probes.livenessProbe | indent 12 }}
+          readinessProbe:
+{{ toYaml .Values.probes.readinessProbe | indent 12 }}
+          resources:
+{{ toYaml .Values.resources.opensearch | indent 12 }}
+          volumeMounts:
+            - name: data
+              mountPath: /usr/share/opensearch/data
+            {{- if .Values.storage.repo.nfs.enabled }}
+            - name: repo
+              mountPath: /usr/share/opensearch/repo
+            {{- end }}
+            - name: os-config
+              mountPath: /usr/share/opensearch/config/os-config
+            - name: os-certs
+              mountPath: /usr/share/opensearch/config/os-certs
+            {{- if .Values.storage.repo.hdfs.enabled }}
+            - name: hdfs-certs
+              mountPath: /usr/share/opensearch/config/repository-hdfs
+            {{- end }}
+      volumes:
+        - name: os-config
+          configMap:
+            name: {{ template "opensearch.name" . }}-cm
+            defaultMode: 0600
+        - name: os-certs
+          secret:
+            secretName: {{ .Values.secret.secretName | default (include "opensearch.secretName" .) }}
+            items:
+              - key: {{ .Values.secret.caName }}
+                path: root-ca.pem
+              - key: {{ .Values.secret.nodeCertName }}
+                path: node.pem
+              - key: {{ .Values.secret.nodeKeyName }}
+                path: node-key.pem
+              - key: {{ .Values.secret.clientCertName }}
+                path: client.pem
+              - key: {{ .Values.secret.clientKeyName }}
+                path: client-key.pem
+            defaultMode: 0600
+        {{- if .Values.storage.repo.hdfs.enabled }}
+        - name: hdfs-certs
+          secret:
+            secretName: {{ .Values.config.clusterName }}-secret-krb5
+            items:
+              - key: krb5.keytab
+                path: krb5.keytab
+              - key: krb5.conf
+                path: krb5.conf
+            defaultMode: 0600
+        {{- end }}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        {{- if .Values.storage.storageClassName }}
+        storageClassName: {{ .Values.storage.storageClassName }}
+        {{ else }}
+        storageClassName: ""
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.storage.capacity }}
+    {{- if .Values.storage.repo.nfs.enabled }}
+    - metadata:
+        name: repo
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        {{- if .Values.storage.storageClassName }}
+        storageClassName: {{ .Values.storage.storageClassName }}
+        {{ else }}
+        storageClassName: ""
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.storage.capacity }}
+    {{- end }}

@@ -1,0 +1,21 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  {{- with .Values.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  namespace: {{ template "deploy-installer.namespace" . }}
+  name: {{ template "deploy-installer.name" . }}
+spec:
+  ingressClassName: {{.Values.ingress.class}}
+  rules:
+  - http:
+      paths:
+      - backend:
+          service:
+            name: {{ template "deploy-installer.name" . }}
+            port:
+              number: 9090
+        path: /api/deploy-installer
+        pathType: Prefix

@@ -1,0 +1,20 @@
+domain: proton.aishu.cn
+layout:
+- go.kubebuilder.io/v3
+projectName: proton-rds-mariadb-operator
+repo: proton-rds-mariadb-operator
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: proton.aishu.cn
+  group: rds
+  kind: RDSMariaDBCluster
+  path: proton-rds-mariadb-operator/api/v1
+  version: v1
+  webhooks:
+    defaulting: true
+    validation: true
+    webhookVersion: v1
+version: "3"

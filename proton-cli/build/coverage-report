@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# Generate cover report in cobertura format.
+
+set -o errexit
+set -o nounset
+set -o pipefail
+
+PROTON_ROOT=$(dirname "${BASH_SOURCE[0]}")/..
+
+source "${PROTON_ROOT}/build/lib/init.sh"
+
+proton::gocov::verify
+proton::gocov::convert

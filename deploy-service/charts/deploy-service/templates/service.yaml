@@ -1,0 +1,122 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: deploy-service
+  namespace: {{ .Values.namespace }}
+  labels:
+{{ include "deploy-service.labels" . | indent 4 }}
+spec:
+{{- if .Values.service.enableDualStack }}
+  ipFamilies:
+  - IPv6
+  - IPv4
+  ipFamilyPolicy: PreferDualStack
+{{- end }}
+  type: {{ .Values.service.type }}
+  ports:
+    - port: 9703
+      targetPort: 9703
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: {{ include "deploy-service.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: {{ .Values.namespace }}
+  name: site-mgmt
+  labels:
+{{ include "deploy-service.labels" . | indent 4 }}
+spec:
+{{- if .Values.service.enableDualStack }}
+  ipFamilies:
+  - IPv6
+  - IPv4
+  ipFamilyPolicy: PreferDualStack
+{{- end }}
+  type: ClusterIP
+  ports:
+    - port: 8000
+      targetPort: 8001
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: {{ include "deploy-service.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: {{ .Values.namespace }}
+  name: site-agent
+  labels:
+{{ include "deploy-service.labels" . | indent 4 }}
+spec:
+{{- if .Values.service.enableDualStack }}
+  ipFamilies:
+  - IPv6
+  - IPv4
+  ipFamilyPolicy: PreferDualStack
+{{- end }}
+  type: ClusterIP
+  ports:
+    - port: 8000
+      targetPort: 8000
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: {{ include "deploy-service.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: {{ .Values.namespace }}
+  name: oss-manager
+  labels:
+{{ include "deploy-service.labels" . | indent 4 }}
+spec:
+{{- if .Values.service.enableDualStack }}
+  ipFamilies:
+  - IPv6
+  - IPv4
+  ipFamilyPolicy: PreferDualStack
+{{- end }}
+  type: ClusterIP
+  ports:
+    - port: 9707
+      targetPort: 9707
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: {{ include "deploy-service.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: {{ .Values.namespace }}
+  name: proton-exporter
+  labels:
+{{ include "deploy-service.labels" . | indent 4 }}
+spec:
+{{- if .Values.service.enableDualStack }}
+  ipFamilies:
+  - IPv6
+  - IPv4
+  ipFamilyPolicy: PreferDualStack
+{{- end }}
+  type: ClusterIP
+  ports:
+    - port: 8080
+      targetPort: 8080
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: {{ include "deploy-service.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}

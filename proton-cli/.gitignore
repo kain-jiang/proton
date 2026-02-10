@@ -1,0 +1,39 @@
+# Test binary, built with `go test -c`
+*.test
+test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+# Report of golangci-lint
+golangci-lint-report.xml
+# Report of gotestsum
+unit-tests.xml
+# Coverage report in cobotura format
+cover.xml
+
+# This is where the result of the go build goes
+/bin
+/output*/
+/_output*/
+/_output
+/cmd/proton-cli/proton-cli
+/proton-cli
+
+# Dependency directories (remove the comment below to include it)
+# vendor/
+
+# Editor settings
+# Visual Studio Code
+/.vscode
+# GoLand
+/.idea
+
+# User kubernetes cluster configs
+.kubeconfig
+
+# User proton-cli configs
+cluster.yaml
+
+# devolop test service-package
+/service-package/*

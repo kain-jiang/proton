@@ -1,0 +1,46 @@
+import { i18nDeploy as i18n } from "../../../../core/mediator";
+
+export default i18n([
+    ["安装", "安裝", "Install"],
+    ["更新", "更新", "Update"],
+    ["名称", "名稱", "Name"],
+    ["版本", "版本", "Version"],
+    ["状态", "狀態", "Status"],
+    ["组件", "組件", "Component"],
+    ["查看详情", "查看詳情", "View Details"],
+    ["备注", "備註", "Remarks"],
+    ["运行中", "運行中", "Running"],
+    ["运行失败", "運行失敗", "Run Failed"],
+    ["共${total}条", "共${total}條", "Total ${total} item(s)"],
+    ["回滚", "回滾", "Rollback"],
+    ["全部更新", "全部更新", "Update All"],
+    ["操作", "操作", "Action"],
+    ["卸载", "卸載", "Uninstall"],
+    [
+        "卸载服务任务创建成功，前往-查看",
+        "卸載服務任務創建成功，前往-查看",
+        "Uninstall service task created successfully, go to - check it.",
+    ],
+    ["【任务监控】", "【任務監控】", "[Task Monitor]"],
+    ["卸载提醒", "卸載提醒", "Uninstall Reminder"],
+    [
+        "此服务与其他服务存在相互依赖关系，为保证卸载顺利请先卸载关联服务。",
+        "此服務與其他服務存在相互依賴關係，為保證卸載順利請先卸載關聯服務。",
+        "This service has dependencies with other services. Please uninstall related services first to ensure a smooth uninstallation.",
+    ],
+    [
+        "确认要卸载${title}吗？",
+        "確認要卸載${title}嗎？",
+        "Are you sure you want to uninstall ${title}?",
+    ],
+    [
+        "卸载后此服务将不存在，如需使用要重新安装。",
+        "卸載後此服務將不存在，如需使用要重新安裝。",
+        "After uninstallation, this service will no longer exist. If you need to use it again, you will have to reinstall it.",
+    ],
+    ["强制卸载", "強制卸載", "Force Uninstall"],
+    ["系统空间", "系統空間", "System Space"],
+    ["系统空间ID", "系統空間ID", "System Space ID"],
+    ["安装更新", "安裝更新", "Install Updates"],
+    ["类型", "類型", "Type"],
+]);

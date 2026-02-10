@@ -1,0 +1,31 @@
+@import "../../../global.scss";
+
+.wrap {
+  width: $content-width;
+  margin: 0 auto;
+
+  & .tips {
+    width: 100%;
+    text-align: left;
+    margin-top: 40px;
+    margin-bottom: 20px;
+    font-size: 16px;
+    color: #000;
+  }
+
+  & .card {
+    margin-top: 16px;
+    text-align: left;
+
+    & .title {
+      font-size: 16px;
+      color: #000;
+    }
+
+    & .content {
+      font-size: 13px;
+      margin-top: 8px;
+      font-weight: 500;
+    }
+  }
+}

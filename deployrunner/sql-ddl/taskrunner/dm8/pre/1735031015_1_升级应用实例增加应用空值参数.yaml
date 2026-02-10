@@ -1,0 +1,8 @@
+- Command: execute
+  args:
+    transaction: false
+    Statements:
+      - >
+        ALTER TABLE task_application_instance ADD COLUMN atrait BLOB;
+      - >
+        ALTER TABLE task_application_instance ADD COLUMN otype INT;

@@ -1,0 +1,18 @@
+- Command: execute
+  args:
+    transaction: false
+    Statements:
+      - >
+        ALTER TABLE IF EXISTS task_app_config_template_index ADD COLUMN IF NOT EXISTS id BIGSERIAL NOT NULL PRIMARY KEY;
+      - >
+        ALTER TABLE IF EXISTS task_job_lock ADD COLUMN IF NOT EXISTS id BIGSERIAL NOT NULL PRIMARY KEY;
+      - >
+        ALTER TABLE IF EXISTS task_app_lang ADD COLUMN IF NOT EXISTS id BIGSERIAL NOT NULL PRIMARY KEY;
+      - >
+        ALTER TABLE IF EXISTS task_compose_job_task ADD COLUMN IF NOT EXISTS id BIGSERIAL NOT NULL PRIMARY KEY;
+      - >
+        ALTER TABLE IF EXISTS task_compose_manifests ADD COLUMN IF NOT EXISTS id BIGSERIAL NOT NULL PRIMARY KEY;
+      - >
+        ALTER TABLE IF EXISTS task_work_compose_manifests ADD COLUMN IF NOT EXISTS id BIGSERIAL NOT NULL PRIMARY KEY;
+      
+      

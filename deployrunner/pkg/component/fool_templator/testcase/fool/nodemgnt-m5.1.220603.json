@@ -1,0 +1,79 @@
+{
+    "name": "nodemgnt",
+    "version": "1.4.1",
+    "componentDefineType": "fool",
+    "configSchema": null,
+    "attributeSchema": null,
+    "Dendence": null,
+    "spec": null,
+    "timeout": 0,
+    "deploys": [
+        {
+            "name": "node-mgnt",
+            "replica": {
+                "defaultReplica": 1
+            },
+            "containers": [
+                {
+                    "name": "nodemgnt",
+                    "command": [
+                        "/nodemgnt_service/nodemgnt_service"
+                    ],
+                    "image": {
+                        "registry": "acr.aichu.cn",
+                        "imag": "as/nodemgnt",
+                        "tag": "m5.1.220603-1.4.1"
+                    },
+                    "ports": [
+                        8090
+                    ],
+                    "livenessProbe": {
+                        "httpGet": {
+                            "path": "/health/alive",
+                            "port": 8090,
+                            "scheme": "HTTP"
+                        },
+                        "failureThreshold": 5,
+                        "initialDelaySeconds": 30,
+                        "periodSeconds": 10,
+                        "successThreshold": 1,
+                        "terminationGracePeriodSeconds": 30,
+                        "timeoutSeconds": 5
+                    },
+                    "readinessProbe": {
+                        "httpGet": {
+                            "path": "/health/ready",
+                            "port": 8090,
+                            "scheme": "HTTP"
+                        },
+                        "failureThreshold": 5,
+                        "initialDelaySeconds": 30,
+                        "periodSeconds": 10,
+                        "successThreshold": 1,
+                        "timeoutSeconds": 5
+                    },
+                    "resources": {
+                        "custom": false,
+                        "requests": {
+                            "memory": "60Mi",
+                            "cpu": "0.1"
+                        }
+                    }
+                }
+            ],
+            "service": [
+                {
+                    "name": "nodemgnt-host",
+                    "ports": [
+                        {
+                            "name": "port",
+                            "port": 8090,
+                            "targetPort": 8090,
+                            "protocol": "TCP"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

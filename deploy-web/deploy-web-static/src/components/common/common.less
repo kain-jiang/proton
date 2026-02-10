@@ -1,0 +1,130 @@
+@ai-prefix: ai;
+@ab-prefix: ab;
+@service-prefix: service;
+
+@link-color: #126EE3; // 链接色
+@link-color-hover: #3A8FF0; // 鼠标经过链接色
+@info-color: #1890FF;
+@success-color: #52C41B; // 成功色
+@warning-color: #FAAD14; // 警告色
+@error-color: #FF4D4F; // 错误色
+@disabled-color: rgba(0, 0, 0, 0.3); // 失效色
+@breadcrumb-current: #1677FF; // 当前面包屑颜色
+@black: #000;
+@collapse-color: #FAFAFA; // collapse组件面板头背景颜色
+
+.ab-tab-container {
+    height: 100%;
+
+    .@{ai-prefix}-tabs-content, .@{ai-prefix}-tabs-tabpane {
+        height: 100%;
+    }
+}
+
+.@{service-prefix}-tab-container {
+    height: 100%;
+
+    .@{ai-prefix}-tabs-content, .@{ai-prefix}-tabs-tabpane {
+        height: 100%;
+        >.@{service-prefix}-content-layout{
+            >.@{service-prefix}-custom-toolbar{
+                margin-top: 0; // Tabs布局，toolbar无上边距
+            }
+        }
+    }
+    .@{ai-prefix}-tabs-nav {
+        &::before {
+            border-bottom: 0!important;
+        }
+    }
+}
+
+.@{service-prefix}-inner-tab {
+    flex: 1;
+    height: 100px; // 限制table高度
+}
+
+.@{ai-prefix}-btn-link {
+    padding: 0!important;
+}
+
+.@{service-prefix}-table {
+    margin-bottom: 16px;
+    width: 650px;
+}
+
+// collapse组件根据父组件高度自适应
+.@{service-prefix}-collapse {
+    height: 100%;
+
+    .@{ai-prefix}-collapse-item {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+
+        .@{ai-prefix}-collapse-header {
+            background-color: @collapse-color;
+        }
+
+        .@{ai-prefix}-collapse-content {
+            flex: 1;
+
+            .@{ai-prefix}-collapse-content-box {
+                height: 100%;
+            }
+        }
+    }
+}
+
+.@{service-prefix}-log-modal {
+    .@{ai-prefix}-modal {
+        width: 800px!important;
+    }
+}
+
+.@{service-prefix}-space-modal {
+    .@{ai-prefix}-modal {
+        width: 600px!important;
+    }
+}
+
+.@{service-prefix}-transfer-modal {
+    .@{ai-prefix}-modal {
+        width: 1000px!important;
+        min-width: 1000px;
+    }
+}
+
+.@{service-prefix}-custom-modal {
+    .@{ai-prefix}-modal {
+        width: 445px!important;
+        .@{ai-prefix}-modal-content {
+            width: 100%;
+        }
+    }
+}
+
+.@{service-prefix}-warning-modal {
+    .@{ai-prefix}-modal {
+        width: 600px!important;
+        .@{ai-prefix}-modal-content {
+            width: 100%;
+            .@{ai-prefix}-radio-wrapper {
+                display: none;
+            }
+        }
+    }
+}
+
+.@{service-prefix}-table-component {
+    .@{ai-prefix}-table-empty {
+        .@{ai-prefix}-table-cell {
+            border-bottom: 1px solid #0000000f;
+        }
+    }
+}
+
+.MuiFormControl-root.MuiFormControl-fullWidth.css-tzsjye {
+    border-left: 1px solid #d3d4db;
+    padding: 1px 1px 1px 10px;
+}

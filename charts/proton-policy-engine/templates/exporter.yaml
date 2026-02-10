@@ -1,0 +1,89 @@
+#Connect to the pod by headless service
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "policy-engine.exporter-name" . }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ template "policy-engine.exporter-name" . }}
+  annotations:
+    # Create endpoints also if the related pod isn't ready
+    service.alpha.kubernetes.io/tolerate-unready-endpoints: "true"
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9401"
+spec:
+{{- if .Values.service.enableDualStack }}
+  ipFamilies:
+  - IPv6
+  - IPv4
+  ipFamilyPolicy: RequireDualStack
+{{- end }}
+  selector:
+    app: {{ template "policy-engine.exporter-name" . }}
+  clusterIP: None
+  ports:
+  - name: exporter
+    port: 9401
+    targetPort: 9401
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ template "policy-engine.exporter-name" . }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ template "policy-engine.exporter-name" . }}
+spec:
+  serviceName: {{ template "policy-engine.exporter-name" . }}
+  podManagementPolicy: Parallel
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ template "policy-engine.exporter-name" . }}
+  template:
+    metadata:
+      name: {{ template "policy-engine.exporter-name" . }}
+      labels:
+        app: {{ template "policy-engine.exporter-name" . }}
+    spec:
+      securityContext:
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+      affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+              - matchExpressions:
+                - key: kubernetes.io/os
+                  operator: In
+                  values:
+                  - linux
+          podAntiAffinity:
+            preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 1
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                    - {{ template "policy-engine.exporter-name" . }}
+                topologyKey: "kubernetes.io/hostname"
+      containers:
+      - name: exporter
+        image: {{ template "policy-engine.exporter-image" . }}
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+        - containerPort: 9401
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: POLICY_ENGINE_NAME
+          value: {{ template "policy-engine.name" . }}
+        - name: POLICY_ENGINE_PORT
+          value: "8180"
+        - name: NAMESPACE
+          value: {{ .Values.namespace }}

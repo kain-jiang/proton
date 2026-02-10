@@ -1,0 +1,194 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: proton-monitor
+  namespace: {{ .Values.namespace | default "kube-system" }}
+spec:
+  serviceName: proton-monitor
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: proton-monitor
+  template:
+    metadata:
+      labels:
+        app: proton-monitor
+    spec:
+      serviceAccountName: proton-monitor
+      initContainers:
+      - name: init
+        image: {{ .Values.image.registry }}/{{ .Values.image.monitor.repository }}:{{ .Values.image.monitor.tag }}
+        imagePullPolicy: IfNotPresent
+        command: ["sh", "-c"]
+        args:
+          - |
+            mkdir -p /data/vmagent
+            mkdir -p /data/vlogs
+            mkdir -p /data/vmetrics
+            mkdir -p /data/grafana/etc
+            mkdir -p /data/grafana/logs
+            mkdir -p /data/grafana/plugins
+            mkdir -p /data/grafana/provisioning
+        volumeMounts:
+        - name: data
+          mountPath: /data
+      containers:
+      - name: vmagent
+        image: {{ .Values.image.registry }}/{{ .Values.image.monitor.repository }}:{{ .Values.image.monitor.tag }}
+        imagePullPolicy: IfNotPresent
+        command: ["vmagent-prod"]
+        args: 
+          - -httpListenAddr=:{{.Values.config.vmagent.port}}
+          - -promscrape.config.strictParse=false
+          - -promscrape.config
+          - /etc/vmagent/scrape.yml
+          - -remoteWrite.url
+          - http://{{ .Values.config.vmagent.remoteWrite.host }}:{{ .Values.config.vmagent.remoteWrite.port }}{{ .Values.config.vmagent.remoteWrite.path | default "/api/v1/write" }}
+          {{- range .Values.config.vmagent.remoteWrite.extraServers }}
+          - -remoteWrite.url
+          - {{ .url }}
+          {{- end }}
+          - -remoteWrite.tmpDataPath
+          - /data/vmagent
+          - -remoteWrite.maxDiskUsagePerURL
+          - 500MB
+        ports:
+        - containerPort: {{ .Values.config.vmagent.port }}
+        {{- if .Values.resources.vmagent}}
+        resources:
+            {{- toYaml .Values.resources.vmagent | nindent 12 }}
+        {{- end}}
+        volumeMounts:
+        - name: vmagent-config
+          mountPath: /etc/vmagent/
+        - name: data
+          mountPath: /data
+        - name: k8s-etcd-certs
+          mountPath: /etc/vmagent/certs
+      - name: configmap-reload
+        image: {{ .Values.image.registry }}/{{ .Values.image.monitor.repository }}:{{ .Values.image.monitor.tag }}
+        imagePullPolicy: IfNotPresent
+        command: ["configmap-reload"]
+        args:
+          - -volume-dir=/etc/vmagent/configs
+          - -webhook-url=http://127.0.0.1:{{ .Values.config.vmagent.port }}/-/reload
+        volumeMounts:
+          - name: vmagent-config
+            mountPath: /etc/vmagent/configs
+            readOnly: true
+        resources:
+          limits:
+            cpu: 100m
+            memory: 50Mi
+          requests:
+            cpu: 10m
+            memory: 10Mi
+      - name: vlogs
+        image: {{ .Values.image.registry }}/{{ .Values.image.monitor.repository }}:{{ .Values.image.monitor.tag }}
+        imagePullPolicy: IfNotPresent
+        command: ["victoria-logs-prod"]
+        args: 
+          - -httpListenAddr=:{{.Values.config.vlogs.port}}
+          - -retentionPeriod={{.Values.config.vlogs.retention}}
+          - -storageDataPath=/data/vlogs
+          - -memory.allowedPercent=60
+          - -search.maxQueryDuration=30s
+          - -insert.maxLineSizeBytes=1048576
+        ports:
+        - containerPort: {{ .Values.config.vlogs.port }}
+        {{- if .Values.resources.vlogs}}
+        resources:
+            {{- toYaml .Values.resources.vlogs | nindent 12 }}
+        {{- end}}
+        volumeMounts:
+        - name: data
+          mountPath: /data
+      - name: vmetrics
+        image: {{ .Values.image.registry }}/{{ .Values.image.monitor.repository }}:{{ .Values.image.monitor.tag }}
+        imagePullPolicy: IfNotPresent
+        command: ["victoria-metrics-prod"]
+        args: 
+          - -httpListenAddr=:{{.Values.config.vmetrics.port}}
+          - -retentionPeriod={{.Values.config.vmetrics.retention}}
+          - -storageDataPath=/data/vmetrics
+        ports:
+        - containerPort: {{ .Values.config.vmetrics.port }}
+        {{- if .Values.resources.vmetrics}}
+        resources:
+            {{- toYaml .Values.resources.vmetrics | nindent 12 }}
+        {{- end}}
+        volumeMounts:
+        - name: data
+          mountPath: /data
+      - name: grafana
+        image: {{ .Values.image.registry }}/{{ .Values.image.monitor.repository }}:{{ .Values.image.monitor.tag }}
+        imagePullPolicy: IfNotPresent
+        command: ["/grafana-run.sh"]
+        env:
+          - name: GF_PATHS_HOME
+            value: "/usr/share/grafana"
+          - name: GF_PATHS_CONFIG
+            value: "/data/grafana/etc/grafana.ini"
+          - name: GF_PATHS_DATA
+            value: "/data/grafana"
+          - name: GF_PATHS_LOGS
+            value: "/data/grafana/logs"
+          - name: GF_PATHS_PLUGINS
+            value: "/usr/share/grafana/plugins"
+          - name: GF_PATHS_PROVISIONING
+            value: "/data/grafana/provisioning"
+        ports:
+        - containerPort: {{ .Values.config.grafana.port }}
+        {{- if .Values.resources.grafana}}
+        resources:
+            {{- toYaml .Values.resources.grafana | nindent 12 }}
+        {{- end}}
+        volumeMounts:
+        - name: data
+          mountPath: /data
+        - name: grafana-config
+          mountPath: /data/grafana/etc
+        - name: grafana-datasource
+          mountPath: /data/grafana/provisioning/datasources
+        - name: grafana-dashboards
+          mountPath: /data/grafana/provisioning/dashboards/dashboards
+        - name: grafana-dashboards-config
+          mountPath: /data/grafana/provisioning/dashboards
+        - name: grafana-alertrules
+          mountPath: /data/grafana/provisioning/alerting
+      volumes:
+      - name: vmagent-config
+        configMap:
+          name: vmagent-config
+      - name: grafana-config
+        configMap:
+          name: grafana-config
+      - name: grafana-datasource
+        configMap:
+          name: grafana-datasource
+      - name: grafana-dashboards
+        configMap:
+          name: grafana-dashboards
+      - name: grafana-dashboards-config
+        configMap:
+          name: grafana-dashboards-config
+      - name: grafana-alertrules
+        configMap:
+          name: grafana-alertrules
+      - name: k8s-etcd-certs
+        secret:
+          secretName: {{ .Values.config.vmagent.k8sEtcdCerts }}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        {{- if .Values.storage.storageClassName }}
+        storageClassName: {{ .Values.storage.storageClassName }}
+        {{ else }}
+        storageClassName: ""
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.storage.capacity }}
+        
