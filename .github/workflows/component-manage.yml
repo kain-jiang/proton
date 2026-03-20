@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     tags:
-      - 'component-manage/v*'
+      - 'component-manage-*'
 
 jobs:
   versions:
@@ -19,8 +19,8 @@ jobs:
       - name: Get Version
         id: version
         run: |
-          if [[ $GITHUB_REF == refs/tags/component-manage/v* ]]; then
-            VERSION=${GITHUB_REF#refs/tags/component-manage/v}
+          if [[ $GITHUB_REF == refs/tags/component-manage-* ]]; then
+            VERSION=${GITHUB_REF#refs/tags/component-manage-}
             TAG=$VERSION
             echo "🚀 Release version: $VERSION"
           else
@@ -73,6 +73,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       packages: write
+      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -96,4 +97,10 @@ jobs:
           tag: ${{ needs.versions.outputs.version }}
           path: component-manage/chart/component-manage
 
+      - name: Pre Release
+        uses: softprops/action-gh-release@v2
+        if: github.ref_type == 'tag'
+        with:
+          files: ${{ runner.temp }}/component-manage-${{ needs.versions.outputs.version }}.tgz
+          prerelease: true
 
