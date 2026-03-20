@@ -109,9 +109,9 @@ func generateContainerRuntimeSourceInto(r nodeContainerRuntime, target *configur
 
 func generateContainerdContainerRuntimeSource(localCR *configuration.LocalCR) *configuration.ContainerdContainerRuntimeSource {
 	s := &configuration.ContainerdContainerRuntimeSource{
-		Root: "/sysvol/proton_data/cs_containerd_data",
+		Root: "/var/lib/containerd",
 		// TODO: generate structurally
-		SandboxImage: fmt.Sprintf("%s/public/pause:3.6", net.JoinHostPort(global.RegistryDomain, strconv.Itoa(localCR.Ha_ports.Registry))),
+		SandboxImage: fmt.Sprintf("%s/pause:3.10.1", net.JoinHostPort(global.RegistryDomain, strconv.Itoa(localCR.Ha_ports.Registry))),
 	}
 
 	var hosts []string

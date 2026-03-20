@@ -13,6 +13,7 @@ import (
 	rds_mgmt_v1alpha1 "devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/client/rds/mgmt/v1alpha1"
 	slb "devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/client/slb/v2"
 	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/configuration"
+	slbops "devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/slb"
 )
 
 func TestManager_reconcileKeepalivedHAInstances(t *testing.T) {
@@ -276,7 +277,7 @@ func Test_getNetworkInterfaceNameByIP(t *testing.T) {
 
 func Test_reconcileNodeKeepalivedHAInstance(t *testing.T) {
 	type args struct {
-		c        slb.KeepalivedHAInterface
+		c        *slbops.Remote
 		name     string
 		instance *slb.KeepalivedHA
 		log      logrus.FieldLogger

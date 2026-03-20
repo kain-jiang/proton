@@ -4,10 +4,8 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
-	"net"
-	"net/http"
+	"log"
 	"os/user"
 	"strings"
 	"sync"
@@ -23,10 +21,9 @@ import (
 	ecms "devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/client/ecms/v1alpha1"
 	exec "devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/client/exec/v1alpha1"
 	firewalld "devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/client/firewalld/v1alpha1"
-	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/client/rest"
-	slb_v2 "devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/client/slb/v2"
 	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/configuration"
 	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/core/global"
+	slbops "devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/slb"
 )
 
 type Node struct {
@@ -369,28 +366,6 @@ func (n *Node) setNode(conf client.RemoteClientConf) error {
 		return err
 	}
 
-	// slb
-	n.Logger.Debug(fmt.Sprintf("set slb on node:%s", conf.Host))
-	if err := executor.Command("systemctl", "enable", "--now", "proton_slb_manager").Run(); err != nil {
-		return err
-	}
-	time.Sleep(time.Second * 3)
-	ticker := time.NewTicker(time.Second * 300)
-	isActive := false
-	for !isActive {
-		select {
-		case <-ticker.C:
-			return errors.New("wait proton_slb_manager timeout")
-		default:
-			if err := executor.Command("systemctl", "is-active", "proton_slb_manager").Run(); err != nil {
-				time.Sleep(5 * time.Second)
-				n.Logger.Debug("wait proton slb manager start")
-			} else {
-				isActive = true
-			}
-		}
-	}
-
 	haConf := configuration.HaProxyConf{}
 	if err := json.Unmarshal([]byte(configuration.HaDefaultConf), &haConf); err != nil {
 		return err
@@ -443,75 +418,18 @@ func (n *Node) setNode(conf client.RemoteClientConf) error {
 		haConf.Conf.CrRpmFrontend.Bind = fmt.Sprintf(":::%d v4v6", n.ClusterConf.Cr.Local.Ha_ports.Rpm)
 	}
 
-	headers := map[string]string{
-		"Content-Type": "application/json",
-	}
-	slbHost := net.JoinHostPort(conf.Host, fmt.Sprintf("%d", slb_v2.DefaultPort))
-	n.Logger.Debug("create haproxy config")
-	if s, b, err := n.HttpClient.Post(fmt.Sprintf("http://%s/api/slb/v1/haproxy/haproxy", slbHost), headers, haConf); err != nil {
-		return fmt.Errorf("unable to create haproxy config, error: %w", err)
-	} else if s == http.StatusConflict {
-		n.Logger.Debug("update haproxy config due to already existing")
-		if s, b, err := n.HttpClient.Put(fmt.Sprintf("http://%s/api/slb/v1/haproxy/haproxy", slbHost), headers, haConf); err != nil {
-			return fmt.Errorf("unable to update haproxy config: %w", err)
-		} else if s != http.StatusNoContent {
-			return fmt.Errorf("unable to update haproxy config, http status code: %d, response body: %v", s, b)
-		}
-	} else if s != http.StatusCreated {
-		return fmt.Errorf("unable to create haproxy config, http status code: %d, response body: %v", s, b)
+	haConfJSON, _ := json.Marshal(haConf)
+	log.Printf("haConfJSON: %s", haConfJSON)
+
+	remoteSLB := slbops.NewRemote(ecmsV1Alpha1)
+	n.Logger.Debug("reconcile haproxy config")
+	if err := remoteSLB.EnsureHAProxy(context.TODO(), haConf); err != nil {
+		return fmt.Errorf("unable to reconcile haproxy config: %w", err)
 	}
 
 	// 为未开启安全检查的SLB HA配置开启安全检查
-	// 先获取，然后检查HA实例是否为空，有内容就检查是否开启安全检查，否则跳过
-	restConfig := &rest.Config{Host: slbHost}
-	slbV2, err := slb_v2.NewForConfig(restConfig)
-	if err != nil {
-		n.Logger.Warning(fmt.Sprintf("Cannot create Proton SLB Client:%s", conf.Host), err)
-	}
-	keepalivedConfClient := slb_v2.NewKeepalivedConf(slbV2)
-	keepalivedConf, err := keepalivedConfClient.Get(context.TODO())
-	needModifyKeepalivedConf := false
-	if err != nil {
-		n.Logger.Warning(fmt.Sprintf("Cannot get Proton SLB Keepalived configuration:%s", conf.Host), err)
-	} else {
-		if valConf, ok := keepalivedConf["conf"]; ok && valConf != nil {
-			if val, ok := keepalivedConf["conf"].(MSI)["vrrp_instance"]; ok && val != nil {
-				n.Logger.Debug(fmt.Sprintf("Proton SLB Keepalived VRRPScript configuration on %s is: %v", conf.Host, val))
-				needModifyKeepalivedConf = true
-			} else {
-				n.Logger.Warning(fmt.Sprintf("Proton SLB Keepalived VRRPInstance configuration on %s is empty, skip adding script security global def", conf.Host))
-			}
-		} else {
-			n.Logger.Warning(fmt.Sprintf("Proton SLB Keepalived configuration on %s is empty, skip adding script security global def", conf.Host))
-		}
-	}
-	if needModifyKeepalivedConf {
-		if val, ok := keepalivedConf["conf"].(MSI)["global_defs"]; ok && val != nil {
-			n.Logger.Debug(fmt.Sprintf("Proton SLB Keepalived GlobalDefs configuration on %s is: %v", conf.Host, val))
-			if valMSI, ok := val.(MSI); ok {
-				if _, ok := valMSI["enable_script_security"]; !ok {
-					valMSI["enable_script_security"] = ""
-				}
-				if _, ok := valMSI["script_user"]; !ok {
-					valMSI["script_user"] = "root"
-				}
-				keepalivedConfConf := keepalivedConf["conf"].(MSI)
-				keepalivedConfConf["global_defs"] = valMSI
-				keepalivedConf["conf"] = keepalivedConfConf
-			}
-		} else {
-			n.Logger.Warning(fmt.Sprintf("Proton SLB Keepalived GlobalDefs configuration on %s is empty", conf.Host))
-			keepalivedConfConf := keepalivedConf["conf"].(MSI)
-			keepalivedConfConf["global_defs"] = map[string]string{
-				"enable_script_security": "",
-				"script_user":            "root",
-			}
-			keepalivedConf["conf"] = keepalivedConfConf
-		}
-		err = keepalivedConfClient.Update(context.TODO(), keepalivedConf)
-		if err != nil {
-			n.Logger.Warning(fmt.Sprintf("Cannot update Proton SLB config to add script security:%s", conf.Host), err)
-		}
+	if err := remoteSLB.EnsureKeepalivedScriptSecurity(context.TODO()); err != nil {
+		n.Logger.Warning(fmt.Sprintf("Cannot update Proton SLB config to add script security:%s", conf.Host), err)
 	}
 
 	// 配置 Chrony，如果是内置master节点作为时间服务器的话，随机选择发生在校验配置文件那一步，这里只负责读取

@@ -10,13 +10,12 @@ import (
 	"path/filepath"
 	"strconv"
 
-	"github.com/go-test/deep"
 	"github.com/sirupsen/logrus"
-	"golang.org/x/exp/slices"
 
 	node "devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/client/node/v1alpha1"
 	slb "devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/client/slb/v1"
 	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/configuration"
+	slbops "devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/slb"
 )
 
 func (m *Manager) reconcileNGINXServers() error {
@@ -34,6 +33,7 @@ func (m *Manager) reconcileNGINXServers() error {
 
 	for _, n := range m.Nodes {
 		log := m.Logger.WithField("node", n.Name())
+		remoteSLB := slbops.NewRemote(n.ECMS())
 
 		for _, f := range []struct {
 			path string
@@ -54,7 +54,7 @@ func (m *Manager) reconcileNGINXServers() error {
 		}
 
 		for _, s := range nginxServers {
-			if err := reconcileNodeNGINXServer(n.SLB_V1().NginxHTTPs(), &s, log); err != nil {
+			if err := reconcileNodeNGINXServer(remoteSLB, &s, log); err != nil {
 				return err
 			}
 		}
@@ -226,32 +226,7 @@ func generateNGINXServerECephHTTPS(upstreams []string, ipVersion string) slb.Ngi
 	}
 }
 
-func reconcileNodeNGINXServer(c slb.NginxHTTPInterface, s *slb.NginxHTTP, log logrus.FieldLogger) error {
-	names, err := c.List(context.TODO())
-	if err != nil {
-		return err
-	}
-
-	if !slices.Contains(names, s.Name) {
-		log.WithField("server", s).Info("create proton slb nginx http server")
-		return c.Create(context.TODO(), s)
-	}
-
-	actual, err := c.Get(context.TODO(), s.Name)
-	if err != nil {
-		return err
-	}
-
-	differences := deep.Equal(actual.Conf, s.Conf)
-	if differences == nil {
-		log.WithField("server", actual).Debug("skip updating proton slb nginx http server")
-		return nil
-	}
-
-	for _, d := range differences {
-		log.WithField("diff", d).Debug("unexpected proton slb nginx http server")
-	}
-
-	log.WithField("server", actual).Info("update proton slb nginx http server")
-	return c.Update(context.TODO(), s)
+func reconcileNodeNGINXServer(r *slbops.Remote, s *slb.NginxHTTP, log logrus.FieldLogger) error {
+	log.WithField("server", s).Info("reconcile proton slb nginx http server")
+	return r.EnsureNginxHTTPServer(context.TODO(), s)
 }

@@ -11,6 +11,7 @@ import (
 	"io/fs"
 	"os"
 	os_exec "os/exec"
+	"os/user"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -430,7 +431,39 @@ func (n *Node) InitKubeadm(kubeadmConfig []byte) error {
 		return fmt.Errorf("%s: failed to bootstrap-token: %v", n.Ipaddress, err)
 	}
 
-	n.Logger.Printf("%s: initial kubernete with kubeadm end", n.Ipaddress)
+	// create root's kube config
+	if err := n.ECMS.Files().Create(ctx, "/root/.kube", true, nil); err != nil {
+		return err
+	}
+
+	// 创建 root 用户的 kubeconfig 因为已有的很多逻辑都依赖使用 root 用户执行 kubectl
+	if err := executor.Command("cp", "/etc/kubernetes/admin.conf", "/root/.kube/config").Run(); err != nil {
+		return fmt.Errorf("%s: failed to copy kubeconfig: %v", n.Ipaddress, err)
+	}
+
+	// 获取当前用户，认为所有 kubernetes control plane 节点都有这个用户
+	u, err := user.Current()
+	if err != nil {
+		return err
+	}
+
+	kubeDir := filepath.Join(u.HomeDir, ".kube")
+	// TODO: 假定所有节点的用户 u 的 home 目录都相同。应该通过系统命令、syscall查询，或通过配置指定。
+	if err := n.ECMS.Files().Create(ctx, kubeDir, true, nil); err != nil {
+		return err
+	}
+
+	kubeconfig := filepath.Join(kubeDir, "config")
+	if err := executor.Command("cp", "/etc/kubernetes/admin.conf", kubeconfig).Run(); err != nil {
+		return fmt.Errorf("%s: failed to copy kubeconfig: %v", n.Ipaddress, err)
+	}
+
+	if err := executor.Command("chown", u.Uid+":"+u.Gid, kubeconfig).Run(); err != nil {
+		return fmt.Errorf("%s: failed to change kubeconfig owner: %v", n.Ipaddress, err)
+	}
+
+	n.Logger.Printf("%s: initial kubernetes with kubeadm end", n.Ipaddress)
+
 	return nil
 }
 
@@ -653,7 +686,7 @@ func (n *Node) JoinKubernetesWithYaml(kubeadmConfig []byte) error {
 func (n *Node) RemoveTaint(nodes []Node) {
 	var executor = exec.NewECMSExecutorForHost(n.ECMS.Exec())
 	for _, node := range nodes {
-		_ = executor.Command("kubectl", "taint", "nodes", node.HostName, "node-role.kubernetes.io/master:NoSchedule-").Run()
+		_ = executor.Command("kubectl", "taint", "nodes", node.HostName, "node-role.kubernetes.io/control-plane:NoSchedule-").Run()
 	}
 }
 
