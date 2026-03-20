@@ -7,7 +7,7 @@ set -o nounset
 PKG_ROOT="$(dirname "${BASH_SOURCE[0]}")"
 
 BIN_DIR="${PKG_ROOT}/bin"
-REPO_DIR="${PKG_ROOT}/repos"
+REPO_DIR="$(realpath "${PKG_ROOT}/repos")"
 
 function install_binaries {
   local -a binaries
