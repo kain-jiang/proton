@@ -88,6 +88,9 @@ spec:
     - name: ingress-nginx-controller:v1.15.0
       oci:
         reference: ghcr.io/kweaver-ai/proton/ingress-nginx-controller:v1.15.0
+    - name: ingress-nginx-kube-webhook-certgen:v1.6.8
+      oci:
+        reference: ghcr.io/kweaver-ai/proton/ingress-nginx-kube-webhook-certgen:v1.6.8
     - name: kafka-exporter:v1.6.0
       oci:
         reference: ghcr.io/kweaver-ai/proton/kafka-exporter:v1.6.0
@@ -103,9 +106,6 @@ spec:
     - name: kube-scheduler:v1.35.2
       oci:
         reference: ghcr.io/kweaver-ai/proton/kube-scheduler:v1.35.2
-    - name: kube-webhook-certgen:v1.6.8
-      oci:
-        reference: ghcr.io/kweaver-ai/proton/kube-webhook-certgen:v1.6.8
     - name: pause:3.10.1
       oci:
         reference: ghcr.io/kweaver-ai/proton/pause:3.10.1
