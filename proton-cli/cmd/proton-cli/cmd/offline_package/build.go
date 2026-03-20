@@ -189,6 +189,15 @@ func pullHTTP(ctx context.Context, path string, s *HTTPSource) error {
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode != http.StatusOK {
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return fmt.Errorf("pull http fail, status: %v, err: %w", resp.Status, err)
+		}
+
+		return fmt.Errorf("pull http fail, status: %v, body: %s", resp.Status, body)
+	}
+
 	var r io.Reader
 	var mode os.FileMode
 	switch s.Format {
@@ -321,7 +330,7 @@ func createRPMRepository(ctx context.Context, dir string) error {
 	}
 
 	if err := e.CommandContext(ctx, cmd, dir).Run(); err != nil {
-		return err
+		return fmt.Errorf("execute create repo fail: %w", err)
 	}
 
 	// create repository config template
