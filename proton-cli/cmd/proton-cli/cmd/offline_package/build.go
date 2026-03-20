@@ -77,7 +77,7 @@ func build(ctx context.Context, m *Manifest) error {
 
 	var (
 		binDir   = filepath.Join(w, "bin")
-		chartDir = filepath.Join(w, "charts")
+		chartDir = filepath.Join(w, "service-package", "charts")
 		imageDir = filepath.Join(w, "service-package", "images")
 
 		repoDir         = filepath.Join(w, "repos")
