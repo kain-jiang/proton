@@ -162,6 +162,9 @@ spec:
     - name: ecms-1.1.8.x86_64.rpm
       http:
         url: https://github.com/kweaver-ai/proton/releases/download/ecms%2F1.1.8/ecms-1.1.8-121.x86_64.rpm
+    - name: haproxy-2.5.6.x86_64.rpm
+      http:
+        url: https://github.com/kweaver-ai/proton/releases/download/haproxy%2F2.5.6/haproxy-2.5.6.x86_64.rpm
     - name: kubeadm-1.35.2-150500.1.1.x86_64.rpm
       http:
         url: https://github.com/kweaver-ai/proton/releases/download/kubernetes-1.35.2/kubeadm-1.35.2-1.proton.x86_64.rpm
