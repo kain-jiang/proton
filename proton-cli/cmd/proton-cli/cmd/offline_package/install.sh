@@ -7,7 +7,7 @@ set -o nounset
 PKG_ROOT="$(dirname "${BASH_SOURCE[0]}")"
 
 BIN_DIR="${PKG_ROOT}/bin"
-REPO_DIR="${PKG_ROOT}/repos"
+REPO_DIR="$(realpath "${PKG_ROOT}/repos")"
 
 function install_binaries {
   local -a binaries
@@ -27,12 +27,23 @@ function install_rpm_packages {
   local names=(
     containerd
     ecms
+    haproxy
     kubeadm
     kubectl
     kubelet
+    proton-cr
   )
   dnf install "${names[@]}" --repo=proton
 }
 
+function enable_and_start_services {
+  local units=(
+    ecms.service
+    proton-cr.service
+  )
+  systemctl enable --now "${units[@]}"
+}
+
 install_binaries
 install_rpm_packages
+enable_and_start_services

@@ -44,9 +44,6 @@ func CompletionCS(c *configuration.Cs, nodes []configuration.Node) {
 			c.IPFamilies = append(c.IPFamilies, v1.IPv6Protocol)
 		}
 	}
-	if c.Addons == nil {
-		c.Addons = configuration.DefaultCSAddons
-	}
 
 	// TODO: complete container runtime docker
 }

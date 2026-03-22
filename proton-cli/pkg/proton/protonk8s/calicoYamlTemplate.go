@@ -4243,7 +4243,7 @@ rules:
     resources:
       - endpointslices
     verbs:
-      - watch 
+      - watch
       - list
   - apiGroups: [""]
     resources:
@@ -4454,7 +4454,7 @@ spec:
         # It can be deleted if this is a fresh installation, or if you have already
         # upgraded to use calico-ipam.
         - name: upgrade-ipam
-          image: {{ .ImageRepository }}/calico/cni:v3.25.2
+          image: {{ .ImageRepository }}/calico-cni:v3.25.2
           imagePullPolicy: IfNotPresent
           command: ["/opt/cni/bin/calico-ipam", "-upgrade"]
           envFrom:
@@ -4482,7 +4482,7 @@ spec:
         # This container installs the CNI binaries
         # and CNI network config file on each node.
         - name: install-cni
-          image: {{.ImageRepository}}/calico/cni:v3.25.2
+          image: {{.ImageRepository}}/calico-cni:v3.25.2
           imagePullPolicy: IfNotPresent
           command: ["/opt/cni/bin/install"]
           envFrom:
@@ -4525,7 +4525,7 @@ spec:
         # i.e. bpf at /sys/fs/bpf and cgroup2 at /run/calico/cgroup. Calico-node initialisation is executed
         # in best effort fashion, i.e. no failure for errors, to not disrupt pod creation in iptable mode.
         - name: "mount-bpffs"
-          image: {{.ImageRepository}}/calico/node:v3.25.2
+          image: {{.ImageRepository}}/calico-node:v3.25.2
           imagePullPolicy: IfNotPresent
           command: ["calico-node", "-init", "-best-effort"]
           volumeMounts:
@@ -4551,7 +4551,7 @@ spec:
         # container programs network policy and routes on each
         # host.
         - name: calico-node
-          image: {{.ImageRepository}}/calico/node:v3.25.2
+          image: {{.ImageRepository}}/calico-node:v3.25.2
           imagePullPolicy: IfNotPresent
           envFrom:
           - configMapRef:
@@ -4807,7 +4807,7 @@ spec:
       priorityClassName: system-cluster-critical
       containers:
         - name: calico-kube-controllers
-          image: {{ .ImageRepository }}/calico/kube-controllers:v3.25.2
+          image: {{ .ImageRepository }}/calico-kube-controllers:v3.25.2
           imagePullPolicy: IfNotPresent
           env:
             # Choose which controllers to run.

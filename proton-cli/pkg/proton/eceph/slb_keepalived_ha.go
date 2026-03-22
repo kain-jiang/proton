@@ -8,11 +8,11 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
-	"golang.org/x/exp/slices"
 
 	node "devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/client/node/v1alpha1"
 	slb "devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/client/slb/v2"
 	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/configuration"
+	slbops "devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/slb"
 )
 
 func (m *Manager) reconcileKeepalivedHAInstances() error {
@@ -34,6 +34,7 @@ func (m *Manager) reconcileKeepalivedHAInstances() error {
 
 	for _, n := range m.Nodes {
 		log := m.Logger.WithField("node", n.Name())
+		remoteSLB := slbops.NewRemote(n.ECMS())
 
 		internalName, externalName := generateKeepalivedHAInstanceNames()
 		internalVirtualRouterID, externalVirtualRouterID := generateKeepalivedHAInstanceIDs()
@@ -91,29 +92,8 @@ func (m *Manager) reconcileKeepalivedHAInstances() error {
 				continue
 			}
 			instance := generateKeepalivedHAInstance(s.name, s.virtualRouterID, s.vip, s.dev, s.label, s.src, s.peers, s.notifyMaster, s.notifyBackup, m.Nodes[0].IPVersion())
-			if err := reconcileNodeKeepalivedHAInstance(n.SLB_V2().KeepalivedHAs(), s.name, instance, log); err != nil {
-				// retry once without notifyMaster and notifyBackup if it somehow exists
-				errStr := fmt.Sprintf("%v", err)
-				log.Debugf("error string: %s", errStr)
-				flagErrDuetoExistingNotify := false
-				if strings.Contains(errStr, fmt.Sprintf("(%s) notify_master script already specified - ignoring %s", s.name, instance.NotifyMaster)) {
-					log.Debugln("Notify master script already exists on this HA Instance, will retry without setting it")
-					instance.NotifyMaster = ""
-					flagErrDuetoExistingNotify = true
-				}
-				if strings.Contains(errStr, fmt.Sprintf("(%s) notify_backup script already specified - ignoring %s", s.name, instance.NotifyBackup)) {
-					log.Debugln("Notify backup script already exists on this HA Instance, will retry without setting it")
-					instance.NotifyBackup = ""
-					flagErrDuetoExistingNotify = true
-				}
-				if flagErrDuetoExistingNotify {
-					err1 := reconcileNodeKeepalivedHAInstance(n.SLB_V2().KeepalivedHAs(), s.name, instance, log)
-					if err1 != nil {
-						return err1
-					}
-				} else {
-					return err
-				}
+			if err := reconcileNodeKeepalivedHAInstance(remoteSLB, s.name, instance, log); err != nil {
+				return err
 			}
 		}
 	}
@@ -225,16 +205,7 @@ func getNetworkInterfaceNameByIP(ip net.IP, interfaces []node.NetworkInterface) 
 	return "unknown"
 }
 
-func reconcileNodeKeepalivedHAInstance(c slb.KeepalivedHAInterface, name string, instance *slb.KeepalivedHA, log logrus.FieldLogger) error {
-	names, err := c.List(context.TODO())
-	if err != nil {
-		return err
-	}
-	if !slices.Contains(names, name) {
-		log.WithFields(logrus.Fields{"name": name, "instance": instance}).Info("create proton slb keepalived ha instance")
-		return c.Create(context.TODO(), name, instance)
-	}
-
-	log.WithFields(logrus.Fields{"name": name, "instance": instance}).Info("update proton slb keepalived ha instance")
-	return c.Update(context.TODO(), name, instance)
+func reconcileNodeKeepalivedHAInstance(r *slbops.Remote, name string, instance *slb.KeepalivedHA, log logrus.FieldLogger) error {
+	log.WithFields(logrus.Fields{"name": name, "instance": instance}).Info("reconcile proton slb keepalived ha instance")
+	return r.EnsureKeepalivedHAInstance(context.TODO(), name, instance)
 }

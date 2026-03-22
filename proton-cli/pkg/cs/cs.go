@@ -305,7 +305,7 @@ func (c *Cs) apply() error {
 		}
 	}
 	sort.Strings(kc.InsecureRegistries)
-	kc.ImageRepository = fmt.Sprintf("%s/public", cr)
+	kc.ImageRepository = cr
 	if c.ClusterConf.Cs.Host_network.Ipv4_interface != "" {
 		kc.IPv4Interface = c.ClusterConf.Cs.Host_network.Ipv4_interface
 	}
@@ -465,11 +465,7 @@ func (c *Cs) updateDockerDaemonConfig(conf client.RemoteClientConf, crHosts []st
 }
 
 func (c *Cs) setKubeletConfigMap(kube kubernetes.Interface) error {
-	version, err := kube.Discovery().ServerVersion()
-	if err != nil {
-		return fmt.Errorf("cannot get kubernetes version:%w", err)
-	}
-	kubeletCMName := fmt.Sprintf("kubelet-config-%s.%s", version.Major, version.Minor)
+	const kubeletCMName = "kubelet-config"
 
 	kubeCm, err := kube.CoreV1().ConfigMaps("kube-system").Get(context.Background(), kubeletCMName, metav1.GetOptions{})
 	if err != nil {

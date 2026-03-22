@@ -77,7 +77,7 @@ func build(ctx context.Context, m *Manifest) error {
 
 	var (
 		binDir   = filepath.Join(w, "bin")
-		chartDir = filepath.Join(w, "charts")
+		chartDir = filepath.Join(w, "service-package", "charts")
 		imageDir = filepath.Join(w, "service-package", "images")
 
 		repoDir         = filepath.Join(w, "repos")
@@ -188,6 +188,15 @@ func pullHTTP(ctx context.Context, path string, s *HTTPSource) error {
 		return err
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return fmt.Errorf("pull http fail, status: %v, err: %w", resp.Status, err)
+		}
+
+		return fmt.Errorf("pull http fail, status: %v, body: %s", resp.Status, body)
+	}
 
 	var r io.Reader
 	var mode os.FileMode
@@ -321,7 +330,7 @@ func createRPMRepository(ctx context.Context, dir string) error {
 	}
 
 	if err := e.CommandContext(ctx, cmd, dir).Run(); err != nil {
-		return err
+		return fmt.Errorf("execute create repo fail: %w", err)
 	}
 
 	// create repository config template

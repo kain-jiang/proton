@@ -181,8 +181,8 @@ func (kc *KubernetesCluster) getTillerConfig() error {
 func (kc *KubernetesCluster) InitCluster() error {
 	kc.Logger.Info("init kubernetes cluster begin")
 	if kc.kubernetesVersion == "" {
-		kc.kubernetesVersion = "v1.23.4"
-		kc.Logger.Info("kubernetes version is empty, use default v1.23.4")
+		kc.kubernetesVersion = "v1.35.2"
+		kc.Logger.Infof("kubernetes version is empty, use default %s", kc.kubernetesVersion)
 	}
 	master := kc.Masters[0]
 	var joinMasters, joinWorkers []Node
@@ -268,18 +268,6 @@ func (kc *KubernetesCluster) InitCluster() error {
 	}
 	if err := master.InitCoreDNS(kc.CoreDNS); err != nil {
 		return fmt.Errorf("%s: init kubernetes coredns failed: %v", master.HostName, err)
-	}
-	if err := master.InitTiller(kc.Tiller); err != nil {
-		return fmt.Errorf("%s: init kubernetes tiller failed: %v", master.HostName, err)
-	}
-	if err := master.WaitTillerReady(); err != nil {
-		return fmt.Errorf("%s: wait tiller ready in 300 seconds failed: %v", master.HostName, err)
-	}
-	if err := master.InitHelm2Client(); err != nil {
-		return fmt.Errorf("%s: init helm2 client failed: %v", master.HostName, err)
-	}
-	if err := master.SetHelm2Repo(kc.ChartRepo); err != nil {
-		return fmt.Errorf("%s: set helm2 repo %s failed: %v", master.HostName, kc.ChartRepo, err)
 	}
 	if err := master.EnableKubeletService(); err != nil {
 		return fmt.Errorf("%s: enable kubelet service failed: %v", master.HostName, err)
