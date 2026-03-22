@@ -14,6 +14,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 
 	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/client"
+	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/core/global"
 )
 
 var (
@@ -178,7 +179,7 @@ func isMasterNode(nodes []corev1.Node) []corev1.Node {
 	masterNodes := []corev1.Node{}
 	for _, node := range nodes {
 		labels := node.GetLabels()
-		if val, exists := labels["node-role.kubernetes.io/master"]; exists && val == "" {
+		if val, exists := labels[global.LabelNodeRoleControlPlane]; exists && val == "" {
 			masterNodes = append(masterNodes, node)
 		}
 	}

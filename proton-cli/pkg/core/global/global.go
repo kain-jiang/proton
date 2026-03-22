@@ -86,6 +86,9 @@ const (
 const (
 	KubernetesControlPlaneEndpoint = "127.0.0.1:8443"
 	KubernetesAPIServerBindPort    = 6443
+
+	// LabelNodeRoleControlPlane specifies that a node hosts control-plane components
+	LabelNodeRoleControlPlane = "node-role.kubernetes.io/control-plane"
 )
 
 // 是否支持双栈 由cs的配置控制
