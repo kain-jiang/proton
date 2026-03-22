@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/core/global"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/kubernetes"
@@ -24,7 +25,7 @@ const (
 	LabelNodeRoleOldControlPlane = "node-role.kubernetes.io/master"
 
 	// LabelNodeRoleControlPlane specifies that a node hosts control-plane components
-	LabelNodeRoleControlPlane = "node-role.kubernetes.io/control-plane"
+	LabelNodeRoleControlPlane = global.LabelNodeRoleControlPlane
 )
 
 const (

@@ -49,6 +49,7 @@ func ValidateCSAddons(addons []configuration.CSAddonName, fldPath *field.Path) (
 	supportedAddons := sets.NewString(
 		string(configuration.CSAddonNameNodeExporter),
 		string(configuration.CSAddonNameStateMetrics),
+		string(configuration.CSAddonNameIngressNginx),
 	)
 	allAddons := sets.NewString()
 	for i, a := range addons {
