@@ -26,6 +26,9 @@ spec:
         url: https://github.com/containerd/nerdctl/releases/download/v2.2.1/nerdctl-2.2.1-linux-amd64.tar.gz
         format: tar+gzip
         path: nerdctl
+    - name: skopeo
+      http:
+        url: https://github.com/kweaver-ai/proton/releases/download/skopeo-1.19.0/skopeo-linux-amd64
 
   charts:
     - name: component-manage-0.5.1.tgz
