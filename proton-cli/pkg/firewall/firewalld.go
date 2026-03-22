@@ -105,7 +105,6 @@ func (m *moduleFirewalld) Apply() error {
 		},
 	}
 
-	m.logger.WithField("addresses", m.addresses).Debug("DEBUGGING")
 	var sources []string
 	sources = append(sources, firewalldSourcePrefixIPSet+firewalldIPSetProtonCSHost)
 	sources = append(sources, firewalldSourcePrefixIPSet+firewalldIPSetProtonCSHost6)

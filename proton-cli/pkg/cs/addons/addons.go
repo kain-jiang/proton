@@ -24,21 +24,27 @@ const (
 	ChartNameNodeExporter = "proton-node-exporter"
 	// kube-state-metrics 的 chart 的名字
 	ChartNameStateMetrics = "proton-kube-state-metrics"
+	// ingress-nginx 的 chart 的名字
+	ChartNameIngressNginx = "ingress-nginx"
 
 	// node-exporter 的 helm release 的名字
 	ReleaseNameNodeExporter = "node-exporter"
 	// kube-state-metrics 的 helm release 的名字
 	ReleaseNameStateMetrics = "proton-kube-state-metrics"
+	// ingress-nginx 的 helm release 的名字
+	ReleaseNameIngressNginx = "ingress-nginx"
 )
 
 var chartNameMap = map[configuration.CSAddonName]string{
 	configuration.CSAddonNameNodeExporter: ChartNameNodeExporter,
 	configuration.CSAddonNameStateMetrics: ChartNameStateMetrics,
+	configuration.CSAddonNameIngressNginx: ChartNameIngressNginx,
 }
 
 var releaseNameMap = map[configuration.CSAddonName]string{
 	configuration.CSAddonNameNodeExporter: ReleaseNameNodeExporter,
 	configuration.CSAddonNameStateMetrics: ReleaseNameStateMetrics,
+	configuration.CSAddonNameIngressNginx: ReleaseNameIngressNginx,
 }
 
 // Reconcile 处理 Proton CS 的插件，至期望的最终状态
@@ -91,11 +97,7 @@ func Reconcile(ctx context.Context, lg logrus.FieldLogger, h helm3.Client, pkg *
 	}
 
 	// 期望的 release values
-	var values = Values{
-		Image: ValuesImage{
-			Registry: registry,
-		},
-	}
+	var values = helmValuesForAddon(name, registry)
 
 	// 如果 release 的版本小于 chart 仓库的最新版本或 values 与期望不同则更新
 	if !(releaseVersion.LessThan(latestVersion) || deep.Equal(r.Config, toMap(values)) != nil) {
@@ -125,6 +127,28 @@ type ValuesImage struct {
 	Registry string `json:"registry,omitempty"`
 }
 
+type ValuesIngressNginx struct {
+	Global struct {
+		Image struct {
+			Registry string `json:"registry,omitzero"`
+		} `json:"image,omitzero"`
+	} `json:"global,omitzero"`
+	Controller struct {
+		Image struct {
+			Image  string  `json:"image,omitzero"`
+			Digest *string `json:"digest"`
+		} `json:"image,omitzero"`
+		AdmissionWebhooks struct {
+			Patch struct {
+				Image struct {
+					Image  string `json:"image,omitzero"`
+					Digest any    `json:"digest"`
+				} `json:"image,omitzero"`
+			} `json:"patch,omitzero"`
+		} `json:"admissionWebhooks,omitzero"`
+	} `json:"controller,omitzero"`
+}
+
 // toYAML 以 yaml 格式序列化，便于在日志中显示 struct
 func toYAML(v any) string {
 	b, _ := yaml.Marshal(v)
@@ -137,4 +161,22 @@ func toMap(v any) map[string]any {
 	var r map[string]any
 	_ = json.Unmarshal(b, &r)
 	return r
+}
+
+func helmValuesForAddon(name configuration.CSAddonName, registry string) (values any) {
+	switch name {
+	case configuration.CSAddonNameIngressNginx:
+		var v ValuesIngressNginx
+		v.Global.Image.Registry = registry
+		v.Controller.Image.Image = "ingress-nginx-controller"
+		v.Controller.AdmissionWebhooks.Patch.Image.Image = "ingress-nginx-kube-webhook-certgen"
+		values = v
+	default:
+		values = Values{
+			Image: ValuesImage{
+				Registry: registry,
+			},
+		}
+	}
+	return
 }

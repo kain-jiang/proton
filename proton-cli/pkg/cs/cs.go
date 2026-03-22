@@ -118,7 +118,9 @@ func (c *Cs) Apply() error {
 			return err
 		}
 
+		c.Logger.WithField("addons", c.ClusterConf.Cs.Addons).Info("Install CS Addons")
 		for _, addon := range c.ClusterConf.Cs.Addons {
+			c.Logger.WithField("name", addon).Info("Install cs addon")
 			if err := addons.Reconcile(context.Background(), c.Logger, helmClient, pkg, registry, addon); err != nil {
 				c.Logger.Errorf("reconcile proton cs addon %s fail: %v", addon, err)
 				return err
