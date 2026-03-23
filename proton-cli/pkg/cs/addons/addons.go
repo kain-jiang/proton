@@ -13,6 +13,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"helm.sh/helm/v3/pkg/storage/driver"
 	"k8s.io/apimachinery/pkg/util/version"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/yaml"
 
 	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/client/helm3"
@@ -138,7 +139,16 @@ type ValuesIngressNginx struct {
 			Image  string  `json:"image,omitzero"`
 			Digest *string `json:"digest"`
 		} `json:"image,omitzero"`
+		Kind        string `json:"kind,omitzero"`
+		HostNetwork *bool  `json:"hostNetwork,omitzero"`
+		Service     struct {
+			Enabled *bool `json:"enabled,omitzero"`
+		} `json:"service,omitzero"`
+		IngressClassResource struct {
+			Default *bool `json:"default,omitzero"`
+		} `json:"ingressClassResource,omitzero"`
 		AdmissionWebhooks struct {
+			Port  *int `json:"port,omitzero"`
 			Patch struct {
 				Image struct {
 					Image  string `json:"image,omitzero"`
@@ -169,6 +179,11 @@ func helmValuesForAddon(name configuration.CSAddonName, registry string) (values
 		var v ValuesIngressNginx
 		v.Global.Image.Registry = registry
 		v.Controller.Image.Image = "ingress-nginx-controller"
+		v.Controller.Kind = "DaemonSet"
+		v.Controller.HostNetwork = ptr.To(true)
+		v.Controller.Service.Enabled = ptr.To(false)
+		v.Controller.IngressClassResource.Default = ptr.To(true)
+		v.Controller.AdmissionWebhooks.Port = ptr.To(9443)
 		v.Controller.AdmissionWebhooks.Patch.Image.Image = "ingress-nginx-kube-webhook-certgen"
 		values = v
 	default:
