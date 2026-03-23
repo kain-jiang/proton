@@ -16,17 +16,17 @@ const (
 	mariadbManagementServiceName = "mariadb-mgmt-cluster"
 	mariadbManagementServicePort = 8888
 
-	mariadbEtcdImageRepository = "proton/etcd"
-	mariadbEtcdImageTag        = "v3.3.19"
+	mariadbEtcdImageRepository = "kweaver-ai/proton/rds-etcd"
+	mariadbEtcdImageTag        = "0.0.1"
 
-	mariadbExporterImageRepository = "proton/rds-exporter"
-	mariadbExporterImageTag        = "2.1.0"
+	mariadbExporterImageRepository = "kweaver-ai/proton/rds-exporter"
+	mariadbExporterImageTag        = "0.0.1"
 
-	mariadbMgmtImageRepository = "proton/rds-mgmt"
-	mariadbMgmtImageTag        = "2.3.0"
+	mariadbMgmtImageRepository = "kweaver-ai/proton/rds-mgmt"
+	mariadbMgmtImageTag        = "0.0.1"
 
-	mariadbMariaDBImageRepository = "proton/rds-mariadb"
-	mariadbMariaDBImageTag        = "2.0.6"
+	mariadbMariaDBImageRepository = "kweaver-ai/proton/rds-mariadb"
+	mariadbMariaDBImageTag        = "0.0.1"
 )
 
 func (m *Applier) applyMariaDB(cli componentmanageCli.Client, name string) error {

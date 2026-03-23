@@ -26,9 +26,9 @@ spec:
         url: https://github.com/kweaver-ai/proton/releases/download/skopeo-1.19.0/skopeo-linux-amd64
 
   charts:
-    - name: component-manage-0.5.1.tgz
+    - name: component-manage-0.0.1.tgz
       http:
-        url: https://github.com/kweaver-ai/proton/releases/download/component-manage-0.5.1/component-manage-0.5.1.tgz
+        url: https://github.com/kweaver-ai/proton/releases/download/component-manage-0.0.1/component-manage-0.0.1.tgz
     - name: ingress-nginx-4.15.0.tgz
       http:
         url: https://github.com/kweaver-ai/proton/releases/download/ingress-nginx-4.15.0/ingress-nginx-4.15.0.tgz
@@ -53,9 +53,9 @@ spec:
     - name: proton-zookeeper-5.6.0.tgz
       http:
         url: https://github.com/kweaver-ai/proton/releases/download/proton-zookeeper-5.6.0/proton-zookeeper-5.6.0.tgz
-    - name: rds-mariadb-operator-1.4.1.tgz
+    - name: rds-mariadb-operator-0.0.1.tgz
       http:
-        url: https://github.com/kweaver-ai/proton/releases/download/rds-mariadb-operator-1.4.1/rds-mariadb-operator-1.4.1.tgz
+        url: https://github.com/kweaver-ai/proton/releases/download/proton-mariadb-0.0.1/rds-mariadb-operator-0.0.1.tgz
 
 
   images:
@@ -71,9 +71,9 @@ spec:
     - name: calico-node:v3.25.2
       oci:
         reference: ghcr.io/kweaver-ai/proton/calico-node:v3.25.2
-    - name: component-manage:git.07cd3ffd
+    - name: kweaver-ai/proton/component-manage:0.0.1
       oci:
-        reference: ghcr.io/kweaver-ai/proton/component-manage:git.07cd3ffd
+        reference: ghcr.io/kweaver-ai/proton/component-manage:0.0.1
     - name: coredns:v1.13.1
       oci:
         reference: ghcr.io/kweaver-ai/proton/coredns:v1.13.1
@@ -89,7 +89,7 @@ spec:
     - name: ingress-nginx-kube-webhook-certgen:v1.6.8
       oci:
         reference: ghcr.io/kweaver-ai/proton/ingress-nginx-kube-webhook-certgen:v1.6.8
-    - name: kafka-exporter:v1.6.0
+    - name: public/porter:v1.6.0
       oci:
         reference: ghcr.io/kweaver-ai/proton/kafka-exporter:v1.6.0
     - name: kube-apiserver:v1.35.2
@@ -119,39 +119,48 @@ spec:
     - name: proton-grafana:1.0.6-20250707.2.90ad92
       oci:
         reference: ghcr.io/kweaver-ai/proton/proton-grafana:1.0.6-20250707.2.90ad92
-    - name: proton-kafka:5.6.0-20251110.2.f1ef4340
+    - name: proton/proton-kafka:5.6.0-20251110.2.f1ef4340
       oci:
         reference: ghcr.io/kweaver-ai/proton/proton-kafka:5.6.0-20251110.2.f1ef4340
-    - name: proton-opensearch-exporter:1.8.8
+    - name: proton/proton-opensearch-exporter:1.8.8
       oci:
         reference: ghcr.io/kweaver-ai/proton/proton-opensearch-exporter:1.8.8
-    - name: proton-opensearch:1.8.8
+    - name: proton/proton-opensearch:1.8.8
       oci:
         reference: ghcr.io/kweaver-ai/proton/proton-opensearch:1.8.8
-    - name: proton-redis:1.11.2-20251029.2.169ac3c0
+    - name: proton/proton-redis:1.11.2-20251029.2.169ac3c0
       oci:
         reference: ghcr.io/kweaver-ai/proton/proton-redis:1.11.2-20251029.2.169ac3c0
-    - name: proton-zookeeper-exporter:5.6.0-20250625.2.138fb9
-      oci:
-        reference: ghcr.io/kweaver-ai/proton/proton-zookeeper-exporter:5.6.0-20250625.2.138fb9
-    - name: proton-zookeeper:5.6.0-20250625.2.138fb9
-      oci:
-        reference: ghcr.io/kweaver-ai/proton/proton-zookeeper:5.6.0-20250625.2.138fb9
-    - name: rds-exporter:2.1.0
-      oci:
-        reference: ghcr.io/kweaver-ai/proton/rds-exporter:2.1.0
-    - name: rds-mariadb-controller:1.4.1
-      oci:
-        reference: ghcr.io/kweaver-ai/proton/rds-mariadb-controller:1.4.1
-    - name: rds-mariadb:2.2.0
-      oci:
-        reference: ghcr.io/kweaver-ai/proton/rds-mariadb:2.2.0
-    - name: rds-mgmt:2.3.0
-      oci:
-        reference: ghcr.io/kweaver-ai/proton/rds-mgmt:2.3.0
-    - name: redis_exporter:v1.77.0
+    - name: public/oliver006/redis_exporter:v1.77.0
       oci:
         reference: ghcr.io/kweaver-ai/proton/redis_exporter:v1.77.0
+    - name: proton/proton-zookeeper-exporter:5.6.0-20250625.2.138fb9
+      oci:
+        reference: ghcr.io/kweaver-ai/proton/proton-zookeeper-exporter:5.6.0-20250625.2.138fb9
+    - name: proton/proton-zookeeper:5.6.0-20250625.2.138fb9
+      oci:
+        reference: ghcr.io/kweaver-ai/proton/proton-zookeeper:5.6.0-20250625.2.138fb9
+    # rds-start
+    - name: kweaver-ai/proton/rds-etcd:0.0.1
+      oci:
+        reference: ghcr.io/kweaver-ai/proton/rds-etcd:0.0.1
+    - name: kweaver-ai/proton/rds-exporter:0.0.1
+      oci:
+        reference: ghcr.io/kweaver-ai/proton/rds-exporter:0.0.1
+    - name: kweaver-ai/proton/rds-mgmt:0.0.1
+      oci:
+        reference: ghcr.io/kweaver-ai/proton/rds-mgmt:0.0.1
+    - name: kweaver-ai/proton/rds-mariadb:0.0.1
+      oci:
+        reference: ghcr.io/kweaver-ai/proton/rds-mariadb:0.0.1
+    - name: kweaver-ai/proton/rds-operator-controller:0.0.1
+      oci:
+        reference: ghcr.io/kweaver-ai/proton/rds-operator-controller:0.0.1
+    - name: kweaver-ai/proton/rds-operator-proxy:0.0.1
+      oci:
+        reference: ghcr.io/kweaver-ai/proton/rds-operator-proxy:0.0.1
+    # rds-end
+
 
   rpms:
     - name: containerd-1.7.25.x86_64.rpm
