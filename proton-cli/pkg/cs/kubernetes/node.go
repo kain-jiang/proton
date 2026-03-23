@@ -452,6 +452,10 @@ func (n *Node) InitKubeadm(kubeadmConfig []byte) error {
 	if err := n.ECMS.Files().Create(ctx, kubeDir, true, nil); err != nil {
 		return err
 	}
+	// 修改 ~/.kube 的所有者为“当前用户”
+	if err := executor.Command("chown", u.Uid+":"+u.Gid, kubeDir).Run(); err != nil {
+		return err
+	}
 
 	kubeconfig := filepath.Join(kubeDir, "config")
 	if err := executor.Command("cp", "/etc/kubernetes/admin.conf", kubeconfig).Run(); err != nil {
