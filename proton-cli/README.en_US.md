@@ -173,6 +173,12 @@ Print the built-in manifest template:
 proton-cli offline-package plan > manifest.yaml
 ```
 
+Print a manifest template for a specific CPU architecture:
+
+```bash
+proton-cli offline-package plan --architecture arm64 > manifest.yaml
+```
+
 Build an offline package from a manifest:
 
 ```bash
@@ -196,7 +202,7 @@ proton-cli offline-package install proton-offline-package.tar --remain
 Behavior confirmed from the code:
 
 - `build` reads `manifest.yaml` by default
-- `plan` prints the embedded manifest template to stdout
+- `plan` prints a generated manifest template to stdout and supports `--architecture` for `amd64` or `arm64`
 - `install` extracts into `.proton-offline-package/` and runs `install.sh`
 
 ### 7. Kubernetes utilities

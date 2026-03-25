@@ -173,6 +173,12 @@ proton-cli recover log
 proton-cli offline-package plan > manifest.yaml
 ```
 
+指定 CPU 架构输出 manifest 模板：
+
+```bash
+proton-cli offline-package plan --architecture arm64 > manifest.yaml
+```
+
 基于 manifest 构建离线包：
 
 ```bash
@@ -196,7 +202,7 @@ proton-cli offline-package install proton-offline-package.tar --remain
 根据代码确认的行为：
 
 - `build` 默认读取 `manifest.yaml`
-- `plan` 会把内嵌的 manifest 模板输出到标准输出
+- `plan` 会把生成的 manifest 模板输出到标准输出，并支持用 `--architecture` 切换 `amd64` 或 `arm64`
 - `install` 会先解压到 `.proton-offline-package/`，然后执行 `install.sh`
 
 ### 7. Kubernetes 工具
