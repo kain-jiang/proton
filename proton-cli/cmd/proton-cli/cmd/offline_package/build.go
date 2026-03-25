@@ -12,10 +12,12 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"golang.org/x/term"
+	helmregistry "helm.sh/helm/v3/pkg/registry"
 	"k8s.io/utils/exec"
 	"oras.land/oras-go/v2"
 	"oras.land/oras-go/v2/content/oci"
@@ -23,6 +25,15 @@ import (
 	"oras.land/oras-go/v2/registry/remote"
 	"oras.land/oras-go/v2/registry/remote/auth"
 	"sigs.k8s.io/yaml"
+)
+
+type artifactKind string
+
+const (
+	artifactKindBinary artifactKind = "binary"
+	artifactKindChart  artifactKind = "chart"
+	artifactKindImage  artifactKind = "image"
+	artifactKindRPM    artifactKind = "rpm"
 )
 
 type buildOptions struct {
@@ -119,28 +130,28 @@ func build(ctx context.Context, m *Manifest) error {
 
 	// pull binaries
 	for _, a := range m.Spec.Binaries {
-		if err := pull(ctx, &a, binDir); err != nil {
+		if err := pull(ctx, artifactKindBinary, &a, binDir); err != nil {
 			return err
 		}
 	}
 
 	// pull charts
 	for _, a := range m.Spec.Charts {
-		if err := pull(ctx, &a, chartDir); err != nil {
+		if err := pull(ctx, artifactKindChart, &a, chartDir); err != nil {
 			return err
 		}
 	}
 
 	// pull images
 	for _, a := range m.Spec.Images {
-		if err := pull(ctx, &a, imageDir); err != nil {
+		if err := pull(ctx, artifactKindImage, &a, imageDir); err != nil {
 			return err
 		}
 	}
 
 	// pull rpms
 	for _, a := range m.Spec.RPMs {
-		if err := pull(ctx, &a, repoPackagesDir); err != nil {
+		if err := pull(ctx, artifactKindRPM, &a, repoPackagesDir); err != nil {
 			return err
 		}
 	}
@@ -180,11 +191,14 @@ func createManifestFile(p string, m *Manifest) error {
 	return os.WriteFile(p, y, 0o644)
 }
 
-func pull(ctx context.Context, a *Artifact, output string) error {
+func pull(ctx context.Context, kind artifactKind, a *Artifact, output string) error {
 	switch {
 	case a.HTTP != nil:
 		return pullHTTP(ctx, filepath.Join(output, a.Name), a.HTTP)
 	case a.OCI != nil:
+		if kind == artifactKindChart {
+			return pullChartOCI(ctx, filepath.Join(output, a.Name), a.OCI)
+		}
 		return pullOCI(ctx, output, a.Name, a.OCI)
 	default:
 		return fmt.Errorf("failed to find artifact source of %q", a.Name)
@@ -266,6 +280,40 @@ func pullHTTP(ctx context.Context, path string, s *HTTPSource) error {
 // container registry credentials cache
 var credentials map[string]auth.Credential
 
+func getCredential(hostPort string) (auth.Credential, error) {
+	if cache, ok := credentials[hostPort]; ok {
+		return cache, nil
+	}
+
+	scanner := bufio.NewScanner(os.Stdin)
+	fmt.Printf("Login: %s\n", hostPort)
+	fmt.Print("Username: ")
+	scanner.Scan()
+	if err := scanner.Err(); err != nil {
+		return auth.EmptyCredential, fmt.Errorf("couldn't read from standard input: %w", err)
+	}
+	username := scanner.Text()
+
+	fmt.Print("Password: ")
+	password, err := term.ReadPassword(int(os.Stdin.Fd()))
+	if err != nil {
+		return auth.EmptyCredential, fmt.Errorf("couldn't read standard input: %w", err)
+	}
+
+	cache := auth.Credential{
+		Username: username,
+		Password: string(password),
+	}
+
+	if credentials == nil {
+		credentials = make(map[string]auth.Credential)
+	}
+
+	credentials[hostPort] = cache
+
+	return cache, nil
+}
+
 func pullOCI(ctx context.Context, output, ref string, s *OCISource) error {
 	log.Println("pull oci", s.Reference)
 	// get oci artifact reference
@@ -277,37 +325,7 @@ func pullOCI(ctx context.Context, output, ref string, s *OCISource) error {
 	r := &remote.Repository{
 		Client: &auth.Client{
 			Credential: func(ctx context.Context, hostPort string) (auth.Credential, error) {
-				if cache, ok := credentials[hostPort]; ok {
-					return cache, nil
-				}
-
-				scanner := bufio.NewScanner(os.Stdin)
-				fmt.Printf("Login: %s\n", hostPort)
-				fmt.Print("Username: ")
-				scanner.Scan()
-				if err := scanner.Err(); err != nil {
-					return auth.EmptyCredential, fmt.Errorf("couldn't read from standard input: %w", err)
-				}
-				username := scanner.Text()
-
-				fmt.Print("Password: ")
-				password, err := term.ReadPassword(int(os.Stdin.Fd()))
-				if err != nil {
-					return auth.EmptyCredential, fmt.Errorf("couldn't read standard input: %w", err)
-				}
-
-				cache := auth.Credential{
-					Username: username,
-					Password: string(password),
-				}
-
-				if credentials == nil {
-					credentials = make(map[string]auth.Credential)
-				}
-
-				credentials[hostPort] = cache
-
-				return cache, nil
+				return getCredential(hostPort)
 			},
 			Cache: auth.NewCache(),
 		},
@@ -324,6 +342,63 @@ func pullOCI(ctx context.Context, output, ref string, s *OCISource) error {
 	}
 
 	return nil
+}
+
+func pullChartOCI(ctx context.Context, path string, s *OCISource) error {
+	log.Println("pull oci chart", s.Reference)
+
+	ar, err := registry.ParseReference(s.Reference)
+	if err != nil {
+		return err
+	}
+
+	client, err := helmregistry.NewClient()
+	if err != nil {
+		return err
+	}
+
+	result, err := client.Pull(s.Reference)
+	if err != nil {
+		if !shouldRetryWithCredential(err) {
+			return err
+		}
+
+		credential, err := getCredential(ar.Registry)
+		if err != nil {
+			return err
+		}
+
+		if err := client.Login(ar.Registry, helmregistry.LoginOptBasicAuth(credential.Username, credential.Password)); err != nil {
+			return err
+		}
+
+		result, err = client.Pull(s.Reference)
+		if err != nil {
+			return err
+		}
+	}
+
+	return os.WriteFile(path, result.Chart.Data, 0o644)
+}
+
+func shouldRetryWithCredential(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	msg := strings.ToLower(err.Error())
+	for _, token := range []string{
+		"unauthorized",
+		"authentication required",
+		"denied",
+		"forbidden",
+	} {
+		if strings.Contains(msg, token) {
+			return true
+		}
+	}
+
+	return false
 }
 
 func createRPMRepository(ctx context.Context, dir string) error {
