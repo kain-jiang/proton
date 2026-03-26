@@ -20,7 +20,6 @@
 - proton/nvidia-device-plugin:v0.14.5-1
 - proton/package-store:main.607624
 - proton/policy-engine-exporter:1.1.1
-- proton/proton-cs-backup:v1.1.3
 - proton/proton-etcd:1.4.2
 - proton/proton-etcd:v3.5.9-1
 - proton/proton-grafana:1.0.6-20250707.2.90ad92

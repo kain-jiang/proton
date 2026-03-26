@@ -189,13 +189,6 @@ func (c *Cs) apply() error {
 			return fmt.Errorf("unable to create kubernetes client: %w", err)
 		}
 
-		// 确保定时备份任务存在且配置正确
-		for _, name := range c.ClusterConf.Cs.Master {
-			if err := EnsureBackupCronJobForNode(context.Background(), kube.BatchV1().CronJobs(configuration.GetProtonCliConfigNSFromFile()), name, cr, c.Logger); err != nil {
-				return fmt.Errorf("ensure backup cronjob for control plane node %s fail: %w", name, err)
-			}
-		}
-
 		// 获取 Kubernetes 已存在的节点
 		nodeList, err := kube.CoreV1().Nodes().List(context.Background(), metav1.ListOptions{})
 		if err != nil {
@@ -352,13 +345,6 @@ func (c *Cs) initCs() error {
 		return err
 	} else {
 		c.Logger.Debug(fmt.Sprintf("create namespace %s success", namespace.Name))
-	}
-
-	var registry, _, _ = global.ImageRepository(c.ClusterConf.Cr)
-	for _, name := range c.ClusterConf.Cs.Master {
-		if err := EnsureBackupCronJobForNode(ctx, clientSet.BatchV1().CronJobs(configuration.GetProtonCliConfigNSFromFile()), name, registry, c.Logger); err != nil {
-			return fmt.Errorf("ensure backup cronjob for control plane node %s fail: %w", name, err)
-		}
 	}
 
 	// get admin.conf from control plane nodes to run kubectl and proton-cli on worker nodes
