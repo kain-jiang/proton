@@ -33,15 +33,17 @@ type appManifestRelease struct {
 }
 
 type appPackageMetadata struct {
-	Platform    string            `json:"platform,omitempty"`
-	Platforms   []string          `json:"platforms,omitempty"`
-	ExportedAt  time.Time         `json:"exportedAt,omitempty"`
-	Images      []appPackageImage `json:"images,omitempty"`
-	ImageErrors []string          `json:"imageErrors,omitempty"`
+	Platform         string            `json:"platform,omitempty"`
+	Platforms        []string          `json:"platforms,omitempty"`
+	OverrideRegistry string            `json:"overrideRegistry,omitempty"`
+	ExportedAt       time.Time         `json:"exportedAt,omitempty"`
+	Images           []appPackageImage `json:"images,omitempty"`
+	ImageErrors      []string          `json:"imageErrors,omitempty"`
 }
 
 type appPackageImage struct {
 	Source             string   `json:"source,omitempty"`
+	PullSource         string   `json:"pullSource,omitempty"`
 	Repository         string   `json:"repository,omitempty"`
 	Tag                string   `json:"tag,omitempty"`
 	LocalRef           string   `json:"localRef,omitempty"`

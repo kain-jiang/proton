@@ -37,6 +37,7 @@ type appExportOptions struct {
 	manifest            string
 	output              string
 	platform            string
+	overrideRegistry    string
 	ignoreMissingImages bool
 }
 
@@ -58,6 +59,7 @@ func newAppExportCommand() *cobra.Command {
 	cmd.Flags().StringVarP(&opts.manifest, "manifest", "f", "", "Path or URL to a VersionSet manifest")
 	cmd.Flags().StringVarP(&opts.output, "output", "o", opts.output, "Output tar file")
 	cmd.Flags().StringVar(&opts.platform, "platform", opts.platform, "Target platform")
+	cmd.Flags().StringVar(&opts.overrideRegistry, "override-registry", "", "Override chart values .image.registry when pulling images")
 	cmd.Flags().BoolVar(&opts.ignoreMissingImages, "ignore-missing-images", false, "Continue exporting when some images cannot be pulled")
 	_ = cmd.MarkFlagRequired("manifest")
 
@@ -112,7 +114,7 @@ func runAppExport(ctx context.Context, opts *appExportOptions) error {
 	}
 
 	log.Printf("pulling %d images for platforms %s", len(images), strings.Join(platforms, ", "))
-	imageMetadata, imageErrors, err := exportAppImages(ctx, images, platforms, imagesDir, opts.ignoreMissingImages)
+	imageMetadata, imageErrors, err := exportAppImages(ctx, images, platforms, imagesDir, opts.overrideRegistry, opts.ignoreMissingImages)
 	if err != nil {
 		return err
 	}
@@ -120,7 +122,7 @@ func runAppExport(ctx context.Context, opts *appExportOptions) error {
 		log.Printf("warning: %s", imageErr)
 	}
 
-	exportedManifest, err := buildExportedManifest(manifestBytes, platforms, imageMetadata, imageErrors)
+	exportedManifest, err := buildExportedManifest(manifestBytes, platforms, opts.overrideRegistry, imageMetadata, imageErrors)
 	if err != nil {
 		return err
 	}
@@ -326,13 +328,16 @@ func newAppImageRef(registryHost, repositoryName, tag string) (appImageRef, erro
 	}
 
 	return appImageRef{
-		Source:     tagged.String(),
-		Repository: reference.Path(tagged),
+		Source: tagged.String(),
+		// The values field `image.registry` is treated as the full registry address.
+		// The offline package name must drop that whole prefix and keep only
+		// `image.repository`.
+		Repository: strings.TrimPrefix(repositoryName, "/"),
 		Tag:        tagged.Tag(),
 	}, nil
 }
 
-func exportAppImages(ctx context.Context, images []appImageRef, platforms []string, imagesDir string, ignoreMissing bool) ([]appPackageImage, []string, error) {
+func exportAppImages(ctx context.Context, images []appImageRef, platforms []string, imagesDir, overrideRegistry string, ignoreMissing bool) ([]appPackageImage, []string, error) {
 	dst, err := oci.New(imagesDir)
 	if err != nil {
 		return nil, nil, err
@@ -343,14 +348,27 @@ func exportAppImages(ctx context.Context, images []appImageRef, platforms []stri
 	for _, image := range images {
 		entry := appPackageImage{
 			Source:             image.Source,
+			PullSource:         image.Source,
 			Repository:         image.Repository,
 			Tag:                image.Tag,
 			LocalRef:           image.LocalRef(),
 			RequestedPlatforms: append([]string(nil), platforms...),
 		}
 
-		log.Printf("pull image %s", image.Source)
-		srcRepo, srcRef, err := newRemoteRepositoryForReference(image.Source, "", "", false)
+		pullSource, err := overrideAppImageSource(image, overrideRegistry)
+		if err != nil {
+			entry.Error = fmt.Sprintf("override registry: %v", err)
+			metadata = append(metadata, entry)
+			if !ignoreMissing {
+				return metadata, imageErrors, fmt.Errorf("override registry for %s: %w", image.Source, err)
+			}
+			imageErrors = append(imageErrors, fmt.Sprintf("image %s skipped: %s", image.Source, entry.Error))
+			continue
+		}
+		entry.PullSource = pullSource
+
+		log.Printf("pull image %s", pullSource)
+		srcRepo, srcRef, err := newRemoteRepositoryForReference(pullSource, "", "", false)
 		if err != nil {
 			entry.Error = fmt.Sprintf("prepare remote repository: %v", err)
 			metadata = append(metadata, entry)
@@ -377,6 +395,40 @@ func exportAppImages(ctx context.Context, images []appImageRef, platforms []stri
 		metadata = append(metadata, entry)
 	}
 	return metadata, imageErrors, nil
+}
+
+func overrideAppImageSource(image appImageRef, overrideRegistry string) (string, error) {
+	overrideRegistry = strings.TrimSpace(overrideRegistry)
+	if overrideRegistry == "" {
+		return image.Source, nil
+	}
+
+	host, repoPrefix := splitAppRegistryOverride(overrideRegistry)
+	repository := image.Repository
+	if repoPrefix != "" && !strings.HasPrefix(repository, repoPrefix+"/") && repository != repoPrefix {
+		repository = repoPrefix + "/" + repository
+	}
+
+	ref := fmt.Sprintf("%s/%s:%s", host, repository, image.Tag)
+	named, err := reference.ParseNormalizedNamed(ref)
+	if err != nil {
+		return "", err
+	}
+
+	tagged, ok := reference.TagNameOnly(named).(reference.NamedTagged)
+	if !ok {
+		return "", fmt.Errorf("image %q is missing a tag", ref)
+	}
+	return tagged.String(), nil
+}
+
+func splitAppRegistryOverride(override string) (string, string) {
+	override = strings.TrimSpace(strings.TrimSuffix(override, "/"))
+	parts := strings.SplitN(override, "/", 2)
+	if len(parts) == 1 {
+		return parts[0], ""
+	}
+	return parts[0], strings.Trim(parts[1], "/")
 }
 
 func copyAppImageForPlatforms(ctx context.Context, srcRepo *remote.Repository, srcRef string, dst *oci.Store, localRef string, platforms []string) ([]string, error) {

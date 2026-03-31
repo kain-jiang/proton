@@ -98,6 +98,30 @@ func TestExtractAppImagesFromValues(t *testing.T) {
 	}
 }
 
+func TestExtractAppImagesFromValuesRegistryWithPathPrefix(t *testing.T) {
+	values := map[string]any{
+		"image": map[string]any{
+			"registry":   "swr.cn-east-3.myhuaweicloud.com/kweaver-ai",
+			"repository": "dip/agent-backend",
+			"tag":        "0.5.1",
+		},
+	}
+
+	refs, ok := extractAppImagesFromValues(values)
+	if !ok || len(refs) != 1 {
+		t.Fatalf("unexpected refs: %#v", refs)
+	}
+	if refs[0].Source != "swr.cn-east-3.myhuaweicloud.com/kweaver-ai/dip/agent-backend:0.5.1" {
+		t.Fatalf("unexpected source: %q", refs[0].Source)
+	}
+	if refs[0].Repository != "dip/agent-backend" {
+		t.Fatalf("unexpected repository: %q", refs[0].Repository)
+	}
+	if refs[0].LocalRef() != "dip/agent-backend:0.5.1" {
+		t.Fatalf("unexpected local ref: %q", refs[0].LocalRef())
+	}
+}
+
 func TestBuildExportedManifest(t *testing.T) {
 	originalTimeNow := timeNow
 	timeNow = func() time.Time {
@@ -105,8 +129,9 @@ func TestBuildExportedManifest(t *testing.T) {
 	}
 	defer func() { timeNow = originalTimeNow }()
 
-	out, err := buildExportedManifest([]byte("kind: VersionSet\nproduct: demo\nversion: 1.0.0\nsource:\n  helmRepoUrl: https://example.com\nreleases:\n  web:\n    chart: web\n    version: 1.0.0\n"), []string{"linux/amd64", "linux/arm64"}, []appPackageImage{{
+	out, err := buildExportedManifest([]byte("kind: VersionSet\nproduct: demo\nversion: 1.0.0\nsource:\n  helmRepoUrl: https://example.com\nreleases:\n  web:\n    chart: web\n    version: 1.0.0\n"), []string{"linux/amd64", "linux/arm64"}, "mirror.example.com", []appPackageImage{{
 		Source:             "docker.io/library/nginx:1.27.0",
+		PullSource:         "mirror.example.com/library/nginx:1.27.0",
 		Repository:         "library/nginx",
 		Tag:                "1.27.0",
 		LocalRef:           "library/nginx:1.27.0",
@@ -133,6 +158,9 @@ func TestBuildExportedManifest(t *testing.T) {
 	platforms, ok := offlinePackage["platforms"].([]any)
 	if !ok || len(platforms) != 2 {
 		t.Fatalf("unexpected platforms block: %+v", offlinePackage["platforms"])
+	}
+	if offlinePackage["overrideRegistry"] != "mirror.example.com" {
+		t.Fatalf("unexpected overrideRegistry: %+v", offlinePackage["overrideRegistry"])
 	}
 	images, ok := offlinePackage["images"].([]any)
 	if !ok || len(images) != 1 {
@@ -175,5 +203,63 @@ func TestCountExportedAppImages(t *testing.T) {
 	})
 	if got != 2 {
 		t.Fatalf("got %d, want 2", got)
+	}
+}
+
+func TestOverrideAppImageSource(t *testing.T) {
+	image := appImageRef{
+		Source:     "docker.io/library/nginx:1.27.0",
+		Repository: "library/nginx",
+		Tag:        "1.27.0",
+	}
+
+	got, err := overrideAppImageSource(image, "mirror.example.com")
+	if err != nil {
+		t.Fatalf("overrideAppImageSource returned error: %v", err)
+	}
+	if got != "mirror.example.com/library/nginx:1.27.0" {
+		t.Fatalf("got %q", got)
+	}
+}
+
+func TestOverrideAppImageSourceWithRepositoryPrefix(t *testing.T) {
+	tests := []struct {
+		name     string
+		image    appImageRef
+		override string
+		want     string
+	}{
+		{
+			name: "prepend prefix",
+			image: appImageRef{
+				Source:     "acr.aishu.cn/dip/agent-backend:0.5.1",
+				Repository: "dip/agent-backend",
+				Tag:        "0.5.1",
+			},
+			override: "swr.cn-east-3.myhuaweicloud.com/kweaver-ai",
+			want:     "swr.cn-east-3.myhuaweicloud.com/kweaver-ai/dip/agent-backend:0.5.1",
+		},
+		{
+			name: "avoid duplicate prefix",
+			image: appImageRef{
+				Source:     "swr.cn-east-3.myhuaweicloud.com/kweaver-ai/dip/agent-backend:0.5.1",
+				Repository: "kweaver-ai/dip/agent-backend",
+				Tag:        "0.5.1",
+			},
+			override: "swr.cn-east-3.myhuaweicloud.com/kweaver-ai",
+			want:     "swr.cn-east-3.myhuaweicloud.com/kweaver-ai/dip/agent-backend:0.5.1",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := overrideAppImageSource(tt.image, tt.override)
+			if err != nil {
+				t.Fatalf("overrideAppImageSource returned error: %v", err)
+			}
+			if got != tt.want {
+				t.Fatalf("got %q, want %q", got, tt.want)
+			}
+		})
 	}
 }

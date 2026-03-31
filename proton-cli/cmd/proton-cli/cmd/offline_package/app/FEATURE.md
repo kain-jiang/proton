@@ -49,6 +49,7 @@ proton-cli offline-package app export \
   --manifest ./kweaver-core.yaml \
   --output ./offline-app-package.tar \
   --platform linux/amd64,linux/arm64 \
+  --override-registry mirror.example.com \
   --ignore-missing-images
 ```
 
@@ -59,6 +60,7 @@ proton-cli offline-package app export \
   -f ./kweaver-core.yaml \
   -o ./offline-app-package.tar \
   --platform linux/amd64,linux/arm64 \
+  --override-registry mirror.example.com \
   --ignore-missing-images
 ```
 
@@ -84,6 +86,11 @@ proton-cli offline-package app export \
   - 默认值为 `false`
   - `false` 时任一镜像拉取失败直接报错退出
   - `true` 时记录 warning，继续导出剩余镜像，并在 `manifest.yaml` 中补充失败镜像信息
+- `--override-registry`
+  - 导出时使用指定值重写 chart values 中的 `.image.registry`
+  - 默认值为空，表示直接使用 chart 中识别出的原始镜像地址
+  - 重写后保留原始 `image.repository` 和 `image.tag`
+  - 示例：`docker.io/library/nginx:1.27.0` 重写为 `mirror.example.com/library/nginx:1.27.0`
 
 ### 2.2 导入命令
 
@@ -313,6 +320,13 @@ image:
 - 若指定 `--ignore-missing-images`，则输出 warning 并继续处理其他镜像
 - 失败镜像必须写入导出包的 `manifest.yaml`
 
+对于启用了 `--override-registry` 的导出：
+
+- 行为上等价于导出时将 values 中的 `.image.registry` 替换为指定值
+- `manifest.yaml` 中应保留原始识别结果 `source`
+- `manifest.yaml` 中应记录本次使用的 `overrideRegistry`
+- 同时补充实际拉取地址 `pullSource`
+
 ### 4.5 镜像去重
 
 镜像拉取前需要按完整镜像引用去重。
@@ -380,9 +394,11 @@ offlinePackage:
   platforms:
     - linux/amd64
     - linux/arm64
+  overrideRegistry: mirror.example.com
   exportedAt: 2026-03-31T00:00:00Z
   images:
     - source: docker.io/library/nginx:1.27.0
+      pullSource: mirror.example.com/library/nginx:1.27.0
       repository: library/nginx
       tag: 1.27.0
       localRef: library/nginx:1.27.0
@@ -410,6 +426,7 @@ offlinePackage:
 - `images` 记录的是“已识别出的完整镜像列表”，而不只是成功导出的镜像
 - `requestedPlatforms` 记录该镜像本次导出请求的平台列表
 - `exportedPlatforms` 记录该镜像实际导出的平台列表
+- `pullSource` 记录该镜像本次实际拉取时使用的镜像地址
 - `exported: true` 表示该镜像已进入离线包内的 OCI Layout
 - `exported: false` 表示该镜像识别成功，但本次未成功导出
 - `imageErrors` 用于汇总导出阶段被忽略的镜像错误

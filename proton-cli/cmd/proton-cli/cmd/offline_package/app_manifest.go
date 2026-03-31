@@ -147,17 +147,18 @@ func collectAppChartRequests(manifest *appManifest) []appChartArtifact {
 	return charts
 }
 
-func buildExportedManifest(manifestBytes []byte, platforms []string, images []appPackageImage, imageErrors []string) ([]byte, error) {
+func buildExportedManifest(manifestBytes []byte, platforms []string, overrideRegistry string, images []appPackageImage, imageErrors []string) ([]byte, error) {
 	var doc map[string]any
 	if err := yaml.Unmarshal(manifestBytes, &doc); err != nil {
 		return nil, fmt.Errorf("parse manifest for export: %w", err)
 	}
 
 	metadata := map[string]any{
-		"platforms":   platforms,
-		"exportedAt":  timeNow().UTC().Format(time.RFC3339),
-		"images":      images,
-		"imageErrors": imageErrors,
+		"platforms":        platforms,
+		"overrideRegistry": strings.TrimSpace(overrideRegistry),
+		"exportedAt":       timeNow().UTC().Format(time.RFC3339),
+		"images":           images,
+		"imageErrors":      imageErrors,
 	}
 	if len(platforms) == 1 {
 		metadata["platform"] = platforms[0]
