@@ -48,7 +48,8 @@
 proton-cli offline-package app export \
   --manifest ./kweaver-core.yaml \
   --output ./offline-app-package.tar \
-  --platform linux/amd64
+  --platform linux/amd64,linux/arm64 \
+  --ignore-missing-images
 ```
 
 等价短参数形式：
@@ -57,7 +58,8 @@ proton-cli offline-package app export \
 proton-cli offline-package app export \
   -f ./kweaver-core.yaml \
   -o ./offline-app-package.tar \
-  --platform linux/amd64
+  --platform linux/amd64,linux/arm64 \
+  --ignore-missing-images
 ```
 
 参数说明：
@@ -70,10 +72,18 @@ proton-cli offline-package app export \
   - 导出 tar 包路径
   - 默认值建议为 `offline-app-package.tar`
 - `--platform`
-  - 目标平台
-  - 支持 `linux/amd64`、`linux/arm64`
+  - 目标平台列表
+  - 支持单平台或逗号分隔的多平台
+  - 当前支持 `linux/amd64`、`linux/arm64`
   - 同时兼容 `x86_64`、`aarch64`、`amd64`、`arm64`
-  - 最终统一归一化为 `linux/amd64` 或 `linux/arm64`
+  - 最终统一归一化为 `linux/amd64`、`linux/arm64`
+  - 示例：`--platform linux/amd64`
+  - 示例：`--platform linux/amd64,linux/arm64`
+- `--ignore-missing-images`
+  - 是否忽略无法拉取的镜像
+  - 默认值为 `false`
+  - `false` 时任一镜像拉取失败直接报错退出
+  - `true` 时记录 warning，继续导出剩余镜像，并在 `manifest.yaml` 中补充失败镜像信息
 
 ### 2.2 导入命令
 
@@ -84,6 +94,7 @@ proton-cli offline-package app import \
   --registry-username username \
   --registry-password password \
   --registry-plain-http=false \
+  --force \
   --chartmuseum-url https://chartmuseum.hello.com \
   --chartmuseum-username username \
   --chartmuseum-password password
@@ -104,6 +115,11 @@ proton-cli offline-package app import \
 - `--registry-plain-http`
   - 是否允许以 HTTP 明文方式访问镜像仓库
   - 默认值建议为 `false`
+- `--force`
+  - 是否覆盖 ChartMuseum 中已存在的同版本 chart
+  - 默认值为 `false`
+  - `false` 时遇到已存在 chart 直接报错退出
+  - `true` 时使用覆盖方式上传 chart
 - `--chartmuseum-url`
   - 目标 ChartMuseum 地址
 - `--chartmuseum-username`
@@ -197,8 +213,8 @@ releases:
 3. 忽略 `dependencies`，仅收集主清单 `releases` 中涉及的 Chart
 4. 下载所有 Chart 到临时目录
 5. 解包或读取每个 Chart，提取镜像定义
-6. 拉取所有镜像到本地 OCI Layout
-7. 生成补充过平台信息的 `manifest.yaml`
+6. 按 `--platform` 选择镜像 manifest，并拉取到本地 OCI Layout
+7. 将所有已识别镜像及其导出结果写入 `manifest.yaml`
 8. 组装 `charts/`、`images/`、`manifest.yaml`
 9. 打包为 tar 文件
 
@@ -291,6 +307,12 @@ image:
 - 在最终汇总中列出未识别项
 - 是否终止执行可以作为后续策略参数控制
 
+对于已识别但拉取失败的镜像：
+
+- 默认直接失败
+- 若指定 `--ignore-missing-images`，则输出 warning 并继续处理其他镜像
+- 失败镜像必须写入导出包的 `manifest.yaml`
+
 ### 4.5 镜像去重
 
 镜像拉取前需要按完整镜像引用去重。
@@ -302,6 +324,19 @@ image:
 - tag
 
 相同镜像只拉取一次，只在 OCI Layout 中保存一份。
+
+### 4.6 平台选择规则
+
+- 当 `--platform` 只包含一个平台时：
+  - 如果远端 tag 是单架构 manifest，则要求其平台与目标平台匹配
+  - 如果远端 tag 是多架构 index，则只选择匹配平台的那个 manifest 导出
+- 当 `--platform` 包含多个平台时：
+  - 对每个平台分别选择匹配的 manifest
+  - 导出包中的镜像 tag 会重新组织为一个只包含所选平台的 OCI index
+  - 当前推荐使用 `linux/amd64,linux/arm64` 作为双架构导出形式
+- 若指定平台在远端 tag 中不存在：
+  - 默认直接失败
+  - 若指定 `--ignore-missing-images`，则该镜像记录 warning 并跳过
 
 ## 5. 导出包格式
 
@@ -329,7 +364,8 @@ offline-app-package.tar
 
 - 保留原始清单内容
 - 补充平台信息
-- 如果有递归依赖展开，可补充实际解析后的依赖状态
+- 补充本次识别出的完整镜像列表
+- 如果有镜像拉取失败，补充失败原因
 
 建议增加字段：
 
@@ -341,9 +377,42 @@ platform: linux/amd64
 
 ```yaml
 offlinePackage:
-  platform: linux/amd64
+  platforms:
+    - linux/amd64
+    - linux/arm64
   exportedAt: 2026-03-31T00:00:00Z
+  images:
+    - source: docker.io/library/nginx:1.27.0
+      repository: library/nginx
+      tag: 1.27.0
+      localRef: library/nginx:1.27.0
+      requestedPlatforms:
+        - linux/amd64
+        - linux/arm64
+      exportedPlatforms:
+        - linux/amd64
+      exported: true
+    - source: acr.example.com/demo/api:1.0.0
+      repository: demo/api
+      tag: 1.0.0
+      localRef: demo/api:1.0.0
+      requestedPlatforms:
+        - linux/amd64
+        - linux/arm64
+      exported: false
+      error: EOF
+  imageErrors:
+    - image acr.example.com/demo/api:1.0.0 skipped: EOF
 ```
+
+说明：
+
+- `images` 记录的是“已识别出的完整镜像列表”，而不只是成功导出的镜像
+- `requestedPlatforms` 记录该镜像本次导出请求的平台列表
+- `exportedPlatforms` 记录该镜像实际导出的平台列表
+- `exported: true` 表示该镜像已进入离线包内的 OCI Layout
+- `exported: false` 表示该镜像识别成功，但本次未成功导出
+- `imageErrors` 用于汇总导出阶段被忽略的镜像错误
 
 ### 5.2 `images/`
 
@@ -415,11 +484,12 @@ offlinePackage:
 
 - 支持 Basic Auth
 - 失败时输出明确的 Chart 文件名和 HTTP 响应
-- 已存在版本的处理策略建议可配置
+- 已存在版本的处理策略可通过 `--force` 控制
 
-建议首版默认策略：
+当前策略：
 
-- 如果远端已存在相同 chart+version，则报错并停止
+- 默认 `--force=false`，如果远端已存在相同 chart+version，则报错并停止
+- 当 `--force=true` 时，允许覆盖远端已存在 chart
 
 ## 7. 错误处理
 
@@ -436,6 +506,10 @@ offlinePackage:
 - Chart 下载失败
 - 镜像拉取失败
 - tar 包写入失败
+
+补充说明：
+
+- 当指定 `--ignore-missing-images=true` 时，“镜像拉取失败”不再直接终止，而是转为 warning，并记录到 `manifest.yaml`
 
 以下情况可先 warning，后续再决定是否提升为错误：
 

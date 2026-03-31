@@ -10,6 +10,7 @@ func NewCommand() *cobra.Command {
 	cmd.AddCommand(newPlanCommand())
 	cmd.AddCommand(newBuildCommand())
 	cmd.AddCommand(newInstallCommand())
+	cmd.AddCommand(newAppCommand())
 
 	return cmd
 }
