@@ -1,0 +1,64 @@
+name: proton-cli-release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: proton-cli/go.mod
+
+      - name: Build proton-cli release artifacts
+        working-directory: proton-cli
+        env:
+          PROTON_BUILD_PLATFORMS: linux/amd64 linux/arm64
+        run: bash build/release
+
+      - name: Prepare release metadata
+        id: meta
+        env:
+          TAG_NAME: ${{ github.ref_name }}
+        run: |
+          if [[ "${TAG_NAME}" == *-alpha.* ]]; then
+            release_name="Proton alpha release ${TAG_NAME}"
+            prerelease=true
+          elif [[ "${TAG_NAME}" == *-beta.* ]]; then
+            release_name="Proton beta release ${TAG_NAME}"
+            prerelease=true
+          elif [[ "${TAG_NAME}" == *-rc.* ]]; then
+            release_name="Proton rc release ${TAG_NAME}"
+            prerelease=true
+          else
+            release_name="Proton release ${TAG_NAME}"
+            prerelease=false
+          fi
+
+          {
+            echo "release_name=${release_name}"
+            echo "prerelease=${prerelease}"
+          } >> "${GITHUB_OUTPUT}"
+
+      - name: Publish GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ steps.meta.outputs.release_name }}
+          generate_release_notes: true
+          prerelease: ${{ steps.meta.outputs.prerelease == 'true' }}
+          files: |
+            proton-cli/_output/release-tars/proton-cli-linux-amd64.tar.gz
+            proton-cli/_output/release-tars/proton-cli-linux-arm64.tar.gz
