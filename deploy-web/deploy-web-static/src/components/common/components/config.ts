@@ -1,1 +1,0 @@
-export const AB_PREFIX = 'ab';

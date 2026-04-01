@@ -1,3 +1,0 @@
-allure-pytest
-PyMySQL
-pytest
