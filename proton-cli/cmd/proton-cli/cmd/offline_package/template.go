@@ -90,7 +90,7 @@ func defaultManifest(info architectureInfo) *Manifest {
 				ociArtifact("etcd:v3.3.19", "ghcr.io/kweaver-ai/proton/etcd:v3.3.19"),
 				ociArtifact("ingress-nginx-controller:v1.15.0", "ghcr.io/kweaver-ai/proton/ingress-nginx-controller:v1.15.0"),
 				ociArtifact("ingress-nginx-kube-webhook-certgen:v1.6.8", "ghcr.io/kweaver-ai/proton/ingress-nginx-kube-webhook-certgen:v1.6.8"),
-				ociArtifact("public/kafka-porter:v1.6.0", "ghcr.io/kweaver-ai/proton/kafka-exporter:v1.6.0"),
+				ociArtifact("public/kafka-exporter:v1.6.0", "ghcr.io/kweaver-ai/proton/kafka-exporter:v1.6.0"),
 				ociArtifact("kube-apiserver:v1.35.2", "ghcr.io/kweaver-ai/proton/kube-apiserver:v1.35.2"),
 				ociArtifact("kube-controller-manager:v1.35.2", "ghcr.io/kweaver-ai/proton/kube-controller-manager:v1.35.2"),
 				ociArtifact("kube-proxy:v1.35.2", "ghcr.io/kweaver-ai/proton/kube-proxy:v1.35.2"),
