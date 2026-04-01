@@ -1,0 +1,381 @@
+package offline_package
+
+import (
+	"context"
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+	"time"
+
+	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/configuration"
+	"sigs.k8s.io/yaml"
+)
+
+func TestNormalizeAppPlatform(t *testing.T) {
+	tests := []struct {
+		in   string
+		want string
+	}{
+		{in: "", want: "linux/amd64"},
+		{in: "linux/amd64", want: "linux/amd64"},
+		{in: "amd64", want: "linux/amd64"},
+		{in: "x86_64", want: "linux/amd64"},
+		{in: "linux/arm64", want: "linux/arm64"},
+		{in: "arm64", want: "linux/arm64"},
+		{in: "aarch64", want: "linux/arm64"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.in, func(t *testing.T) {
+			got, err := normalizeAppPlatform(tt.in)
+			if err != nil {
+				t.Fatalf("normalizeAppPlatform returned error: %v", err)
+			}
+			if got != tt.want {
+				t.Fatalf("got %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestNormalizeAppPlatformInvalid(t *testing.T) {
+	if _, err := normalizeAppPlatform("ppc64le"); err == nil {
+		t.Fatal("expected error for invalid platform")
+	}
+}
+
+func TestNormalizeAppPlatforms(t *testing.T) {
+	got, err := normalizeAppPlatforms("linux/amd64,arm64,x86_64")
+	if err != nil {
+		t.Fatalf("normalizeAppPlatforms returned error: %v", err)
+	}
+	if len(got) != 2 || got[0] != "linux/amd64" || got[1] != "linux/arm64" {
+		t.Fatalf("unexpected platforms: %#v", got)
+	}
+}
+
+func TestValidateAppManifest(t *testing.T) {
+	manifest := &appManifest{
+		Kind:    "VersionSet",
+		Product: "test",
+		Version: "1.0.0",
+		Source: appManifestSource{
+			HelmRepoURL: "https://example.com/charts",
+		},
+		Releases: map[string]appManifestRelease{
+			"web": {Chart: "web", Version: "1.0.0"},
+		},
+	}
+
+	if err := validateAppManifest(manifest); err != nil {
+		t.Fatalf("validateAppManifest returned error: %v", err)
+	}
+}
+
+func TestExtractAppImagesFromValues(t *testing.T) {
+	values := map[string]any{
+		"image": map[string]any{
+			"registry": "docker.io",
+			"controller": map[string]any{
+				"repository": "bitnami/nginx",
+				"tag":        "1.0.0",
+			},
+			"sidecar": map[string]any{
+				"repository": "bitnami/os-shell",
+				"tag":        "1.0.0",
+			},
+		},
+	}
+
+	refs, ok := extractAppImagesFromValues(values)
+	if !ok {
+		t.Fatal("expected extractAppImagesFromValues to find images")
+	}
+	if len(refs) != 2 {
+		t.Fatalf("got %d refs, want 2", len(refs))
+	}
+	if refs[0].Repository == "" || refs[0].Tag == "" {
+		t.Fatalf("unexpected first ref: %+v", refs[0])
+	}
+}
+
+func TestExtractAppImagesFromValuesRegistryWithPathPrefix(t *testing.T) {
+	values := map[string]any{
+		"image": map[string]any{
+			"registry":   "swr.cn-east-3.myhuaweicloud.com/kweaver-ai",
+			"repository": "dip/agent-backend",
+			"tag":        "0.5.1",
+		},
+	}
+
+	refs, ok := extractAppImagesFromValues(values)
+	if !ok || len(refs) != 1 {
+		t.Fatalf("unexpected refs: %#v", refs)
+	}
+	if refs[0].Source != "swr.cn-east-3.myhuaweicloud.com/kweaver-ai/dip/agent-backend:0.5.1" {
+		t.Fatalf("unexpected source: %q", refs[0].Source)
+	}
+	if refs[0].Repository != "dip/agent-backend" {
+		t.Fatalf("unexpected repository: %q", refs[0].Repository)
+	}
+	if refs[0].LocalRef() != "dip/agent-backend:0.5.1" {
+		t.Fatalf("unexpected local ref: %q", refs[0].LocalRef())
+	}
+}
+
+func TestBuildExportedManifest(t *testing.T) {
+	originalTimeNow := timeNow
+	timeNow = func() time.Time {
+		return time.Date(2026, 3, 31, 0, 0, 0, 0, time.UTC)
+	}
+	defer func() { timeNow = originalTimeNow }()
+
+	out, err := buildExportedManifest([]byte("kind: VersionSet\nproduct: demo\nversion: 1.0.0\nsource:\n  helmRepoUrl: https://example.com\nreleases:\n  web:\n    chart: web\n    version: 1.0.0\n"), []string{"linux/amd64", "linux/arm64"}, "mirror.example.com", []appPackageImage{{
+		Source:             "docker.io/library/nginx:1.27.0",
+		PullSource:         "mirror.example.com/library/nginx:1.27.0",
+		Repository:         "library/nginx",
+		Tag:                "1.27.0",
+		LocalRef:           "library/nginx:1.27.0",
+		RequestedPlatforms: []string{"linux/amd64", "linux/arm64"},
+		ExportedPlatforms:  []string{"linux/amd64"},
+		Exported:           true,
+	}}, []string{"image docker.io/library/busybox:1.0 skipped: EOF"})
+	if err != nil {
+		t.Fatalf("buildExportedManifest returned error: %v", err)
+	}
+
+	var doc map[string]any
+	if err := yaml.Unmarshal(out, &doc); err != nil {
+		t.Fatalf("yaml.Unmarshal returned error: %v", err)
+	}
+
+	offlinePackage, ok := doc["offlinePackage"].(map[string]any)
+	if !ok {
+		t.Fatalf("missing offlinePackage block: %+v", doc)
+	}
+	if offlinePackage["platform"] != nil {
+		t.Fatalf("unexpected single platform field: %+v", offlinePackage["platform"])
+	}
+	platforms, ok := offlinePackage["platforms"].([]any)
+	if !ok || len(platforms) != 2 {
+		t.Fatalf("unexpected platforms block: %+v", offlinePackage["platforms"])
+	}
+	if offlinePackage["overrideRegistry"] != "mirror.example.com" {
+		t.Fatalf("unexpected overrideRegistry: %+v", offlinePackage["overrideRegistry"])
+	}
+	images, ok := offlinePackage["images"].([]any)
+	if !ok || len(images) != 1 {
+		t.Fatalf("unexpected images block: %+v", offlinePackage["images"])
+	}
+	imageErrors, ok := offlinePackage["imageErrors"].([]any)
+	if !ok || len(imageErrors) != 1 {
+		t.Fatalf("unexpected imageErrors block: %+v", offlinePackage["imageErrors"])
+	}
+}
+
+func TestValidateAppPackageLayout(t *testing.T) {
+	root := t.TempDir()
+	for _, path := range []string{
+		filepath.Join(root, "manifest.yaml"),
+		filepath.Join(root, "charts"),
+		filepath.Join(root, "images"),
+	} {
+		if strings.HasSuffix(path, ".yaml") {
+			if err := os.WriteFile(path, []byte("kind: VersionSet"), 0o644); err != nil {
+				t.Fatal(err)
+			}
+			continue
+		}
+		if err := os.MkdirAll(path, 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	if _, _, _, err := validateAppPackageLayout(root); err != nil {
+		t.Fatalf("validateAppPackageLayout returned error: %v", err)
+	}
+}
+
+func TestCountExportedAppImages(t *testing.T) {
+	got := countExportedAppImages([]appPackageImage{
+		{Exported: true},
+		{Exported: false},
+		{Exported: true},
+	})
+	if got != 2 {
+		t.Fatalf("got %d, want 2", got)
+	}
+}
+
+func TestOverrideAppImageSource(t *testing.T) {
+	image := appImageRef{
+		Source:     "docker.io/library/nginx:1.27.0",
+		Repository: "library/nginx",
+		Tag:        "1.27.0",
+	}
+
+	got, err := overrideAppImageSource(image, "mirror.example.com")
+	if err != nil {
+		t.Fatalf("overrideAppImageSource returned error: %v", err)
+	}
+	if got != "mirror.example.com/library/nginx:1.27.0" {
+		t.Fatalf("got %q", got)
+	}
+}
+
+func TestOverrideAppImageSourceWithRepositoryPrefix(t *testing.T) {
+	tests := []struct {
+		name     string
+		image    appImageRef
+		override string
+		want     string
+	}{
+		{
+			name: "prepend prefix",
+			image: appImageRef{
+				Source:     "acr.aishu.cn/dip/agent-backend:0.5.1",
+				Repository: "dip/agent-backend",
+				Tag:        "0.5.1",
+			},
+			override: "swr.cn-east-3.myhuaweicloud.com/kweaver-ai",
+			want:     "swr.cn-east-3.myhuaweicloud.com/kweaver-ai/dip/agent-backend:0.5.1",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := overrideAppImageSource(tt.image, tt.override)
+			if err != nil {
+				t.Fatalf("overrideAppImageSource returned error: %v", err)
+			}
+			if got != tt.want {
+				t.Fatalf("got %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestHydrateAppImportOptionsRequiresTargetsWithoutAuto(t *testing.T) {
+	opts := &appImportOptions{}
+	err := hydrateAppImportOptions(context.Background(), opts)
+	if err == nil || !strings.Contains(err.Error(), "target registry is required") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestHydrateAppImportOptionsUsesAutoTargets(t *testing.T) {
+	opts := &appImportOptions{auto: true}
+
+	original := loadAppImportAutoTargetsFunc
+	loadAppImportAutoTargetsFunc = func(_ context.Context) (*appImportAutoTargets, error) {
+		return &appImportAutoTargets{
+			registry:            "registry.example.com",
+			registryUsername:    "user",
+			registryPassword:    "pass",
+			registryPlainHTTP:   true,
+			chartmuseumURL:      "http://chartmuseum.example.com",
+			chartmuseumUsername: "chart-user",
+			chartmuseumPassword: "chart-pass",
+		}, nil
+	}
+	defer func() {
+		loadAppImportAutoTargetsFunc = original
+	}()
+
+	if err := hydrateAppImportOptions(context.Background(), opts); err != nil {
+		t.Fatalf("hydrateAppImportOptions returned error: %v", err)
+	}
+	if opts.registry != "registry.example.com" || opts.chartmuseumURL != "http://chartmuseum.example.com" {
+		t.Fatalf("unexpected hydrated options: %+v", opts)
+	}
+	if !opts.registryPlainHTTP {
+		t.Fatalf("expected registryPlainHTTP to be true")
+	}
+}
+
+func TestHydrateAppImportOptionsManualOverridesAuto(t *testing.T) {
+	opts := &appImportOptions{
+		auto:              true,
+		registry:          "manual.registry",
+		chartmuseumURL:    "http://manual.chartmuseum",
+		registryPlainHTTP: false,
+	}
+
+	original := loadAppImportAutoTargetsFunc
+	loadAppImportAutoTargetsFunc = func(_ context.Context) (*appImportAutoTargets, error) {
+		return &appImportAutoTargets{
+			registry:          "auto.registry",
+			registryPlainHTTP: true,
+			chartmuseumURL:    "http://auto.chartmuseum",
+		}, nil
+	}
+	defer func() {
+		loadAppImportAutoTargetsFunc = original
+	}()
+
+	if err := hydrateAppImportOptions(context.Background(), opts); err != nil {
+		t.Fatalf("hydrateAppImportOptions returned error: %v", err)
+	}
+	if opts.registry != "manual.registry" {
+		t.Fatalf("expected manual registry to win, got %q", opts.registry)
+	}
+	if opts.chartmuseumURL != "http://manual.chartmuseum" {
+		t.Fatalf("expected manual chartmuseum to win, got %q", opts.chartmuseumURL)
+	}
+	if !opts.registryPlainHTTP {
+		t.Fatalf("expected auto plainHTTP to fill missing true value")
+	}
+}
+
+func TestAppImportAutoTargetsFromExternalOCI(t *testing.T) {
+	cfg := &configuration.ClusterConfig{
+		Cr: &configuration.Cr{
+			External: &configuration.ExternalCR{
+				ImageRepo: configuration.RepoOCI,
+				ChartRepo: configuration.RepoChartmuseum,
+				OCI: &configuration.OCI{
+					Registry:  "registry.example.com",
+					PlainHTTP: true,
+					Username:  "oci-user",
+					Password:  "oci-pass",
+				},
+				Chartmuseum: &configuration.Chartmuseum{
+					Host:     "http://chartmuseum.example.com",
+					Username: "chart-user",
+					Password: "chart-pass",
+				},
+			},
+		},
+	}
+
+	targets, err := appImportAutoTargetsFromConfig(cfg)
+	if err != nil {
+		t.Fatalf("appImportAutoTargetsFromConfig returned error: %v", err)
+	}
+	if targets.registry != "registry.example.com" || !targets.registryPlainHTTP {
+		t.Fatalf("unexpected registry targets: %+v", targets)
+	}
+	if targets.chartmuseumURL != "http://chartmuseum.example.com" {
+		t.Fatalf("unexpected chartmuseum url: %+v", targets)
+	}
+}
+
+func TestAppImportAutoTargetsRejectsNonChartmuseum(t *testing.T) {
+	cfg := &configuration.ClusterConfig{
+		Cr: &configuration.Cr{
+			External: &configuration.ExternalCR{
+				ImageRepo: configuration.RepoOCI,
+				ChartRepo: configuration.RepoOCI,
+				OCI: &configuration.OCI{
+					Registry: "registry.example.com",
+				},
+			},
+		},
+	}
+
+	_, err := appImportAutoTargetsFromConfig(cfg)
+	if err == nil || !strings.Contains(err.Error(), "not chartmuseum") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
