@@ -253,20 +253,6 @@ image:
 swr.cn-east-3.myhuaweicloud.com/kweaver-ai/dip/agent-backend:0.5.1
 ```
 
-### 8.1 特殊处理
-
-为避免重复路径前缀，当前实现做了额外保护：
-
-- 若 `override-registry` 带路径前缀
-- 且 `image.repository` 本身已经带相同前缀
-- 则不会重复拼接
-
-避免出现：
-
-```text
-kweaver-ai/kweaver-ai/...
-```
-
 ## 9. 平台处理
 
 平台处理使用 `oras-go` 完成。

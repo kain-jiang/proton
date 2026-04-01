@@ -43,7 +43,6 @@
 
 - 语义是重写 values 中的 `.image.registry`
 - 保留原始 `.image.repository` 与 `.image.tag`
-- 不能把路径前缀重复拼接
 - `manifest.yaml` 中应同时记录：
   - 原始 `source`
   - 实际 `pullSource`

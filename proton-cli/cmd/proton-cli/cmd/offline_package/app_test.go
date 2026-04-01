@@ -239,16 +239,6 @@ func TestOverrideAppImageSourceWithRepositoryPrefix(t *testing.T) {
 			override: "swr.cn-east-3.myhuaweicloud.com/kweaver-ai",
 			want:     "swr.cn-east-3.myhuaweicloud.com/kweaver-ai/dip/agent-backend:0.5.1",
 		},
-		{
-			name: "avoid duplicate prefix",
-			image: appImageRef{
-				Source:     "swr.cn-east-3.myhuaweicloud.com/kweaver-ai/dip/agent-backend:0.5.1",
-				Repository: "kweaver-ai/dip/agent-backend",
-				Tag:        "0.5.1",
-			},
-			override: "swr.cn-east-3.myhuaweicloud.com/kweaver-ai",
-			want:     "swr.cn-east-3.myhuaweicloud.com/kweaver-ai/dip/agent-backend:0.5.1",
-		},
 	}
 
 	for _, tt := range tests {

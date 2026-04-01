@@ -403,13 +403,7 @@ func overrideAppImageSource(image appImageRef, overrideRegistry string) (string,
 		return image.Source, nil
 	}
 
-	host, repoPrefix := splitAppRegistryOverride(overrideRegistry)
-	repository := image.Repository
-	if repoPrefix != "" && !strings.HasPrefix(repository, repoPrefix+"/") && repository != repoPrefix {
-		repository = repoPrefix + "/" + repository
-	}
-
-	ref := fmt.Sprintf("%s/%s:%s", host, repository, image.Tag)
+	ref := fmt.Sprintf("%s/%s:%s", strings.TrimSuffix(overrideRegistry, "/"), image.Repository, image.Tag)
 	named, err := reference.ParseNormalizedNamed(ref)
 	if err != nil {
 		return "", err
@@ -420,15 +414,6 @@ func overrideAppImageSource(image appImageRef, overrideRegistry string) (string,
 		return "", fmt.Errorf("image %q is missing a tag", ref)
 	}
 	return tagged.String(), nil
-}
-
-func splitAppRegistryOverride(override string) (string, string) {
-	override = strings.TrimSpace(strings.TrimSuffix(override, "/"))
-	parts := strings.SplitN(override, "/", 2)
-	if len(parts) == 1 {
-		return parts[0], ""
-	}
-	return parts[0], strings.Trim(parts[1], "/")
 }
 
 func copyAppImageForPlatforms(ctx context.Context, srcRepo *remote.Repository, srcRef string, dst *oci.Store, localRef string, platforms []string) ([]string, error) {
