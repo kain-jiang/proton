@@ -50,6 +50,9 @@
 
 ## 导入规则
 
+- `--auto` 允许从当前 Proton 集群配置自动补全 registry 和 ChartMuseum
+- 显式传参优先于 `--auto` 自动值
+- 当前 chart 仓库不是 ChartMuseum 时，`app import --auto` 直接报错
 - 镜像推送目标为 `<registry>/<localRef>`
 - chart 上传到 ChartMuseum
 - `--force` 用于覆盖已存在 chart

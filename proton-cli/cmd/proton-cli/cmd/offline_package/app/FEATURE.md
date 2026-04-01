@@ -97,6 +97,15 @@ proton-cli offline-package app export \
 ```bash
 proton-cli offline-package app import \
   --input ./offline-app-package.tar \
+  --auto \
+  --force
+```
+
+或显式指定目标仓库：
+
+```bash
+proton-cli offline-package app import \
+  --input ./offline-app-package.tar \
   --registry registry.hello.com \
   --registry-username username \
   --registry-password password \
@@ -115,24 +124,36 @@ proton-cli offline-package app import \
 - `--registry`
   - 目标镜像仓库地址
   - 例如 `registry.hello.com`
+  - 未指定且启用 `--auto` 时，自动从当前 Proton 集群配置读取
 - `--registry-username`
   - 镜像仓库用户名
+  - 未指定且启用 `--auto` 时，自动从当前 Proton 集群配置读取
 - `--registry-password`
   - 镜像仓库密码
+  - 未指定且启用 `--auto` 时，自动从当前 Proton 集群配置读取
 - `--registry-plain-http`
   - 是否允许以 HTTP 明文方式访问镜像仓库
   - 默认值建议为 `false`
+  - 启用 `--auto` 且当前镜像仓库类型为外部 OCI 时，会自动继承集群配置中的 `plain_http`
 - `--force`
   - 是否覆盖 ChartMuseum 中已存在的同版本 chart
   - 默认值为 `false`
   - `false` 时遇到已存在 chart 直接报错退出
   - `true` 时使用覆盖方式上传 chart
+- `--auto`
+  - 是否自动从当前 Proton 集群配置补全导入目标
+  - 自动补全 `registry`、registry 认证、`chartmuseum-url`、ChartMuseum 认证
+  - 若同时显式传入同名参数，以显式参数为准
+  - 若当前集群 chart 仓库不是 ChartMuseum，则直接报错
 - `--chartmuseum-url`
   - 目标 ChartMuseum 地址
+  - 未指定且启用 `--auto` 时，自动从当前 Proton 集群配置读取
 - `--chartmuseum-username`
   - ChartMuseum 用户名
+  - 未指定且启用 `--auto` 时，自动从当前 Proton 集群配置读取
 - `--chartmuseum-password`
   - ChartMuseum 密码
+  - 未指定且启用 `--auto` 时，自动从当前 Proton 集群配置读取
 
 ## 3. 输入清单格式
 

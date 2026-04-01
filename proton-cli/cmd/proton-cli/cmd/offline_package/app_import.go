@@ -16,10 +16,15 @@ import (
 	"github.com/spf13/cobra"
 	"oras.land/oras-go/v2"
 	"oras.land/oras-go/v2/content/oci"
+
+	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/client"
+	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/configuration"
+	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/core/global"
 )
 
 type appImportOptions struct {
 	input               string
+	auto                bool
 	registry            string
 	registryUsername    string
 	registryPassword    string
@@ -29,6 +34,8 @@ type appImportOptions struct {
 	chartmuseumUsername string
 	chartmuseumPassword string
 }
+
+var loadAppImportAutoTargetsFunc = loadAppImportAutoTargets
 
 func newAppImportCommand() *cobra.Command {
 	opts := &appImportOptions{}
@@ -43,6 +50,7 @@ func newAppImportCommand() *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&opts.input, "input", "i", "", "Input offline package tar file")
+	cmd.Flags().BoolVar(&opts.auto, "auto", false, "Auto-detect registry and ChartMuseum from current proton cluster config")
 	cmd.Flags().StringVar(&opts.registry, "registry", "", "Target registry host")
 	cmd.Flags().StringVar(&opts.registryUsername, "registry-username", "", "Target registry username")
 	cmd.Flags().StringVar(&opts.registryPassword, "registry-password", "", "Target registry password")
@@ -52,8 +60,6 @@ func newAppImportCommand() *cobra.Command {
 	cmd.Flags().StringVar(&opts.chartmuseumUsername, "chartmuseum-username", "", "Target ChartMuseum username")
 	cmd.Flags().StringVar(&opts.chartmuseumPassword, "chartmuseum-password", "", "Target ChartMuseum password")
 	_ = cmd.MarkFlagRequired("input")
-	_ = cmd.MarkFlagRequired("registry")
-	_ = cmd.MarkFlagRequired("chartmuseum-url")
 
 	return cmd
 }
@@ -63,6 +69,9 @@ func runAppImport(ctx context.Context, opts *appImportOptions) error {
 		return fmt.Errorf("stat input package: %w", err)
 	} else if fi.IsDir() {
 		return fmt.Errorf("input package must be a tar file")
+	}
+	if err := hydrateAppImportOptions(ctx, opts); err != nil {
+		return err
 	}
 
 	workdir, err := os.MkdirTemp("", "proton-cli-offline-app-import-*")
@@ -96,6 +105,99 @@ func runAppImport(ctx context.Context, opts *appImportOptions) error {
 
 	fmt.Printf("import completed\n- registry: %s\n- chartmuseum: %s\n- charts imported: %d\n- images imported: %d\n", opts.registry, opts.chartmuseumURL, chartCount, imageCount)
 	return nil
+}
+
+func hydrateAppImportOptions(ctx context.Context, opts *appImportOptions) error {
+	if opts.auto {
+		resolved, err := loadAppImportAutoTargetsFunc(ctx)
+		if err != nil {
+			return err
+		}
+		if opts.registry == "" {
+			opts.registry = resolved.registry
+		}
+		if opts.registryUsername == "" {
+			opts.registryUsername = resolved.registryUsername
+		}
+		if opts.registryPassword == "" {
+			opts.registryPassword = resolved.registryPassword
+		}
+		if !opts.registryPlainHTTP && resolved.registryPlainHTTP {
+			opts.registryPlainHTTP = true
+		}
+		if opts.chartmuseumURL == "" {
+			opts.chartmuseumURL = resolved.chartmuseumURL
+		}
+		if opts.chartmuseumUsername == "" {
+			opts.chartmuseumUsername = resolved.chartmuseumUsername
+		}
+		if opts.chartmuseumPassword == "" {
+			opts.chartmuseumPassword = resolved.chartmuseumPassword
+		}
+	}
+
+	if strings.TrimSpace(opts.registry) == "" {
+		return fmt.Errorf("target registry is required, set --registry or enable --auto")
+	}
+	if strings.TrimSpace(opts.chartmuseumURL) == "" {
+		return fmt.Errorf("target chartmuseum is required, set --chartmuseum-url or enable --auto")
+	}
+	return nil
+}
+
+type appImportAutoTargets struct {
+	registry            string
+	registryUsername    string
+	registryPassword    string
+	registryPlainHTTP   bool
+	chartmuseumURL      string
+	chartmuseumUsername string
+	chartmuseumPassword string
+}
+
+func loadAppImportAutoTargets(ctx context.Context) (*appImportAutoTargets, error) {
+	_, k := client.NewK8sClient()
+	if k == nil {
+		return nil, fmt.Errorf("auto-detect import targets: kubernetes client is unavailable")
+	}
+
+	clusterCfg, err := configuration.LoadFromKubernetes(ctx, k)
+	if err != nil {
+		return nil, fmt.Errorf("auto-detect import targets: load current proton cluster config: %w", err)
+	}
+	return appImportAutoTargetsFromConfig(clusterCfg)
+}
+
+func appImportAutoTargetsFromConfig(clusterCfg *configuration.ClusterConfig) (*appImportAutoTargets, error) {
+	if clusterCfg == nil || clusterCfg.Cr == nil {
+		return nil, fmt.Errorf("auto-detect import targets: current proton cluster config has no cr settings")
+	}
+	if !clusterCfg.Cr.UseChartmuseum() {
+		return nil, fmt.Errorf("auto-detect import targets: current proton cluster chart repository is not chartmuseum")
+	}
+
+	registryHost, registryUsername, registryPassword := global.ImageRepository(clusterCfg.Cr)
+	if strings.TrimSpace(registryHost) == "" {
+		return nil, fmt.Errorf("auto-detect import targets: current proton cluster has no image registry")
+	}
+	chartmuseumURL, chartmuseumUsername, chartmuseumPassword := global.Chartmuseum(clusterCfg.Cr)
+	if strings.TrimSpace(chartmuseumURL) == "" {
+		return nil, fmt.Errorf("auto-detect import targets: current proton cluster has no chartmuseum")
+	}
+
+	targets := &appImportAutoTargets{
+		registry:            registryHost,
+		registryUsername:    registryUsername,
+		registryPassword:    registryPassword,
+		chartmuseumURL:      chartmuseumURL,
+		chartmuseumUsername: chartmuseumUsername,
+		chartmuseumPassword: chartmuseumPassword,
+	}
+	if clusterCfg.Cr.External != nil && clusterCfg.Cr.External.ImageRepo == configuration.RepoOCI && clusterCfg.Cr.External.OCI != nil {
+		targets.registryPlainHTTP = clusterCfg.Cr.External.OCI.PlainHTTP
+	}
+
+	return targets, nil
 }
 
 func extractAppPackage(tarPath, dst string) error {

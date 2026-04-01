@@ -1,12 +1,14 @@
 package offline_package
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
+	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/configuration"
 	"sigs.k8s.io/yaml"
 )
 
@@ -251,5 +253,129 @@ func TestOverrideAppImageSourceWithRepositoryPrefix(t *testing.T) {
 				t.Fatalf("got %q, want %q", got, tt.want)
 			}
 		})
+	}
+}
+
+func TestHydrateAppImportOptionsRequiresTargetsWithoutAuto(t *testing.T) {
+	opts := &appImportOptions{}
+	err := hydrateAppImportOptions(context.Background(), opts)
+	if err == nil || !strings.Contains(err.Error(), "target registry is required") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestHydrateAppImportOptionsUsesAutoTargets(t *testing.T) {
+	opts := &appImportOptions{auto: true}
+
+	original := loadAppImportAutoTargetsFunc
+	loadAppImportAutoTargetsFunc = func(_ context.Context) (*appImportAutoTargets, error) {
+		return &appImportAutoTargets{
+			registry:            "registry.example.com",
+			registryUsername:    "user",
+			registryPassword:    "pass",
+			registryPlainHTTP:   true,
+			chartmuseumURL:      "http://chartmuseum.example.com",
+			chartmuseumUsername: "chart-user",
+			chartmuseumPassword: "chart-pass",
+		}, nil
+	}
+	defer func() {
+		loadAppImportAutoTargetsFunc = original
+	}()
+
+	if err := hydrateAppImportOptions(context.Background(), opts); err != nil {
+		t.Fatalf("hydrateAppImportOptions returned error: %v", err)
+	}
+	if opts.registry != "registry.example.com" || opts.chartmuseumURL != "http://chartmuseum.example.com" {
+		t.Fatalf("unexpected hydrated options: %+v", opts)
+	}
+	if !opts.registryPlainHTTP {
+		t.Fatalf("expected registryPlainHTTP to be true")
+	}
+}
+
+func TestHydrateAppImportOptionsManualOverridesAuto(t *testing.T) {
+	opts := &appImportOptions{
+		auto:              true,
+		registry:          "manual.registry",
+		chartmuseumURL:    "http://manual.chartmuseum",
+		registryPlainHTTP: false,
+	}
+
+	original := loadAppImportAutoTargetsFunc
+	loadAppImportAutoTargetsFunc = func(_ context.Context) (*appImportAutoTargets, error) {
+		return &appImportAutoTargets{
+			registry:          "auto.registry",
+			registryPlainHTTP: true,
+			chartmuseumURL:    "http://auto.chartmuseum",
+		}, nil
+	}
+	defer func() {
+		loadAppImportAutoTargetsFunc = original
+	}()
+
+	if err := hydrateAppImportOptions(context.Background(), opts); err != nil {
+		t.Fatalf("hydrateAppImportOptions returned error: %v", err)
+	}
+	if opts.registry != "manual.registry" {
+		t.Fatalf("expected manual registry to win, got %q", opts.registry)
+	}
+	if opts.chartmuseumURL != "http://manual.chartmuseum" {
+		t.Fatalf("expected manual chartmuseum to win, got %q", opts.chartmuseumURL)
+	}
+	if !opts.registryPlainHTTP {
+		t.Fatalf("expected auto plainHTTP to fill missing true value")
+	}
+}
+
+func TestAppImportAutoTargetsFromExternalOCI(t *testing.T) {
+	cfg := &configuration.ClusterConfig{
+		Cr: &configuration.Cr{
+			External: &configuration.ExternalCR{
+				ImageRepo: configuration.RepoOCI,
+				ChartRepo: configuration.RepoChartmuseum,
+				OCI: &configuration.OCI{
+					Registry:  "registry.example.com",
+					PlainHTTP: true,
+					Username:  "oci-user",
+					Password:  "oci-pass",
+				},
+				Chartmuseum: &configuration.Chartmuseum{
+					Host:     "http://chartmuseum.example.com",
+					Username: "chart-user",
+					Password: "chart-pass",
+				},
+			},
+		},
+	}
+
+	targets, err := appImportAutoTargetsFromConfig(cfg)
+	if err != nil {
+		t.Fatalf("appImportAutoTargetsFromConfig returned error: %v", err)
+	}
+	if targets.registry != "registry.example.com" || !targets.registryPlainHTTP {
+		t.Fatalf("unexpected registry targets: %+v", targets)
+	}
+	if targets.chartmuseumURL != "http://chartmuseum.example.com" {
+		t.Fatalf("unexpected chartmuseum url: %+v", targets)
+	}
+}
+
+func TestAppImportAutoTargetsRejectsNonChartmuseum(t *testing.T) {
+	cfg := &configuration.ClusterConfig{
+		Cr: &configuration.Cr{
+			External: &configuration.ExternalCR{
+				ImageRepo: configuration.RepoOCI,
+				ChartRepo: configuration.RepoOCI,
+				OCI: &configuration.OCI{
+					Registry: "registry.example.com",
+				},
+			},
+		},
+	}
+
+	_, err := appImportAutoTargetsFromConfig(cfg)
+	if err == nil || !strings.Contains(err.Error(), "not chartmuseum") {
+		t.Fatalf("unexpected error: %v", err)
 	}
 }

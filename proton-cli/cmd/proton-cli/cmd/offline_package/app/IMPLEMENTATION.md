@@ -65,6 +65,7 @@
 当前支持：
 
 - `--input`, `-i`
+- `--auto`
 - `--registry`
 - `--registry-username`
 - `--registry-password`
@@ -76,8 +77,15 @@
 
 实际语义：
 
+- `--auto`
+  - 通过当前 kubeconfig 连接 Kubernetes
+  - 读取当前 Proton 集群保存的 cluster config
+  - 自动补全 registry、registry 认证、ChartMuseum 地址、ChartMuseum 认证
+  - 若显式参数已提供，则显式参数优先
+  - 若当前 chart 仓库不是 ChartMuseum，则直接报错
 - `--registry-plain-http`
   - 控制推送镜像时对目标 registry 使用 HTTP 还是 HTTPS
+  - `--auto` 下仅在外部 OCI registry 场景继承 `plain_http`
 - `--force`
   - 覆盖 ChartMuseum 中已存在的 chart
 
