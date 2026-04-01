@@ -17,6 +17,7 @@ require (
 	github.com/go-logr/logr v1.4.1
 	github.com/go-resty/resty/v2 v2.7.0
 	github.com/go-test/deep v1.0.8
+	github.com/google/uuid v1.6.0
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hashicorp/go-version v1.2.1
 	github.com/jedib0t/go-pretty/v6 v6.4.6
@@ -29,6 +30,7 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/moby/moby/api v1.52.0
 	github.com/olekukonko/tablewriter v0.0.5
+	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/image-spec v1.1.1
 	github.com/opencontainers/runtime-spec v1.2.1
 	github.com/pelletier/go-toml v1.9.5
@@ -51,6 +53,7 @@ require (
 	golang.org/x/net v0.33.0
 	golang.org/x/sync v0.14.0
 	golang.org/x/sys v0.28.0
+	golang.org/x/term v0.27.0
 	gopkg.in/ini.v1 v1.67.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	gopkg.in/yaml.v2 v2.4.0
@@ -129,7 +132,6 @@ require (
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/pprof v0.0.0-20230426061923-93006964c1fc // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
-	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/gosuri/uitable v0.0.4 // indirect
@@ -168,7 +170,6 @@ require (
 	github.com/mxk/go-flowrate v0.0.0-20140419014527-cca7078d478f // indirect
 	github.com/nwaples/rardecode v1.1.0 // indirect
 	github.com/onsi/gomega v1.31.1 // indirect
-	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
 	github.com/pierrec/lz4/v4 v4.1.2 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
@@ -205,7 +206,6 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/crypto v0.31.0 // indirect
 	golang.org/x/oauth2 v0.18.0 // indirect
-	golang.org/x/term v0.27.0 // indirect
 	golang.org/x/text v0.22.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
