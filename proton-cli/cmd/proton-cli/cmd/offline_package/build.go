@@ -16,9 +16,9 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
+	"github.com/stianwa/createrepo"
 	"golang.org/x/term"
 	helmregistry "helm.sh/helm/v3/pkg/registry"
-	"k8s.io/utils/exec"
 	"oras.land/oras-go/v2"
 	"oras.land/oras-go/v2/content/oci"
 	"oras.land/oras-go/v2/registry"
@@ -162,7 +162,7 @@ func build(ctx context.Context, m *Manifest) error {
 	}
 
 	// create rpm repository
-	if err := createRPMRepository(ctx, repoDir); err != nil {
+	if err := createRPMRepository(repoDir); err != nil {
 		return err
 	}
 
@@ -401,26 +401,13 @@ func shouldRetryWithCredential(err error) bool {
 	return false
 }
 
-func createRPMRepository(ctx context.Context, dir string) error {
-	e := exec.New()
-	var cmd string
-	for _, c := range []string{
-		"createrepo",
-		"createrepo_c",
-	} {
-		p, err := e.LookPath(c)
-		if errors.Is(err, exec.ErrExecutableNotFound) {
-			continue
-		}
-		if err != nil {
-			return err
-		}
-		cmd = p
-		break
+func createRPMRepository(dir string) error {
+	repo, err := createrepo.NewRepo(dir, &createrepo.Config{})
+	if err != nil {
+		return fmt.Errorf("init rpm repo fail: %w", err)
 	}
-
-	if err := e.CommandContext(ctx, cmd, dir).Run(); err != nil {
-		return fmt.Errorf("execute create repo fail: %w", err)
+	if _, err := repo.Create(); err != nil {
+		return fmt.Errorf("create rpm repo fail: %w", err)
 	}
 
 	// create repository config template
