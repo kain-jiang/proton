@@ -1,6 +1,6 @@
 module devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3
 
-go 1.24.5
+go 1.26
 
 require (
 	github.com/Masterminds/semver/v3 v3.2.1
