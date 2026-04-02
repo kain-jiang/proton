@@ -68,7 +68,7 @@ func defaultManifest(info architectureInfo) *Manifest {
 				httpArtifact("skopeo", "https://github.com/kweaver-ai/proton/releases/download/skopeo-1.19.0/skopeo-linux-"+info.goArch, "", ""),
 			},
 			Charts: []Artifact{
-				httpArtifact("component-manage-0.0.1.tgz", "https://github.com/kweaver-ai/proton/releases/download/component-manage-0.0.1/component-manage-0.0.1.tgz", "", ""),
+				ociArtifact("component-manage-0.0.2.tgz", "ghcr.io/kweaver-ai/charts/component-manage:0.0.2"),
 				httpArtifact("ingress-nginx-4.15.0.tgz", "https://github.com/kweaver-ai/proton/releases/download/ingress-nginx-4.15.0/ingress-nginx-4.15.0.tgz", "", ""),
 				httpArtifact("nvidia-device-plugin-1.0.0-0.14.5.tgz", "https://github.com/kweaver-ai/proton/releases/download/nvidia-device-plugin-1.0.0-0.14.5/nvidia-device-plugin-1.0.0-0.14.5.tgz", "", ""),
 				httpArtifact("proton-grafana-1.0.6.tgz", "https://github.com/kweaver-ai/proton/releases/download/proton-grafana-1.0.6/proton-grafana-1.0.6.tgz", "", ""),
@@ -84,7 +84,7 @@ func defaultManifest(info architectureInfo) *Manifest {
 				ociArtifact("calico-cni:v3.25.2", "quay.io/calico/cni:v3.25.2"),
 				ociArtifact("calico-kube-controllers:v3.25.2", "quay.io/calico/kube-controllers:v3.25.2"),
 				ociArtifact("calico-node:v3.25.2", "quay.io/calico/node:v3.25.2"),
-				ociArtifact("kweaver-ai/proton/component-manage:0.0.1", "ghcr.io/kweaver-ai/proton/component-manage:0.0.1"),
+				ociArtifact("kweaver-ai/proton/component-manage:0.0.2", "ghcr.io/kweaver-ai/proton/component-manage:0.0.2"),
 				ociArtifact("coredns:v1.13.1", "registry.k8s.io/coredns/coredns:v1.13.1"),
 				ociArtifact("etcd:3.6.6-0", "registry.k8s.io/etcd:3.6.6-0"),
 				ociArtifact("etcd:v3.3.19", "ghcr.io/kweaver-ai/proton/etcd:v3.3.19"),
