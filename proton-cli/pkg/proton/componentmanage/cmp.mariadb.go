@@ -9,7 +9,6 @@ import (
 
 const (
 	mariadbOperatorChartName = "rds-mariadb-operator"
-	mariadbOperatorNamespace = "default"
 
 	mariadbAdminAccountSecretName = "proton-mariadb-proton-rds"
 
@@ -55,7 +54,7 @@ func (m *Applier) applyMariaDB(cli componentmanageCli.Client, name string) error
 	err = cli.EnableMariaDB(componentmanageCli.MariaDBPluginInfo{
 		ChartName:    c.Metadata.Name,
 		ChartVersion: c.Metadata.Version,
-		Namespace:    mariadbOperatorNamespace,
+		Namespace:    configuration.GetProtonResourceNSFromFile(),
 		Images: componentmanageCli.MariaDBPluginImagesInfo{
 			MariaDB:  m.SearchImage(originRegistry, mariadbMariaDBImageRepository, mariadbMariaDBImageTag),
 			ETCD:     m.SearchImage(originRegistry, mariadbEtcdImageRepository, mariadbEtcdImageTag),
