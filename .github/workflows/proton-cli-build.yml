@@ -2,6 +2,8 @@ name: proton-cli-build
 
 on:
   push:
+    branches:
+      - '**'
     paths:
       - "proton-cli/**"
   workflow_dispatch:
