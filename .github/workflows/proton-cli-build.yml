@@ -1,0 +1,39 @@
+name: proton-cli-build
+
+on:
+  push:
+    paths:
+      - "proton-cli/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: proton-cli/go.mod
+
+      - name: Build proton-cli binaries
+        working-directory: proton-cli
+        env:
+          PROTON_BUILD_PLATFORMS: linux/amd64 linux/arm64
+        run: ./build/binaries
+
+      - name: Upload proton-cli binaries
+        uses: actions/upload-artifact@v7
+        with:
+          name: proton-cli-bins
+          path: proton-cli/_output/local/bin
+          compression-level: 0
+          if-no-files-found: error
