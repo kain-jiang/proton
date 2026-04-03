@@ -5,6 +5,7 @@ import (
 	"bufio"
 	"compress/gzip"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -12,6 +13,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -144,7 +146,7 @@ func build(ctx context.Context, m *Manifest) error {
 
 	// pull images
 	for _, a := range m.Spec.Images {
-		if err := pull(ctx, artifactKindImage, &a, imageDir); err != nil {
+		if err := pullForAch(ctx, artifactKindImage, &a, imageDir, m.Spec.Architecture); err != nil {
 			return err
 		}
 	}
@@ -192,6 +194,10 @@ func createManifestFile(p string, m *Manifest) error {
 }
 
 func pull(ctx context.Context, kind artifactKind, a *Artifact, output string) error {
+	return pullForAch(ctx, kind, a, output, runtime.GOARCH)
+}
+
+func pullForAch(ctx context.Context, kind artifactKind, a *Artifact, output string, arch string) error {
 	switch {
 	case a.HTTP != nil:
 		return pullHTTP(ctx, filepath.Join(output, a.Name), a.HTTP)
@@ -199,7 +205,7 @@ func pull(ctx context.Context, kind artifactKind, a *Artifact, output string) er
 		if kind == artifactKindChart {
 			return pullChartOCI(ctx, filepath.Join(output, a.Name), a.OCI)
 		}
-		return pullOCI(ctx, output, a.Name, a.OCI)
+		return pullOCIForArch(ctx, output, a.Name, a.OCI, arch)
 	default:
 		return fmt.Errorf("failed to find artifact source of %q", a.Name)
 	}
@@ -314,13 +320,14 @@ func getCredential(hostPort string) (auth.Credential, error) {
 	return cache, nil
 }
 
-func pullOCI(ctx context.Context, output, ref string, s *OCISource) error {
+func pullOCIForArch(ctx context.Context, output, ref string, s *OCISource, arch string) error {
 	log.Println("pull oci", s.Reference)
 	// get oci artifact reference
 	ar, err := registry.ParseReference(s.Reference)
 	if err != nil {
 		return err
 	}
+	srcRef := ar.Reference
 
 	r := &remote.Repository{
 		Client: &auth.Client{
@@ -337,7 +344,19 @@ func pullOCI(ctx context.Context, output, ref string, s *OCISource) error {
 		return err
 	}
 
-	if _, err := oras.Copy(ctx, r, ar.Reference, dst, ref, oras.DefaultCopyOptions); err != nil {
+	desc, rc, err := r.FetchReference(ctx, ar.Reference)
+	if err != nil {
+		return err
+	}
+	defer rc.Close()
+
+	if isImageList(desc.MediaType) {
+		if srcRef, err = choiceInstance(rc, "linux/"+arch); err != nil {
+			return fmt.Errorf("choosing an image from list %s: %w", s.Reference, err)
+		}
+	}
+
+	if _, err := oras.Copy(ctx, r, srcRef, dst, ref, oras.DefaultCopyOptions); err != nil {
 		return err
 	}
 
@@ -416,4 +435,37 @@ func createRPMRepository(dir string) error {
 	}
 
 	return nil
+}
+
+func isImageList(mt string) bool {
+	return mt == "application/vnd.docker.distribution.manifest.list.v2+json" || mt == "application/vnd.oci.image.index.v1+json"
+}
+
+// 对于 application/vnd.docker.distribution.manifest.list.v2+json 和 application/vnd.oci.image.index.v1+json 的简单定义
+type imageList struct {
+	Manifests []struct {
+		MediaType string `json:"mediaType,omitzero"`
+		Digest    string `json:"digest,omitzero"`
+		Platform  struct {
+			OS           string `json:"os,omitzero"`
+			Architecture string `json:"architecture,omitzero"`
+		} `json:"platform,omitzero"`
+	} `json:"manifests,omitzero"`
+}
+
+func choiceInstance(r io.Reader, platform string) (digest string, err error) {
+	var l imageList
+	if err = json.NewDecoder(r).Decode(&l); err != nil {
+		return
+	}
+
+	for _, m := range l.Manifests {
+		if platform == m.Platform.OS+"/"+m.Platform.Architecture {
+			digest = m.Digest
+			return
+		}
+	}
+
+	err = fmt.Errorf("no image found for %s", platform)
+	return
 }
