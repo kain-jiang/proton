@@ -295,7 +295,7 @@ func extractAppImagesFromValues(values map[string]any) ([]appImageRef, bool) {
 
 	if repository, okRepo := imageMap["repository"].(string); okRepo {
 		tag, okTag := imageMap["tag"].(string)
-		if okTag && registry != "" && repository != "" && tag != "" {
+		if okTag && repository != "" && tag != "" {
 			ref, err := newAppImageRef(registry, repository, tag)
 			if err == nil {
 				refs = append(refs, ref)
@@ -315,7 +315,7 @@ func extractAppImagesFromValues(values map[string]any) ([]appImageRef, bool) {
 
 		repository, okRepo := child["repository"].(string)
 		tag, okTag := child["tag"].(string)
-		if !okRepo || !okTag || registry == "" || repository == "" || tag == "" {
+		if !okRepo || !okTag || repository == "" || tag == "" {
 			continue
 		}
 
@@ -329,24 +329,28 @@ func extractAppImagesFromValues(values map[string]any) ([]appImageRef, bool) {
 }
 
 func newAppImageRef(registryHost, repositoryName, tag string) (appImageRef, error) {
-	source := fmt.Sprintf("%s/%s:%s", strings.TrimSuffix(registryHost, "/"), strings.TrimPrefix(repositoryName, "/"), tag)
-	named, err := reference.ParseNormalizedNamed(source)
-	if err != nil {
-		return appImageRef{}, err
+	registryHost = strings.TrimSpace(strings.TrimSuffix(registryHost, "/"))
+	repositoryName = strings.TrimPrefix(strings.TrimSpace(repositoryName), "/")
+	tag = strings.TrimSpace(tag)
+
+	if repositoryName == "" || tag == "" {
+		return appImageRef{}, fmt.Errorf("image repository and tag are required")
 	}
 
-	tagged, ok := reference.TagNameOnly(named).(reference.NamedTagged)
-	if !ok {
-		return appImageRef{}, fmt.Errorf("image %q is missing a tag", source)
+	if registryHost != "" {
+		source := fmt.Sprintf("%s/%s:%s", registryHost, repositoryName, tag)
+		return appImageRef{
+			Registry:   registryHost,
+			Source:     source,
+			Repository: repositoryName,
+			Tag:        tag,
+		}, nil
 	}
 
 	return appImageRef{
-		Source: tagged.String(),
-		// The values field `image.registry` is treated as the full registry address.
-		// The offline package name must drop that whole prefix and keep only
-		// `image.repository`.
-		Repository: strings.TrimPrefix(repositoryName, "/"),
-		Tag:        tagged.Tag(),
+		Source:     repositoryName + ":" + tag,
+		Repository: repositoryName,
+		Tag:        tag,
 	}, nil
 }
 

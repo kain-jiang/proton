@@ -326,6 +326,29 @@ func TestExtractAppImagesFromValuesRegistryWithPathPrefix(t *testing.T) {
 	}
 }
 
+func TestExtractAppImagesFromValuesWithoutRegistry(t *testing.T) {
+	values := map[string]any{
+		"image": map[string]any{
+			"repository": "as/audit-log",
+			"tag":        "0.5.0",
+		},
+	}
+
+	refs, ok := extractAppImagesFromValues(values)
+	if !ok || len(refs) != 1 {
+		t.Fatalf("unexpected refs: %#v", refs)
+	}
+	if refs[0].Registry != "" {
+		t.Fatalf("unexpected registry: %q", refs[0].Registry)
+	}
+	if refs[0].Source != "as/audit-log:0.5.0" {
+		t.Fatalf("unexpected source: %q", refs[0].Source)
+	}
+	if refs[0].LocalRef() != "as/audit-log:0.5.0" {
+		t.Fatalf("unexpected local ref: %q", refs[0].LocalRef())
+	}
+}
+
 func TestBuildExportedManifest(t *testing.T) {
 	originalTimeNow := timeNow
 	timeNow = func() time.Time {
@@ -412,6 +435,7 @@ func TestCountExportedAppImages(t *testing.T) {
 
 func TestOverrideAppImageSource(t *testing.T) {
 	image := appImageRef{
+		Registry:   "docker.io",
 		Source:     "docker.io/library/nginx:1.27.0",
 		Repository: "library/nginx",
 		Tag:        "1.27.0",
@@ -436,6 +460,7 @@ func TestOverrideAppImageSourceWithRepositoryPrefix(t *testing.T) {
 		{
 			name: "prepend prefix",
 			image: appImageRef{
+				Registry:   "acr.aishu.cn",
 				Source:     "acr.aishu.cn/dip/agent-backend:0.5.1",
 				Repository: "dip/agent-backend",
 				Tag:        "0.5.1",
@@ -455,6 +480,22 @@ func TestOverrideAppImageSourceWithRepositoryPrefix(t *testing.T) {
 				t.Fatalf("got %q, want %q", got, tt.want)
 			}
 		})
+	}
+}
+
+func TestOverrideAppImageSourceFillsMissingRegistry(t *testing.T) {
+	image := appImageRef{
+		Source:     "as/audit-log:0.5.0",
+		Repository: "as/audit-log",
+		Tag:        "0.5.0",
+	}
+
+	got, err := overrideAppImageSource(image, "acr.example.com")
+	if err != nil {
+		t.Fatalf("overrideAppImageSource returned error: %v", err)
+	}
+	if got != "acr.example.com/as/audit-log:0.5.0" {
+		t.Fatalf("got %q", got)
 	}
 }
 

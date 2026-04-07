@@ -68,6 +68,7 @@ type appManifestDocument struct {
 }
 
 type appImageRef struct {
+	Registry   string
 	Source     string
 	Repository string
 	Tag        string
