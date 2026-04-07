@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 	"time"
@@ -72,6 +73,57 @@ func loadAppManifest(ctx context.Context, path string) ([]byte, *appManifest, er
 	return body, &manifest, nil
 }
 
+func loadAppManifestTree(ctx context.Context, path string, includeDependencies bool) ([]byte, *appManifest, []appManifestDocument, error) {
+	visited := map[string]struct{}{}
+	documents := make([]appManifestDocument, 0, 4)
+	if err := walkAppManifestTree(ctx, "", path, includeDependencies, visited, &documents); err != nil {
+		return nil, nil, nil, err
+	}
+	if len(documents) == 0 {
+		return nil, nil, nil, fmt.Errorf("manifest %q was not loaded", path)
+	}
+
+	root := documents[0]
+	return root.Bytes, root.Manifest, documents, nil
+}
+
+func walkAppManifestTree(ctx context.Context, baseLocation, rawPath string, includeDependencies bool, visited map[string]struct{}, documents *[]appManifestDocument) error {
+	location, err := resolveAppManifestLocation(baseLocation, rawPath)
+	if err != nil {
+		return err
+	}
+	if _, ok := visited[location]; ok {
+		return nil
+	}
+
+	body, manifest, err := loadAppManifest(ctx, location)
+	if err != nil {
+		return err
+	}
+	visited[location] = struct{}{}
+	*documents = append(*documents, appManifestDocument{
+		Location: location,
+		Bytes:    body,
+		Manifest: manifest,
+	})
+
+	if !includeDependencies {
+		return nil
+	}
+
+	for i, dep := range manifest.Dependencies {
+		depManifest := strings.TrimSpace(dep.Manifest)
+		if depManifest == "" {
+			return fmt.Errorf("dependency %d (%s %s) manifest is required", i, dep.Product, dep.Version)
+		}
+		if err := walkAppManifestTree(ctx, location, depManifest, includeDependencies, visited, documents); err != nil {
+			return fmt.Errorf("load dependency manifest %q for %s %s: %w", depManifest, dep.Product, dep.Version, err)
+		}
+	}
+
+	return nil
+}
+
 func readAppManifestSource(ctx context.Context, path string) ([]byte, error) {
 	if u, err := url.Parse(path); err == nil && (u.Scheme == "http" || u.Scheme == "https") {
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, path, http.NoBody)
@@ -100,6 +152,37 @@ func readAppManifestSource(ctx context.Context, path string) ([]byte, error) {
 	return body, nil
 }
 
+func resolveAppManifestLocation(baseLocation, rawPath string) (string, error) {
+	trimmed := strings.TrimSpace(rawPath)
+	if trimmed == "" {
+		return "", fmt.Errorf("manifest path is required")
+	}
+
+	if u, err := url.Parse(trimmed); err == nil && (u.Scheme == "http" || u.Scheme == "https") {
+		return u.String(), nil
+	}
+
+	if baseLocation != "" {
+		if baseURL, err := url.Parse(baseLocation); err == nil && (baseURL.Scheme == "http" || baseURL.Scheme == "https") {
+			ref, err := url.Parse(trimmed)
+			if err != nil {
+				return "", fmt.Errorf("parse dependency manifest path %q: %w", trimmed, err)
+			}
+			return baseURL.ResolveReference(ref).String(), nil
+		}
+
+		if !filepath.IsAbs(trimmed) {
+			trimmed = filepath.Join(filepath.Dir(baseLocation), trimmed)
+		}
+	}
+
+	absPath, err := filepath.Abs(trimmed)
+	if err != nil {
+		return "", fmt.Errorf("resolve manifest path %q: %w", rawPath, err)
+	}
+	return absPath, nil
+}
+
 func validateAppManifest(manifest *appManifest) error {
 	switch {
 	case manifest.Kind != "VersionSet":
@@ -126,23 +209,50 @@ func validateAppManifest(manifest *appManifest) error {
 	return nil
 }
 
-func collectAppChartRequests(manifest *appManifest) []appChartArtifact {
-	releases := make([]string, 0, len(manifest.Releases))
-	for name := range manifest.Releases {
-		releases = append(releases, name)
-	}
-	sort.Strings(releases)
+func collectAppChartRequests(documents []appManifestDocument) []appChartArtifact {
+	seen := map[string]struct{}{}
+	filenameCounts := map[string]int{}
+	charts := make([]appChartArtifact, 0)
 
-	charts := make([]appChartArtifact, 0, len(releases))
-	for _, releaseName := range releases {
-		release := manifest.Releases[releaseName]
-		filename := fmt.Sprintf("%s-%s.tgz", release.Chart, release.Version)
-		charts = append(charts, appChartArtifact{
-			Name:    release.Chart,
-			Version: release.Version,
-			Path:    filename,
-		})
+	for _, document := range documents {
+		releases := make([]string, 0, len(document.Manifest.Releases))
+		for name := range document.Manifest.Releases {
+			releases = append(releases, name)
+		}
+		sort.Strings(releases)
+
+		for _, releaseName := range releases {
+			release := document.Manifest.Releases[releaseName]
+			key := strings.Join([]string{document.Manifest.Source.HelmRepoURL, release.Chart, release.Version}, "\x00")
+			if _, ok := seen[key]; ok {
+				continue
+			}
+			seen[key] = struct{}{}
+
+			filename := fmt.Sprintf("%s-%s.tgz", release.Chart, release.Version)
+			filenameCounts[filename]++
+			if filenameCounts[filename] > 1 {
+				filename = fmt.Sprintf("%s-%s-%d.tgz", release.Chart, release.Version, filenameCounts[filename])
+			}
+
+			charts = append(charts, appChartArtifact{
+				Name:    release.Chart,
+				Version: release.Version,
+				RepoURL: document.Manifest.Source.HelmRepoURL,
+				Path:    filename,
+			})
+		}
 	}
+
+	sort.Slice(charts, func(i, j int) bool {
+		if charts[i].RepoURL != charts[j].RepoURL {
+			return charts[i].RepoURL < charts[j].RepoURL
+		}
+		if charts[i].Name != charts[j].Name {
+			return charts[i].Name < charts[j].Name
+		}
+		return charts[i].Version < charts[j].Version
+	})
 
 	return charts
 }

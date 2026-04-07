@@ -39,6 +39,7 @@ type appExportOptions struct {
 	platform            string
 	overrideRegistry    string
 	ignoreMissingImages bool
+	disableDependencies bool
 }
 
 func newAppExportCommand() *cobra.Command {
@@ -61,6 +62,7 @@ func newAppExportCommand() *cobra.Command {
 	cmd.Flags().StringVar(&opts.platform, "platform", opts.platform, "Target platform")
 	cmd.Flags().StringVar(&opts.overrideRegistry, "override-registry", "", "Override chart values .image.registry when pulling images")
 	cmd.Flags().BoolVar(&opts.ignoreMissingImages, "ignore-missing-images", false, "Continue exporting when some images cannot be pulled")
+	cmd.Flags().BoolVar(&opts.disableDependencies, "disable-dependencies", false, "Only process the root manifest and ignore dependencies")
 	_ = cmd.MarkFlagRequired("manifest")
 
 	return cmd
@@ -68,7 +70,7 @@ func newAppExportCommand() *cobra.Command {
 
 func runAppExport(ctx context.Context, opts *appExportOptions) error {
 	log.Printf("reading manifest %q", opts.manifest)
-	manifestBytes, manifest, err := loadAppManifest(ctx, opts.manifest)
+	manifestBytes, _, manifestDocuments, err := loadAppManifestTree(ctx, opts.manifest, !opts.disableDependencies)
 	if err != nil {
 		return err
 	}
@@ -78,10 +80,6 @@ func runAppExport(ctx context.Context, opts *appExportOptions) error {
 		return err
 	}
 	platformLabel := strings.Join(platforms, ",")
-
-	if len(manifest.Dependencies) > 0 {
-		log.Printf("current export only processes main manifest releases, dependencies are ignored")
-	}
 
 	workdir, err := os.MkdirTemp("", "proton-cli-offline-app-export-*")
 	if err != nil {
@@ -98,8 +96,8 @@ func runAppExport(ctx context.Context, opts *appExportOptions) error {
 		return err
 	}
 
-	log.Printf("resolving releases")
-	charts, err := downloadAppCharts(ctx, manifest.Source.HelmRepoURL, collectAppChartRequests(manifest), chartsDir)
+	log.Printf("resolving releases from %d manifest(s)", len(manifestDocuments))
+	charts, err := downloadAppCharts(ctx, collectAppChartRequests(manifestDocuments), chartsDir)
 	if err != nil {
 		return err
 	}
@@ -140,38 +138,24 @@ func runAppExport(ctx context.Context, opts *appExportOptions) error {
 	return nil
 }
 
-func downloadAppCharts(ctx context.Context, repoURL string, charts []appChartArtifact, chartsDir string) ([]appChartArtifact, error) {
-	repoEntry := &repo.Entry{
-		Name: "offline-package-app",
-		URL:  repoURL,
-	}
-	chartRepo, err := repo.NewChartRepository(repoEntry, getter.All(cli.New()))
-	if err != nil {
-		return nil, fmt.Errorf("create chart repository client: %w", err)
-	}
-
-	indexPath, err := chartRepo.DownloadIndexFile()
-	if err != nil {
-		return nil, fmt.Errorf("download chart repository index: %w", err)
-	}
-	defer os.Remove(indexPath)
-
-	indexFile, err := repo.LoadIndexFile(indexPath)
-	if err != nil {
-		return nil, fmt.Errorf("load chart repository index: %w", err)
-	}
-
+func downloadAppCharts(ctx context.Context, charts []appChartArtifact, chartsDir string) ([]appChartArtifact, error) {
+	indexFiles := map[string]*repo.IndexFile{}
 	out := make([]appChartArtifact, 0, len(charts))
 	for _, chart := range charts {
+		indexFile, err := loadChartRepositoryIndex(chart.RepoURL, indexFiles)
+		if err != nil {
+			return nil, err
+		}
+
 		cv, err := indexFile.Get(chart.Name, chart.Version)
 		if err != nil {
-			return nil, fmt.Errorf("find chart %s-%s in repo index: %w", chart.Name, chart.Version, err)
+			return nil, fmt.Errorf("find chart %s-%s in repo %s index: %w", chart.Name, chart.Version, chart.RepoURL, err)
 		}
 		if len(cv.URLs) == 0 {
 			return nil, fmt.Errorf("chart %s-%s has no downloadable URL", chart.Name, chart.Version)
 		}
 
-		resolved, err := resolveChartURL(repoURL, cv.URLs[0])
+		resolved, err := resolveChartURL(chart.RepoURL, cv.URLs[0])
 		if err != nil {
 			return nil, fmt.Errorf("resolve chart %s-%s URL: %w", chart.Name, chart.Version, err)
 		}
@@ -188,6 +172,35 @@ func downloadAppCharts(ctx context.Context, repoURL string, charts []appChartArt
 	}
 
 	return out, nil
+}
+
+func loadChartRepositoryIndex(repoURL string, cache map[string]*repo.IndexFile) (*repo.IndexFile, error) {
+	if indexFile, ok := cache[repoURL]; ok {
+		return indexFile, nil
+	}
+
+	repoEntry := &repo.Entry{
+		Name: "offline-package-app",
+		URL:  repoURL,
+	}
+	chartRepo, err := repo.NewChartRepository(repoEntry, getter.All(cli.New()))
+	if err != nil {
+		return nil, fmt.Errorf("create chart repository client for %s: %w", repoURL, err)
+	}
+
+	indexPath, err := chartRepo.DownloadIndexFile()
+	if err != nil {
+		return nil, fmt.Errorf("download chart repository index for %s: %w", repoURL, err)
+	}
+	defer os.Remove(indexPath)
+
+	indexFile, err := repo.LoadIndexFile(indexPath)
+	if err != nil {
+		return nil, fmt.Errorf("load chart repository index for %s: %w", repoURL, err)
+	}
+
+	cache[repoURL] = indexFile
+	return indexFile, nil
 }
 
 func resolveChartURL(repoURL, raw string) (string, error) {

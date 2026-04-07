@@ -46,6 +46,7 @@
 - `--output`, `-o`
 - `--platform`
 - `--ignore-missing-images`
+- `--disable-dependencies`
 - `--override-registry`
 
 实际语义：
@@ -57,6 +58,9 @@
     - `linux/arm64`
 - `--ignore-missing-images`
   - 某些镜像无法拉取时，记录 warning 并继续
+- `--disable-dependencies`
+  - 关闭 `dependencies` 递归解析
+  - 仅导出根清单中的 `releases`
 - `--override-registry`
   - 等价于导出时重写 chart values 中的 `.image.registry`
 
@@ -112,15 +116,15 @@
 
 `dependencies` 当前处理方式：
 
-- 解析保留
-- 导出忽略
-- 日志明确提示已忽略
-
-这与 `FEATURE.md` 的“当前版本不处理 `dependencies`”一致。
+- 递归读取并校验依赖清单
+- 支持本地路径与 `http://` / `https://` URL
+- 当父清单来自 URL 时，依赖清单允许使用相对 URL 路径
+- 使用已解析后的清单绝对位置去重，避免循环依赖导致重复读取
+- 当启用 `--disable-dependencies` 时，只加载根清单，不展开依赖
 
 ## 5. Chart 收集与下载
 
-导出时只使用：
+导出时会遍历所有已解析清单，并使用各自的：
 
 - `source.helmRepoUrl`
 - `releases[*].chart`
@@ -128,15 +132,15 @@
 
 实现流程：
 
-1. 使用 Helm repo client 下载 index
-2. 在 index 中定位每个 chart+version
-3. 下载为 `<chart>-<version>.tgz`
-4. 平铺保存到临时 `charts/`
+1. 递归读取主清单及其依赖清单
+2. 按每份清单的 `source.helmRepoUrl` 分组下载 Helm repo index
+3. 在对应 index 中定位每个 chart+version
+4. 下载为 `<chart>-<version>.tgz`
+5. 平铺保存到临时 `charts/`
 
 当前不处理：
 
 - subchart 依赖递归下载
-- `dependencies` 清单递归展开
 
 ## 6. 镜像提取规则
 

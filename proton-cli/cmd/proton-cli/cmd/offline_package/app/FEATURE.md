@@ -49,6 +49,7 @@ proton-cli offline-package app export \
   --manifest ./kweaver-core.yaml \
   --output ./offline-app-package.tar \
   --platform linux/amd64,linux/arm64 \
+  --disable-dependencies \
   --override-registry mirror.example.com \
   --ignore-missing-images
 ```
@@ -60,6 +61,7 @@ proton-cli offline-package app export \
   -f ./kweaver-core.yaml \
   -o ./offline-app-package.tar \
   --platform linux/amd64,linux/arm64 \
+  --disable-dependencies \
   --override-registry mirror.example.com \
   --ignore-missing-images
 ```
@@ -86,6 +88,11 @@ proton-cli offline-package app export \
   - 默认值为 `false`
   - `false` 时任一镜像拉取失败直接报错退出
   - `true` 时记录 warning，继续导出剩余镜像，并在 `manifest.yaml` 中补充失败镜像信息
+- `--disable-dependencies`
+  - 是否禁用 `dependencies` 递归解析
+  - 默认值为 `false`
+  - `false` 时递归处理依赖清单
+  - `true` 时仅处理根清单 `releases`
 - `--override-registry`
   - 导出时使用指定值重写 chart values 中的 `.image.registry`
   - 默认值为空，表示直接使用 chart 中识别出的原始镜像地址
@@ -204,17 +211,23 @@ releases:
 
 `dependencies` 表示当前产品依赖的其他产品清单。
 
-当前版本明确不处理 `dependencies`，行为如下：
+当前版本处理 `dependencies`，行为如下：
 
-- 不递归读取依赖清单
+- 递归读取依赖清单
 - 不根据 `optional` 或 `defaultEnabled` 参与筛选
-- 不把依赖产品中的 Chart 和镜像纳入导出结果
+- 将依赖产品中的 Chart 和镜像一并纳入导出结果
+- `dependencies[*].manifest` 支持：
+  - 本地绝对路径
+  - 相对于当前清单文件位置的本地相对路径
+  - `http://` / `https://` 绝对 URL
+  - 相对于当前清单 URL 的相对路径
 
 实现要求：
 
-- 解析清单时可以保留该字段内容
-- 导出逻辑必须忽略该字段
-- 命令输出中应明确提示“当前仅处理主清单 releases，dependencies 已忽略”
+- 解析清单时保留该字段内容
+- 导出逻辑递归展开该字段
+- 需对重复依赖与循环依赖做去重，避免重复读取
+- 指定 `--disable-dependencies` 时，退回为仅处理根清单
 
 ### 3.4 `releases`
 
@@ -238,7 +251,7 @@ releases:
 
 1. 读取并解析清单
 2. 归一化平台参数
-3. 忽略 `dependencies`，仅收集主清单 `releases` 中涉及的 Chart
+3. 递归读取 `dependencies`，收集主清单与依赖清单 `releases` 中涉及的 Chart
 4. 下载所有 Chart 到临时目录
 5. 解包或读取每个 Chart，提取镜像定义
 6. 按 `--platform` 选择镜像 manifest，并拉取到本地 OCI Layout
@@ -248,11 +261,11 @@ releases:
 
 ### 4.2 Chart 收集规则
 
-Chart 来源仅取自清单中的 `source` 和 `releases`：
+Chart 来源取自每一份已解析清单中的 `source` 和 `releases`：
 
-- 仓库地址来自 `source.helmRepoUrl`
-- Chart 列表来自 `releases[*].chart`
-- Chart 版本来自 `releases[*].version`
+- 每份清单的仓库地址来自其自身 `source.helmRepoUrl`
+- Chart 列表来自该清单的 `releases[*].chart`
+- Chart 版本来自该清单的 `releases[*].version`
 
 输出时所有 Chart 平铺保存到 `charts/` 目录，不保留 release 名称层级。
 

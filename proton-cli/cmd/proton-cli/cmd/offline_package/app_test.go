@@ -2,6 +2,8 @@ package offline_package
 
 import (
 	"context"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
@@ -70,6 +72,206 @@ func TestValidateAppManifest(t *testing.T) {
 
 	if err := validateAppManifest(manifest); err != nil {
 		t.Fatalf("validateAppManifest returned error: %v", err)
+	}
+}
+
+func TestResolveAppManifestLocationLocalRelative(t *testing.T) {
+	base := filepath.Join("/tmp", "manifests", "root.yaml")
+	got, err := resolveAppManifestLocation(base, "./deps/child.yaml")
+	if err != nil {
+		t.Fatalf("resolveAppManifestLocation returned error: %v", err)
+	}
+
+	want := filepath.Join("/tmp", "manifests", "deps", "child.yaml")
+	if got != want {
+		t.Fatalf("got %q, want %q", got, want)
+	}
+}
+
+func TestResolveAppManifestLocationURLRelative(t *testing.T) {
+	got, err := resolveAppManifestLocation("https://example.com/manifests/root.yaml", "./deps/child.yaml")
+	if err != nil {
+		t.Fatalf("resolveAppManifestLocation returned error: %v", err)
+	}
+	if got != "https://example.com/manifests/deps/child.yaml" {
+		t.Fatalf("got %q", got)
+	}
+}
+
+func TestLoadAppManifestTreeLocalDependencies(t *testing.T) {
+	root := t.TempDir()
+	depsDir := filepath.Join(root, "deps")
+	if err := os.MkdirAll(depsDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	writeManifest := func(path, body string) {
+		t.Helper()
+		if err := os.WriteFile(path, []byte(body), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	writeManifest(filepath.Join(root, "root.yaml"), `
+kind: VersionSet
+product: root
+version: 1.0.0
+source:
+  helmRepoUrl: https://charts.example.com/root
+dependencies:
+  - product: dep
+    version: 1.0.0
+    manifest: ./deps/dep.yaml
+releases:
+  root:
+    chart: root-chart
+    version: 1.0.0
+`)
+	writeManifest(filepath.Join(depsDir, "dep.yaml"), `
+kind: VersionSet
+product: dep
+version: 1.0.0
+source:
+  helmRepoUrl: https://charts.example.com/dep
+dependencies:
+  - product: nested
+    version: 1.0.0
+    manifest: ./nested.yaml
+releases:
+  dep:
+    chart: dep-chart
+    version: 2.0.0
+`)
+	writeManifest(filepath.Join(depsDir, "nested.yaml"), `
+kind: VersionSet
+product: nested
+version: 1.0.0
+source:
+  helmRepoUrl: https://charts.example.com/nested
+releases:
+  nested:
+    chart: nested-chart
+    version: 3.0.0
+`)
+
+	_, _, documents, err := loadAppManifestTree(context.Background(), filepath.Join(root, "root.yaml"), true)
+	if err != nil {
+		t.Fatalf("loadAppManifestTree returned error: %v", err)
+	}
+	if len(documents) != 3 {
+		t.Fatalf("got %d documents, want 3", len(documents))
+	}
+
+	charts := collectAppChartRequests(documents)
+	if len(charts) != 3 {
+		t.Fatalf("got %d charts, want 3", len(charts))
+	}
+}
+
+func TestLoadAppManifestTreeURLRelativeDependencies(t *testing.T) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/manifests/root.yaml", func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte(`
+kind: VersionSet
+product: root
+version: 1.0.0
+source:
+  helmRepoUrl: https://charts.example.com/root
+dependencies:
+  - product: dep
+    version: 1.0.0
+    manifest: ./deps/dep.yaml
+releases:
+  root:
+    chart: root-chart
+    version: 1.0.0
+`))
+	})
+	mux.HandleFunc("/manifests/deps/dep.yaml", func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte(`
+kind: VersionSet
+product: dep
+version: 1.0.0
+source:
+  helmRepoUrl: https://charts.example.com/dep
+releases:
+  dep:
+    chart: dep-chart
+    version: 2.0.0
+`))
+	})
+
+	server := httptest.NewServer(mux)
+	defer server.Close()
+
+	_, _, documents, err := loadAppManifestTree(context.Background(), server.URL+"/manifests/root.yaml", true)
+	if err != nil {
+		t.Fatalf("loadAppManifestTree returned error: %v", err)
+	}
+	if len(documents) != 2 {
+		t.Fatalf("got %d documents, want 2", len(documents))
+	}
+	if documents[1].Location != server.URL+"/manifests/deps/dep.yaml" {
+		t.Fatalf("unexpected dependency location: %q", documents[1].Location)
+	}
+}
+
+func TestLoadAppManifestTreeDisableDependencies(t *testing.T) {
+	root := t.TempDir()
+	depsDir := filepath.Join(root, "deps")
+	if err := os.MkdirAll(depsDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	writeManifest := func(path, body string) {
+		t.Helper()
+		if err := os.WriteFile(path, []byte(body), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	rootPath := filepath.Join(root, "root.yaml")
+	writeManifest(rootPath, `
+kind: VersionSet
+product: root
+version: 1.0.0
+source:
+  helmRepoUrl: https://charts.example.com/root
+dependencies:
+  - product: dep
+    version: 1.0.0
+    manifest: ./deps/dep.yaml
+releases:
+  root:
+    chart: root-chart
+    version: 1.0.0
+`)
+	writeManifest(filepath.Join(depsDir, "dep.yaml"), `
+kind: VersionSet
+product: dep
+version: 1.0.0
+source:
+  helmRepoUrl: https://charts.example.com/dep
+releases:
+  dep:
+    chart: dep-chart
+    version: 2.0.0
+`)
+
+	_, _, documents, err := loadAppManifestTree(context.Background(), rootPath, false)
+	if err != nil {
+		t.Fatalf("loadAppManifestTree returned error: %v", err)
+	}
+	if len(documents) != 1 {
+		t.Fatalf("got %d documents, want 1", len(documents))
+	}
+
+	charts := collectAppChartRequests(documents)
+	if len(charts) != 1 {
+		t.Fatalf("got %d charts, want 1", len(charts))
+	}
+	if charts[0].Name != "root-chart" {
+		t.Fatalf("unexpected chart: %+v", charts[0])
 	}
 }
 

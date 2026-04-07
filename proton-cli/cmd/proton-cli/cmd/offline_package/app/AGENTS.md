@@ -13,8 +13,10 @@
 - 改动范围尽量限制在 `proton-cli/cmd/proton-cli/cmd/offline_package`
 - 不依赖其他目录已有实现来完成核心逻辑
 - 镜像处理必须使用 `oras-go`，不要依赖 `skopeo` 二进制
-- `dependencies` 当前只解析保留，不参与导出
-- chart 只按主清单 `releases` 处理
+- `dependencies` 需要递归参与导出
+- 依赖清单既可能是本地路径，也可能是 `http://` / `https://` URL，且 URL 场景下允许使用相对路径
+- chart 需要覆盖主清单与依赖清单中的 `releases`
+- 允许通过 `--disable-dependencies` 显式退回为仅处理主清单
 
 ## 导出规则
 

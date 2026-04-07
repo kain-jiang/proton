@@ -56,8 +56,15 @@ type appPackageImage struct {
 type appChartArtifact struct {
 	Name    string
 	Version string
+	RepoURL string
 	URL     string
 	Path    string
+}
+
+type appManifestDocument struct {
+	Location string
+	Bytes    []byte
+	Manifest *appManifest
 }
 
 type appImageRef struct {
