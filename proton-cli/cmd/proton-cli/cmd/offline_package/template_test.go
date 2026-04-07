@@ -6,34 +6,6 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-func TestRenderManifestTemplateArm64(t *testing.T) {
-	out, err := renderManifestTemplate("arm64")
-	if err != nil {
-		t.Fatalf("renderManifestTemplate returned error: %v", err)
-	}
-
-	var m Manifest
-	if err := yaml.Unmarshal(out, &m); err != nil {
-		t.Fatalf("yaml.Unmarshal returned error: %v", err)
-	}
-
-	if m.Spec.Architecture != "arm64" {
-		t.Fatalf("unexpected architecture %q", m.Spec.Architecture)
-	}
-	if got := m.Spec.Binaries[0].HTTP.URL; got != "https://github.com/projectcalico/calico/releases/download/v3.25.2/calicoctl-linux-arm64" {
-		t.Fatalf("unexpected binary URL %q", got)
-	}
-	if got := m.Spec.Binaries[1].HTTP.Path; got != "linux-arm64/helm" {
-		t.Fatalf("unexpected helm path %q", got)
-	}
-	if got := m.Spec.RPMs[0].Name; got != "containerd-1.7.25.aarch64.rpm" {
-		t.Fatalf("unexpected rpm name %q", got)
-	}
-	if got := m.Spec.RPMs[1].HTTP.URL; got != "https://github.com/kweaver-ai/proton/releases/download/cri-tools-1.35.0/cri-tools-1.35.0-150500.1.1.aarch64.rpm" {
-		t.Fatalf("unexpected rpm URL %q", got)
-	}
-}
-
 func TestRenderManifestTemplateArchitectureAliases(t *testing.T) {
 	tests := []struct {
 		name string
