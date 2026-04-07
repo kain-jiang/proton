@@ -329,24 +329,41 @@ func pullOCIForArch(ctx context.Context, output, ref string, s *OCISource, arch 
 	}
 	srcRef := ar.Reference
 
-	r := &remote.Repository{
-		Client: &auth.Client{
-			Credential: func(ctx context.Context, hostPort string) (auth.Credential, error) {
-				return getCredential(hostPort)
-			},
-			Cache: auth.NewCache(),
-		},
-		Reference: ar,
-	}
-
 	dst, err := oci.New(output)
 	if err != nil {
 		return err
 	}
 
+	// First try without credentials (for public registries)
+	r := &remote.Repository{
+		Client: &auth.Client{
+			Credential: auth.StaticCredential(ar.Host(), auth.EmptyCredential),
+			Cache:      auth.NewCache(),
+		},
+		Reference: ar,
+	}
+
 	desc, rc, err := r.FetchReference(ctx, ar.Reference)
 	if err != nil {
-		return err
+		// If authentication is required, retry with credentials
+		if shouldRetryWithCredential(err) {
+			r = &remote.Repository{
+				Client: &auth.Client{
+					Credential: func(ctx context.Context, hostPort string) (auth.Credential, error) {
+						return getCredential(hostPort)
+					},
+					Cache: auth.NewCache(),
+				},
+				Reference: ar,
+			}
+
+			desc, rc, err = r.FetchReference(ctx, ar.Reference)
+			if err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
 	}
 	defer rc.Close()
 
