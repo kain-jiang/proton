@@ -146,12 +146,6 @@ type ContainerdContainerRuntimeSource struct {
 }
 
 type RegistryHostConfig struct {
-	// Host. Examples:
-	//  - docker.io
-	//  - registry.k8s.io
-	//  - registry.aishu.cn:15000
-	Host string `json:"host,omitzero"`
-
 	// Server specifies the default server. When `host` is
 	// also specified, those hosts are tried first.
 	Server string `toml:"server" json:"server,omitzero"`

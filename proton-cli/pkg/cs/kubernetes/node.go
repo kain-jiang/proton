@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"net/url"
 	"os"
 	os_exec "os/exec"
 	"os/user"
@@ -307,7 +308,12 @@ func (n *Node) InitContainerd(s *configuration.ContainerdContainerRuntimeSource)
 
 	// create registry host configs
 	for _, r := range s.Registries {
-		dir := filepath.Join("/etc/containerd/certs.d", r.Host)
+		u, err := url.Parse(r.Server)
+		if err != nil {
+			return err
+		}
+
+		dir := filepath.Join("/etc/containerd/certs.d", u.Host)
 
 		n.Logger.WithField("host", r).Debug("create registry host directory")
 		if err := n.ECMS.Files().Create(ctx, dir, true, nil); err != nil {

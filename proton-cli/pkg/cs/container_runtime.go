@@ -134,7 +134,6 @@ func generateContainerdRegistryHostConfig(host string) configuration.RegistryHos
 		Host:   host,
 	}
 	return configuration.RegistryHostConfig{
-		Host:   host,
 		Server: s.String(),
 		HostConfigs: map[string]configuration.RegistryHostFileConfig{
 			host: {
