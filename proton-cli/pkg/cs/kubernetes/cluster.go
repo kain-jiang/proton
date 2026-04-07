@@ -181,7 +181,7 @@ func (kc *KubernetesCluster) getTillerConfig() error {
 func (kc *KubernetesCluster) InitCluster() error {
 	kc.Logger.Info("init kubernetes cluster begin")
 	if kc.kubernetesVersion == "" {
-		kc.kubernetesVersion = "v1.35.2"
+		kc.kubernetesVersion = "v1.34.6"
 		kc.Logger.Infof("kubernetes version is empty, use default %s", kc.kubernetesVersion)
 	}
 	master := kc.Masters[0]
