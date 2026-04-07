@@ -68,7 +68,7 @@ func defaultManifest(info architectureInfo) *Manifest {
 				httpArtifact("skopeo", "https://github.com/kweaver-ai/proton/releases/download/skopeo-1.19.0/skopeo-linux-"+info.goArch, "", ""),
 			},
 			Charts: []Artifact{
-				ociArtifact("component-manage-0.0.2.tgz", "swr.cn-east-3.myhuaweicloud.com/kweaver-ai/mirror/ghcr.io/kweaver-ai/charts/component-manage:0.0.2"),
+				httpArtifact("component-manage-0.0.2.tgz", "https://github.com/kweaver-ai/proton/releases/download/component-manage-0.0.2/component-manage-0.0.2.tgz", "", ""),
 				httpArtifact("ingress-nginx-4.15.0.tgz", "https://github.com/kweaver-ai/proton/releases/download/ingress-nginx-4.15.0/ingress-nginx-4.15.0.tgz", "", ""),
 				httpArtifact("nvidia-device-plugin-1.0.0-0.14.5.tgz", "https://github.com/kweaver-ai/proton/releases/download/nvidia-device-plugin-1.0.0-0.14.5/nvidia-device-plugin-1.0.0-0.14.5.tgz", "", ""),
 				httpArtifact("proton-grafana-1.0.6.tgz", "https://github.com/kweaver-ai/proton/releases/download/proton-grafana-1.0.6/proton-grafana-1.0.6.tgz", "", ""),
