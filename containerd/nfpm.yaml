@@ -1,0 +1,192 @@
+# Name. (required)
+name: containerd
+
+# Architecture. (required)
+# This will expand any env var you set in the field, e.g. arch: ${GOARCH}
+# The architecture is specified using Go nomenclature (GOARCH) and translated
+# to the platform specific equivalent. In order to manually set the architecture
+# to a platform specific value, set `{format}.arch`.
+# Examples: `all`, `amd64`, `386`, `arm5`, `arm6`, `arm7`, `arm64`, `mips`,
+# `mipsle`, `mips64le`, `ppc64le`, `s390`
+arch: ${ARCH}
+
+# Platform.
+# This will expand any env var you set in the field, e.g. platform: ${GOOS}
+# This is only used by the rpm and deb packagers.
+# Examples: `linux` (default), `darwin`
+platform: linux
+
+# Version. (required)
+# This will expand any env var you set in the field, e.g. version: ${SEMVER}
+# Some package managers, like deb, require the version to start with a digit.
+# Hence, you should not prefix the version with 'v'.
+version: ${VERSION}
+
+# Version Schema allows you to specify how to parse the version string.
+# Default is `semver`
+#   `semver` attempt to parse the version string as a valid semver version.
+#       The parser is lenient; it will strip a `v` prefix and will accept
+#       versions with fewer than 3 components, like `v1.2`.
+#       If parsing succeeds, then the version will be molded into a format
+#       compatible with the specific packager used.
+#       If parsing fails, then the version is used as-is.
+#   `none` skip trying to parse the version string and just use what is passed in
+version_schema: semver
+
+# Version Epoch.
+# A package with a higher version epoch will always be considered newer.
+# See: https://www.debian.org/doc/debian-policy/ch-controlfields.html#epochs-should-be-used-sparingly
+# epoch: 2
+
+# Version Prerelease.
+# Default is extracted from `version` if it is semver compatible.
+# This is appended to the `version`, e.g. `1.2.3+beta1`. If the `version` is
+# semver compatible, then this replaces the prerelease component of the semver.
+# prerelease: alpha.1
+
+# Version Metadata (previously deb.metadata).
+# Default is extracted from `version` if it is semver compatible.
+# Setting metadata might interfere with version comparisons depending on the
+# packager. If the `version` is semver compatible, then this replaces the
+# version metadata component of the semver.
+# version_metadata: git
+
+# Version Release, aka revision.
+# This will expand any env var you set in the field, e.g. release: ${VERSION_RELEASE}
+# This is appended to the `version` after `prerelease`. This should be
+# incremented if you release an updated package of the same upstream version,
+# and it should reset to 1 when bumping the version.
+release: ${RELEASE}
+
+# Section.
+# This is only used by the deb packager.
+# See: https://www.debian.org/doc/debian-policy/ch-archive.html#sections
+# section: default
+
+# Priority.
+# Defaults to `optional` on deb
+# Defaults to empty on rpm and apk
+# See: https://www.debian.org/doc/debian-policy/ch-archive.html#priorities
+# priority: extra
+
+# Maintainer. (required)
+# This will expand any env var you set in the field, e.g. maintainer: ${GIT_COMMITTER_NAME} <${GIT_COMMITTER_EMAIL}>
+# Defaults to empty on rpm and apk
+# Leaving the 'maintainer' field unset will not be allowed in a future version
+maintainer: 吴毓喆（Bedivere） <wu.yuzhe@kweaver.ai>
+
+# Description.
+# This will expand any env var you set in the field, e.g. description: ${DESCRIPTION}
+# Defaults to `no description given`.
+# Most packagers call for a one-line synopsis of the package. Some (like deb)
+# also call for a multi-line description starting on the second line.
+description: An open and reliable container runtime
+
+# Vendor.
+# This will expand any env var you set in the field, e.g. vendor: ${VENDOR}
+# This is only used by the rpm packager.
+vendor: Proton
+
+# Package's homepage.
+# This will expand any env var you set in the field, e.g. homepage: ${CI_PROJECT_URL}
+homepage: https://github.com/containerd/containerd
+
+# License.
+license: Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND ISC AND MIT AND MPL-2.0
+
+# Date to be used as mtime on internal files.
+#
+# Default is the value of $SOURCE_DATE_EPOCH (which should be an Unix time),
+# or the current time.
+# Read more about SOURCE_DATE_EPOCH at https://reproducible-builds.org/docs/source-date-epoch/
+# mtime: "2009-11-10T23:00:00Z"
+
+# Changelog YAML file, see: https://github.com/goreleaser/chglog
+# changelog: "changelog.yaml"
+
+# Disables globbing for files, config_files, etc.
+# disable_globbing: false
+
+# Packages it replaces. (overridable)
+# This will expand any env var you set in the field, e.g. ${REPLACE_BLA}
+# the env var approach can be used to account for differences in platforms
+# replaces:
+#   - foobar
+#   - ${REPLACE_BLA}
+
+# Packages it provides. (overridable)
+# This will expand any env var you set in the field, e.g. ${PROVIDES_BLA}
+# the env var approach can be used to account for differences in platforms
+provides:
+  - containerd = ${VERSION}.${RELEASE}
+
+# Dependencies. (overridable)
+# This will expand any env var you set in the field, e.g. ${DEPENDS_NGINX}
+# the env var approach can be used to account for differences in platforms
+# e.g. rhel needs nginx >= 1:1.18 and deb needs nginx (>= 1.18.0)
+depends:
+  - runc
+
+# Recommended packages. (overridable)
+# This will expand any env var you set in the field, e.g. ${RECOMMENDS_BLA}
+# the env var approach can be used to account for differences in platforms
+# recommends:
+#   - golang
+#   - ${RECOMMENDS_BLA}
+
+# Suggested packages. (overridable)
+# This will expand any env var you set in the field, e.g. ${SUGGESTS_BLA}
+# the env var approach can be used to account for differences in platforms
+# suggests:
+#   - bzr
+
+# Packages it conflicts with. (overridable)
+# This will expand any env var you set in the field, e.g. ${CONFLICTS_BLA}
+# the env var approach can be used to account for differences in platforms
+# conflicts:
+#   - mercurial
+#   - ${CONFLICTS_BLA}
+
+# Contents to add to the package
+# This can be binaries or any other files.
+contents:
+  # Binaries
+  - src: bin/containerd
+    dst: /usr/bin/containerd
+  - src: bin/containerd-stress
+    dst: /usr/bin/containerd-stress
+  - src: bin/containerd-shim-runc-v2
+    dst: /usr/bin/containerd-shim-runc-v2
+  - src: bin/ctr
+    dst: /usr/bin/ctr
+
+  # Config files
+  - src: config.toml
+    dst: /etc/containerd/config.toml
+    type: config
+  - dst: /etc/containerd/certs.d
+    type: dir
+
+  # Systemd units
+  - src: containerd.service
+    dst: /usr/lib/systemd/system/containerd.service
+
+# Umask to be used on files without explicit mode set.
+#
+# By default, nFPM will inherit the mode of the original file that's being
+# added.
+# This may lead to issues if these files are checkout out in Git, for example,
+# as it won't keep all the permissions on fresh checkouts, or if the local
+# system has a problematic umask setting.
+#
+# This setting allows to set the umask for all files that are added to the
+# package without a specific file_info.mode set.
+#
+# Default: 0o002 (will remove world-writable permissions)
+umask: 0o002
+
+# Scripts to run at specific stages. (overridable)
+scripts:
+  postinstall: scripts/postinstall.sh
+  preremove: scripts/preremove.sh
+  postremove: scripts/postremove.sh
