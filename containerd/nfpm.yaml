@@ -14,7 +14,7 @@ arch: ${ARCH}
 # This will expand any env var you set in the field, e.g. platform: ${GOOS}
 # This is only used by the rpm and deb packagers.
 # Examples: `linux` (default), `darwin`
-platform: linux
+platform: ${PLATFORM}
 
 # Version. (required)
 # This will expand any env var you set in the field, e.g. version: ${SEMVER}
@@ -80,7 +80,12 @@ maintainer: 吴毓喆（Bedivere） <wu.yuzhe@kweaver.ai>
 # Defaults to `no description given`.
 # Most packagers call for a one-line synopsis of the package. Some (like deb)
 # also call for a multi-line description starting on the second line.
-description: An open and reliable container runtime
+description: |
+  Containerd is an industry-standard container runtime with an emphasis on
+  simplicity, robustness and portability. It is available as a daemon for Linux
+  and Windows, which can manage the complete container lifecycle of its host
+  system: image transfer and storage, container execution and supervision,
+  low-level storage and network attachments, etc.
 
 # Vendor.
 # This will expand any env var you set in the field, e.g. vendor: ${VENDOR}
@@ -117,8 +122,8 @@ license: Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND ISC AND MIT AND MPL-2.
 # Packages it provides. (overridable)
 # This will expand any env var you set in the field, e.g. ${PROVIDES_BLA}
 # the env var approach can be used to account for differences in platforms
-provides:
-  - containerd = ${VERSION}.${RELEASE}
+# provides:
+#   - containerd = ${VERSION}.${RELEASE}
 
 # Dependencies. (overridable)
 # This will expand any env var you set in the field, e.g. ${DEPENDS_NGINX}
@@ -151,14 +156,18 @@ depends:
 # This can be binaries or any other files.
 contents:
   # Binaries
-  - src: bin/containerd
+  - src: build/${PLATFORM}-${ARCH}/bin/containerd
     dst: /usr/bin/containerd
-  - src: bin/containerd-stress
+    expand: true
+  - src: build/${PLATFORM}-${ARCH}/bin/containerd-stress
     dst: /usr/bin/containerd-stress
-  - src: bin/containerd-shim-runc-v2
+    expand: true
+  - src: build/${PLATFORM}-${ARCH}/bin/containerd-shim-runc-v2
     dst: /usr/bin/containerd-shim-runc-v2
-  - src: bin/ctr
+    expand: true
+  - src: build/${PLATFORM}-${ARCH}/bin/ctr
     dst: /usr/bin/ctr
+    expand: true
 
   # Config files
   - src: config.toml
@@ -190,3 +199,9 @@ scripts:
   postinstall: scripts/postinstall.sh
   preremove: scripts/preremove.sh
   postremove: scripts/postremove.sh
+
+# Custom configuration applied only to the RPM packager.
+rpm:
+  # The package summary. This is, by default, the first line of the
+  # description, but can be explicitly provided here.
+  summary: An open and reliable container runtime
