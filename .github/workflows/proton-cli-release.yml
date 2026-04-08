@@ -22,6 +22,7 @@ jobs:
         uses: actions/setup-go@v6
         with:
           go-version-file: proton-cli/go.mod
+          cache-dependency-path: proton-cli/go.sum
 
       - name: Build proton-cli release artifacts
         working-directory: proton-cli
