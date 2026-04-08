@@ -46,6 +46,8 @@ type Source struct {
 	HTTP *HTTPSource `json:"http,omitzero"`
 
 	OCI *OCISource `json:"oci,omitzero"`
+
+	File *FileSource `json:"file,omitzero"`
 }
 
 // HTTPSource 定义通过 HTTP 获取制品时所需的地址和解包信息。
@@ -60,4 +62,9 @@ type HTTPSource struct {
 // OCISource 定义通过 OCI 仓库拉取制品时使用的镜像引用。
 type OCISource struct {
 	Reference string `json:"reference,omitzero"`
+}
+
+// FileSource 定义通过本地文件获取制品
+type FileSource struct {
+	Path string `json:"path,omitzero"`
 }
