@@ -40,6 +40,7 @@ func Execute() {
 	rootCmd.AddCommand(images.SetImageCmd())
 	rootCmd.AddCommand(K8SCmd())
 	rootCmd.AddCommand(newAlphaCmd())
+	rootCmd.AddCommand(newOrasCommand())
 	rootCmd.AddCommand(offline_package.NewCommand())
 
 	err := rootCmd.Execute()
