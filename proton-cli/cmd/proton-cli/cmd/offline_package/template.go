@@ -107,7 +107,7 @@ func defaultManifest(info architectureInfo) *Manifest {
 				ociArtifact("public/oliver006/redis_exporter:v1.77.0", "swr.cn-east-3.myhuaweicloud.com/kweaver-ai/mirror/quay.io/oliver006/redis_exporter:v1.77.0"),
 				ociArtifact("proton/proton-zookeeper-exporter:5.6.0-20250625.2.138fb9", "swr.cn-east-3.myhuaweicloud.com/kweaver-ai/mirror/ghcr.io/kweaver-ai/proton/proton-zookeeper-exporter:5.6.0-20250625.2.138fb9"),
 				ociArtifact("proton/proton-zookeeper:5.6.0-20250625.2.138fb9", "swr.cn-east-3.myhuaweicloud.com/kweaver-ai/mirror/ghcr.io/kweaver-ai/proton/proton-zookeeper:5.6.0-20250625.2.138fb9"),
-				ociArtifact("kweaver-ai/proton/rds-etcd:0.0.1", "swr.cn-east-3.myhuaweicloud.com/kweaver-ai/mirror/ghcr.io/kweaver-ai/proton/rds-etcd:0.0.1"),
+				ociArtifact("kweaver-ai/proton/rds-etcd:0.0.2", "swr.cn-east-3.myhuaweicloud.com/kweaver-ai/mirror/ghcr.io/kweaver-ai/proton/rds-etcd:0.0.2"),
 				ociArtifact("kweaver-ai/proton/rds-exporter:0.0.1", "swr.cn-east-3.myhuaweicloud.com/kweaver-ai/mirror/ghcr.io/kweaver-ai/proton/rds-exporter:0.0.1"),
 				ociArtifact("kweaver-ai/proton/rds-mgmt:0.0.1", "swr.cn-east-3.myhuaweicloud.com/kweaver-ai/mirror/ghcr.io/kweaver-ai/proton/rds-mgmt:0.0.1"),
 				ociArtifact("kweaver-ai/proton/rds-mariadb:0.0.1", "swr.cn-east-3.myhuaweicloud.com/kweaver-ai/mirror/ghcr.io/kweaver-ai/proton/rds-mariadb:0.0.1"),
