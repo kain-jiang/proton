@@ -1,0 +1,71 @@
+name: "Build: proton-offline-package"
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ${{ matrix.runs-on }}
+    strategy:
+      matrix:
+        include:
+          - arch: amd64
+            runs-on: ubuntu-24.04
+          - arch: arm64
+            runs-on: ubuntu-24.04-arm
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: proton-cli/go.mod
+          cache-dependency-path: proton-cli/go.sum
+
+      - name: Build proton-cli binary
+        working-directory: proton-cli
+        env:
+          PROTON_BUILD_PLATFORMS: linux/${{ matrix.arch }}
+        run: ./build/binaries
+
+      - name: Create manifest
+        id: manifest
+        working-directory: proton-cli
+        run: |
+          ./_output/local/bin/linux/${{ matrix.arch }}/proton-cli offline-package plan --architecture ${{ matrix.arch }} > manifest.yaml
+          cat manifest.yaml
+
+      - name: Build offline package
+        working-directory: proton-cli
+        run: |
+          mv _output/local/bin/linux/${{ matrix.arch }}/proton-cli ./proton-cli
+          ./proton-cli offline-package build --manifest manifest.yaml
+
+      - name: Install ORAS
+        uses: oras-project/setup-oras@v2
+
+      - name: Login to registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ vars.REGISTRY_URL }}
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+
+      - name: Push to OCI registry
+        working-directory: proton-cli
+        env:
+          REGISTRY_IMAGE: ${{ vars.REGISTRY_URL }}/${{ vars.REGISTRY_BASE }}/proton-offline-package-${{ matrix.arch }}:${{ github.run_id }}
+        run: |
+          echo "Pushing ${REGISTRY_IMAGE}"
+          oras push "${REGISTRY_IMAGE}" --artifact-type application/x-tar proton-offline-package.tar
+
+      - name: Upload offline package
+        uses: actions/upload-artifact@v7
+        with:
+          name: proton-offline-package-${{ matrix.arch }}
+          path: proton-cli/proton-offline-package.tar
+          if-no-files-found: error
