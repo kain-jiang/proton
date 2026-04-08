@@ -1,7 +1,9 @@
 package offline_package
 
 import (
+	"archive/tar"
 	"context"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -496,6 +498,104 @@ func TestOverrideAppImageSourceFillsMissingRegistry(t *testing.T) {
 	}
 	if got != "acr.example.com/as/audit-log:0.5.0" {
 		t.Fatalf("got %q", got)
+	}
+}
+
+func TestResolveAppExportImagesDirDefault(t *testing.T) {
+	workdir := filepath.Join("/tmp", "offline-app-export")
+
+	got, err := resolveAppExportImagesDir(workdir, "")
+	if err != nil {
+		t.Fatalf("resolveAppExportImagesDir returned error: %v", err)
+	}
+
+	want := filepath.Join(workdir, "images")
+	if got != want {
+		t.Fatalf("got %q, want %q", got, want)
+	}
+}
+
+func TestResolveAppExportImagesDirWithCacheDir(t *testing.T) {
+	workdir := filepath.Join("/tmp", "offline-app-export")
+	cacheDir := filepath.Join("/var", "cache", "proton-cli")
+
+	got, err := resolveAppExportImagesDir(workdir, cacheDir)
+	if err != nil {
+		t.Fatalf("resolveAppExportImagesDir returned error: %v", err)
+	}
+
+	want := filepath.Join(cacheDir, "images")
+	if got != want {
+		t.Fatalf("got %q, want %q", got, want)
+	}
+}
+
+func TestNewAppExportCommandIncludesCacheDirFlag(t *testing.T) {
+	cmd := newAppExportCommand()
+	flag := cmd.Flags().Lookup("cache-dir")
+	if flag == nil {
+		t.Fatal("expected cache-dir flag")
+	}
+}
+
+func TestTarAppPackageIncludesExternalImagesDir(t *testing.T) {
+	workdir := t.TempDir()
+	imagesDir := t.TempDir()
+
+	if err := os.WriteFile(filepath.Join(workdir, "manifest.yaml"), []byte("kind: VersionSet\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(filepath.Join(workdir, "charts"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(workdir, "charts", "demo.tgz"), []byte("chart"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(imagesDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(imagesDir, "index.json"), []byte(`{"manifests":[]}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(imagesDir, "oci-layout"), []byte(`{"imageLayoutVersion":"1.0.0"}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	output := filepath.Join(t.TempDir(), "offline-app-package.tar")
+	if err := tarAppPackage(workdir, imagesDir, output); err != nil {
+		t.Fatalf("tarAppPackage returned error: %v", err)
+	}
+
+	f, err := os.Open(output)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer f.Close()
+
+	tr := tar.NewReader(f)
+	var entries []string
+	for {
+		hdr, err := tr.Next()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			t.Fatalf("read tar entry: %v", err)
+		}
+		entries = append(entries, hdr.Name)
+	}
+
+	for _, required := range []string{"manifest.yaml", "charts/demo.tgz", "images/index.json", "images/oci-layout"} {
+		found := false
+		for _, entry := range entries {
+			if entry == required {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Fatalf("missing tar entry %q in %#v", required, entries)
+		}
 	}
 }
 

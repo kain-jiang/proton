@@ -37,6 +37,7 @@ type appExportOptions struct {
 	manifest            string
 	output              string
 	platform            string
+	cacheDir            string
 	overrideRegistry    string
 	ignoreMissingImages bool
 	disableDependencies bool
@@ -60,6 +61,7 @@ func newAppExportCommand() *cobra.Command {
 	cmd.Flags().StringVarP(&opts.manifest, "manifest", "f", "", "Path or URL to a VersionSet manifest")
 	cmd.Flags().StringVarP(&opts.output, "output", "o", opts.output, "Output tar file")
 	cmd.Flags().StringVar(&opts.platform, "platform", opts.platform, "Target platform")
+	cmd.Flags().StringVar(&opts.cacheDir, "cache-dir", "", "Directory used to persist the exported OCI image layout")
 	cmd.Flags().StringVar(&opts.overrideRegistry, "override-registry", "", "Override chart values .image.registry when pulling images")
 	cmd.Flags().BoolVar(&opts.ignoreMissingImages, "ignore-missing-images", false, "Continue exporting when some images cannot be pulled")
 	cmd.Flags().BoolVar(&opts.disableDependencies, "disable-dependencies", false, "Only process the root manifest and ignore dependencies")
@@ -88,7 +90,10 @@ func runAppExport(ctx context.Context, opts *appExportOptions) error {
 	defer os.RemoveAll(workdir)
 
 	chartsDir := filepath.Join(workdir, "charts")
-	imagesDir := filepath.Join(workdir, "images")
+	imagesDir, err := resolveAppExportImagesDir(workdir, opts.cacheDir)
+	if err != nil {
+		return err
+	}
 	if err := os.MkdirAll(chartsDir, 0o755); err != nil {
 		return err
 	}
@@ -129,13 +134,26 @@ func runAppExport(ctx context.Context, opts *appExportOptions) error {
 	}
 
 	log.Printf("packaging %q", opts.output)
-	if err := tarAppPackage(workdir, opts.output); err != nil {
+	if err := tarAppPackage(workdir, imagesDir, opts.output); err != nil {
 		return err
 	}
 
 	exportedImages := countExportedAppImages(imageMetadata)
 	fmt.Printf("export completed\n- platform: %s\n- charts: %d\n- images: %d/%d\n- output: %s\n", platformLabel, len(charts), exportedImages, len(imageMetadata), opts.output)
 	return nil
+}
+
+func resolveAppExportImagesDir(workdir, cacheDir string) (string, error) {
+	cacheDir = strings.TrimSpace(cacheDir)
+	if cacheDir == "" {
+		return filepath.Join(workdir, "images"), nil
+	}
+
+	absCacheDir, err := filepath.Abs(cacheDir)
+	if err != nil {
+		return "", fmt.Errorf("resolve cache dir %q: %w", cacheDir, err)
+	}
+	return filepath.Join(absCacheDir, "images"), nil
 }
 
 func downloadAppCharts(ctx context.Context, charts []appChartArtifact, chartsDir string) ([]appChartArtifact, error) {
@@ -508,7 +526,7 @@ func pushAppImageIndex(ctx context.Context, dst *oci.Store, manifests []ocispec.
 	return desc, nil
 }
 
-func tarAppPackage(srcDir, outputPath string) error {
+func tarAppPackage(srcDir, imagesDir, outputPath string) error {
 	f, err := os.Create(outputPath)
 	if err != nil {
 		return err
@@ -518,7 +536,65 @@ func tarAppPackage(srcDir, outputPath string) error {
 	tw := tar.NewWriter(f)
 	defer tw.Close()
 
-	return tw.AddFS(os.DirFS(srcDir))
+	if err := addTarPath(tw, filepath.Join(srcDir, "manifest.yaml"), "manifest.yaml"); err != nil {
+		return err
+	}
+	if err := addTarTree(tw, filepath.Join(srcDir, "charts"), "charts"); err != nil {
+		return err
+	}
+	return addTarTree(tw, imagesDir, "images")
+}
+
+func addTarTree(tw *tar.Writer, rootPath, rootName string) error {
+	return filepath.Walk(rootPath, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		rel, err := filepath.Rel(rootPath, path)
+		if err != nil {
+			return err
+		}
+
+		name := rootName
+		if rel != "." {
+			name = filepath.ToSlash(filepath.Join(rootName, rel))
+		}
+		return addTarEntry(tw, path, info, name)
+	})
+}
+
+func addTarPath(tw *tar.Writer, path, name string) error {
+	info, err := os.Stat(path)
+	if err != nil {
+		return err
+	}
+	return addTarEntry(tw, path, info, name)
+}
+
+func addTarEntry(tw *tar.Writer, path string, info os.FileInfo, name string) error {
+	header, err := tar.FileInfoHeader(info, "")
+	if err != nil {
+		return err
+	}
+	header.Name = filepath.ToSlash(name)
+	if info.IsDir() && !strings.HasSuffix(header.Name, "/") {
+		header.Name += "/"
+	}
+	if err := tw.WriteHeader(header); err != nil {
+		return err
+	}
+	if info.IsDir() {
+		return nil
+	}
+
+	f, err := os.Open(path)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	_, err = io.Copy(tw, f)
+	return err
 }
 
 func loadOCIImageTags(imagesDir string) ([]string, error) {
