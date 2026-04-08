@@ -16,6 +16,8 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/opencontainers/go-digest"
+	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/stianwa/createrepo"
@@ -81,7 +83,7 @@ func newBuildCommand() *cobra.Command {
 
 func build(ctx context.Context, m *Manifest) error {
 	// create temporary directory as workspace
-	w, err := os.MkdirTemp("", "proton-cli-offline-package-*")
+	w, err := os.MkdirTemp("", "proton-offline-package-*")
 	if err != nil {
 		return err
 	}
@@ -204,6 +206,9 @@ func pullForAch(ctx context.Context, kind artifactKind, a *Artifact, output stri
 	case a.OCI != nil:
 		if kind == artifactKindChart {
 			return pullChartOCI(ctx, filepath.Join(output, a.Name), a.OCI)
+		}
+		if kind == artifactKindRPM {
+			return pullRPMOCI(ctx, filepath.Join(output, a.Name), a.OCI)
 		}
 		return pullOCIForArch(ctx, output, a.Name, a.OCI, arch)
 	default:
@@ -415,6 +420,225 @@ func pullChartOCI(ctx context.Context, path string, s *OCISource) error {
 	}
 
 	return os.WriteFile(path, result.Chart.Data, 0o644)
+}
+
+// pullRPMOCI pulls an RPM file from an OCI registry using oras.
+// The artifact is expected to be an OCI artifact bundle containing the RPM file.
+// It copies the artifact to a temporary OCI store and extracts the RPM file.
+func pullRPMOCI(ctx context.Context, path string, s *OCISource) error {
+	log.Println("pull oci rpm", s.Reference)
+
+	ar, err := registry.ParseReference(s.Reference)
+	if err != nil {
+		return err
+	}
+
+	// Create a temporary directory for the OCI store
+	tmpDir, err := os.MkdirTemp("", "proton-cli-rpm-*")
+	if err != nil {
+		return err
+	}
+	defer os.RemoveAll(tmpDir)
+
+	// Create source repository with authentication support
+	r := &remote.Repository{
+		Client: &auth.Client{
+			Credential: auth.StaticCredential(ar.Host(), auth.EmptyCredential),
+			Cache:      auth.NewCache(),
+		},
+		Reference: ar,
+	}
+
+	// Try to fetch first to check if authentication is needed
+	_, rc, err := r.FetchReference(ctx, ar.Reference)
+	if err != nil {
+		if shouldRetryWithCredential(err) {
+			credential, err := getCredential(ar.Registry)
+			if err != nil {
+				return err
+			}
+
+			r = &remote.Repository{
+				Client: &auth.Client{
+					Credential: auth.StaticCredential(ar.Host(), credential),
+					Cache:      auth.NewCache(),
+				},
+				Reference: ar,
+			}
+
+			_, rc, err = r.FetchReference(ctx, ar.Reference)
+			if err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+	}
+	if rc != nil {
+		rc.Close()
+	}
+
+	// Create destination OCI store
+	dst, err := oci.New(tmpDir)
+	if err != nil {
+		return err
+	}
+
+	// Copy the artifact from remote to local OCI store
+	_, err = oras.Copy(ctx, r, ar.Reference, dst, ar.Reference, oras.DefaultCopyOptions)
+	if err != nil {
+		return fmt.Errorf("failed to copy artifact: %w", err)
+	}
+
+	// Now extract the RPM file from the local OCI store
+	// The artifact may contain multiple blobs, we need to find the RPM file
+	src, err := oci.New(tmpDir)
+	if err != nil {
+		return err
+	}
+
+	// Get the manifest to find the blobs
+	manifestDesc, err := src.Resolve(ctx, ar.Reference)
+	if err != nil {
+		return fmt.Errorf("failed to resolve artifact: %w", err)
+	}
+
+	// Fetch the manifest content
+	manifestRC, err := src.Fetch(ctx, manifestDesc)
+	if err != nil {
+		return fmt.Errorf("failed to fetch manifest: %w", err)
+	}
+	defer manifestRC.Close()
+
+	manifestBytes, err := io.ReadAll(manifestRC)
+	if err != nil {
+		return fmt.Errorf("failed to read manifest: %w", err)
+	}
+
+	// Parse the manifest to get blob digests
+	var manifest struct {
+		Layers []struct {
+			MediaType   string `json:"mediaType"`
+			Digest      string `json:"digest"`
+			Size        int64  `json:"size"`
+			Annotations struct {
+				Title string `json:"org.opencontainers.image.title"`
+			} `json:"annotations,omitempty"`
+		} `json:"layers"`
+		Blobs []struct {
+			MediaType   string `json:"mediaType"`
+			Digest      string `json:"digest"`
+			Size        int64  `json:"size"`
+			Annotations struct {
+				Title string `json:"org.opencontainers.image.title"`
+			} `json:"annotations,omitempty"`
+		} `json:"blobs"`
+		Config struct {
+			Digest string `json:"digest"`
+		} `json:"config"`
+	}
+
+	if err := json.Unmarshal(manifestBytes, &manifest); err != nil {
+		// If it's an OCI image manifest, try a different structure
+		var imageManifest struct {
+			Config struct {
+				MediaType string `json:"mediaType"`
+				Digest    string `json:"digest"`
+				Size      int64  `json:"size"`
+			} `json:"config"`
+			Layers []struct {
+				MediaType string `json:"mediaType"`
+				Digest    string `json:"digest"`
+				Size      int64  `json:"size"`
+			} `json:"layers"`
+		}
+		if err2 := json.Unmarshal(manifestBytes, &imageManifest); err2 != nil {
+			return fmt.Errorf("failed to parse manifest: %w, original error: %v", err, err2)
+		}
+		// For image manifests, treat layers as the content
+		for _, layer := range imageManifest.Layers {
+			d, err := digest.Parse(layer.Digest)
+			if err != nil {
+				continue
+			}
+			if err := extractBlobToFile(ctx, src, d, path); err != nil {
+				continue
+			}
+			return nil
+		}
+		return fmt.Errorf("failed to extract RPM from image manifest")
+	}
+
+	// Try to find and extract the RPM file from layers/blobs
+	// Look for a blob with .rpm extension in the title annotation
+	for _, layer := range manifest.Layers {
+		if strings.HasSuffix(layer.Annotations.Title, ".rpm") {
+			d, err := digest.Parse(layer.Digest)
+			if err != nil {
+				continue
+			}
+			if err := extractBlobToFile(ctx, src, d, path); err != nil {
+				return fmt.Errorf("failed to extract RPM blob: %w", err)
+			}
+			return nil
+		}
+	}
+
+	// If no title annotation, try all blobs
+	for _, blob := range manifest.Blobs {
+		if strings.HasSuffix(blob.Annotations.Title, ".rpm") {
+			d, err := digest.Parse(blob.Digest)
+			if err != nil {
+				continue
+			}
+			if err := extractBlobToFile(ctx, src, d, path); err != nil {
+				return fmt.Errorf("failed to extract RPM blob: %w", err)
+			}
+			return nil
+		}
+	}
+
+	// If no RPM file found by name, try to extract the first non-config blob
+	for _, layer := range manifest.Layers {
+		d, err := digest.Parse(layer.Digest)
+		if err != nil {
+			continue
+		}
+		if err := extractBlobToFile(ctx, src, d, path); err == nil {
+			return nil
+		}
+	}
+
+	return fmt.Errorf("no RPM file found in artifact")
+}
+
+// extractBlobToFile extracts a blob from the OCI store and saves it to a file
+func extractBlobToFile(ctx context.Context, store *oci.Store, d digest.Digest, path string) error {
+	desc := ocispec.Descriptor{
+		Digest: d,
+	}
+
+	rc, err := store.Fetch(ctx, desc)
+	if err != nil {
+		return err
+	}
+	defer rc.Close()
+
+	f, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	if _, err := io.Copy(f, rc); err != nil {
+		return err
+	}
+
+	if err := os.Chmod(path, 0o644); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func shouldRetryWithCredential(err error) bool {

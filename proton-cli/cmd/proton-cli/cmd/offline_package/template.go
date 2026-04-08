@@ -115,6 +115,8 @@ func defaultManifest(info architectureInfo) *Manifest {
 				ociArtifact("kweaver-ai/proton/rds-operator-proxy:0.0.1", "swr.cn-east-3.myhuaweicloud.com/kweaver-ai/mirror/ghcr.io/kweaver-ai/proton/rds-operator-proxy:0.0.1"),
 			},
 			RPMs: []Artifact{
+				// Example: Pull RPM from OCI registry using oras
+				// ociArtifact("example-package."+info.packageArch+".rpm", "registry.example.com/rpms/example-package:1.0.0-"+info.packageArch),
 				httpArtifact("containerd-2.2.0-2.el10_2.x86_64.rpm", "https://mirrors.aliyun.com/epel/10/Everything/"+info.packageArch+"/Packages/c/containerd-2.2.0-2.el10_2."+info.packageArch+".rpm", "", ""),
 				httpArtifact("cri-tools-1.34.0-150500.1.1."+info.packageArch+".rpm", "https://mirrors.aliyun.com/kubernetes-new/core/stable/v1.34/rpm/"+info.packageArch+"/cri-tools-1.34.0-150500.1.1."+info.packageArch+".rpm", "", ""),
 				httpArtifact("ecms-1.1.8-120.el7."+info.packageArch+".rpm", "https://github.com/kweaver-ai/proton/releases/download/ecms%2F1.1.8/ecms-1.1.8-120.el7."+info.packageArch+".rpm", "", ""),
