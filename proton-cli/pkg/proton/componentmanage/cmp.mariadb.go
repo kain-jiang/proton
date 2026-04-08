@@ -16,7 +16,7 @@ const (
 	mariadbManagementServicePort = 8888
 
 	mariadbEtcdImageRepository = "kweaver-ai/proton/rds-etcd"
-	mariadbEtcdImageTag        = "0.0.1"
+	mariadbEtcdImageTag        = "0.0.2"
 
 	mariadbExporterImageRepository = "kweaver-ai/proton/rds-exporter"
 	mariadbExporterImageTag        = "0.0.1"

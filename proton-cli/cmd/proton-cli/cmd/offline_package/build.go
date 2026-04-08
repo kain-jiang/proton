@@ -5,6 +5,7 @@ import (
 	"bufio"
 	"compress/gzip"
 	"context"
+	"debug/elf"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -117,24 +118,9 @@ func build(ctx context.Context, m *Manifest) error {
 		return err
 	}
 
-	// create bin/proton-cli (self)
-	{
-		p, err := os.Executable()
-		if err != nil {
-			return err
-		}
-		b, err := os.ReadFile(p)
-		if err != nil {
-			return err
-		}
-		if err := os.WriteFile(filepath.Join(binDir, "proton-cli"), b, 0o755); err != nil {
-			return err
-		}
-	}
-
-	// pull binaries
+	// pull binaries (including proton-cli if defined in manifest)
 	for _, a := range m.Spec.Binaries {
-		if err := pull(ctx, artifactKindBinary, &a, binDir); err != nil {
+		if err := pullForAch(ctx, artifactKindBinary, &a, binDir, m.Spec.Architecture); err != nil {
 			return err
 		}
 	}
@@ -199,21 +185,40 @@ func pull(ctx context.Context, kind artifactKind, a *Artifact, output string) er
 	return pullForAch(ctx, kind, a, output, runtime.GOARCH)
 }
 
-func pullForAch(ctx context.Context, kind artifactKind, a *Artifact, output string, arch string) error {
+func pullForAch(ctx context.Context, kind artifactKind, a *Artifact, output string, arch string) (err error) {
 	switch {
 	case a.HTTP != nil:
-		return pullHTTP(ctx, filepath.Join(output, a.Name), a.HTTP)
+		err = pullHTTP(ctx, filepath.Join(output, a.Name), a.HTTP)
 	case a.OCI != nil:
 		if kind == artifactKindChart {
-			return pullChartOCI(ctx, filepath.Join(output, a.Name), a.OCI)
+			err = pullChartOCI(ctx, filepath.Join(output, a.Name), a.OCI)
+		} else {
+			err = pullOCIForArch(ctx, output, a.Name, a.OCI, arch)
 		}
 		if kind == artifactKindRPM {
 			return pullRPMOCI(ctx, filepath.Join(output, a.Name), a.OCI)
 		}
-		return pullOCIForArch(ctx, output, a.Name, a.OCI, arch)
+	case a.File != nil:
+		err = pullFile(filepath.Join(output, a.Name), a.File)
 	default:
-		return fmt.Errorf("failed to find artifact source of %q", a.Name)
+		err = fmt.Errorf("failed to find artifact source of %q", a.Name)
 	}
+	if err != nil {
+		return
+	}
+
+	// 检查可执行文件的格式
+	if kind == artifactKindBinary {
+		ok, err := isBinArch(filepath.Join(output, a.Name), arch)
+		if err != nil {
+			return err
+		}
+		if !ok {
+			return fmt.Errorf("%v is not %v", a.Name, arch)
+		}
+	}
+
+	return
 }
 
 func pullHTTP(ctx context.Context, path string, s *HTTPSource) error {
@@ -641,6 +646,27 @@ func extractBlobToFile(ctx context.Context, store *oci.Store, d digest.Digest, p
 	return nil
 }
 
+func pullFile(path string, s *FileSource) error {
+	log.Println("pull file", s.Path)
+
+	src, err := os.Open(s.Path)
+	if err != nil {
+		return err
+	}
+	defer src.Close()
+
+	dst, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	defer dst.Close()
+
+	if _, err := io.Copy(dst, src); err != nil {
+		return err
+	}
+	return nil
+}
+
 func shouldRetryWithCredential(err error) bool {
 	if err == nil {
 		return false
@@ -708,5 +734,24 @@ func choiceInstance(r io.Reader, platform string) (digest string, err error) {
 	}
 
 	err = fmt.Errorf("no image found for %s", platform)
+	return
+}
+
+func isBinArch(path, arch string) (ok bool, err error) {
+	f, err := elf.Open(path)
+	if err != nil {
+		return
+	}
+	defer f.Close()
+
+	switch arch {
+	case "amd64":
+		ok = f.Machine == elf.EM_X86_64
+	case "arm64":
+		ok = f.Machine == elf.EM_AARCH64
+	default:
+		err = fmt.Errorf("unsupported arch: %v", arch)
+	}
+
 	return
 }

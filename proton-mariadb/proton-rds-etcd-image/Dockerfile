@@ -14,6 +14,7 @@ RUN curl -sSL https://github.com/etcd-io/etcd/releases/download/v3.3.19/etcd-v3.
 FROM runtime
 COPY --from=binary /usr/local/bin/etcdctl /usr/local/bin/etcdctl
 COPY --from=binary /usr/local/bin/etcd /usr/local/bin/etcd
+ENV ETCD_UNSUPPORTED_ARCH=arm64
 
 RUN mkdir -p /var/etcd /var/lib/etcd
 EXPOSE 2379 2380

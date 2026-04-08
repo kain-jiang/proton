@@ -33,13 +33,17 @@ func normalizeArchitecture(arch string) (architectureInfo, error) {
 }
 
 // renderManifestTemplate 根据目标架构生成离线包 manifest 的 YAML 模板。
-func renderManifestTemplate(arch string) ([]byte, error) {
+// protonCLIPath specifies the local path to proton-cli binary.
+// protonCLIVersion specifies the version of proton-cli to download.
+// These two parameters are mutually exclusive - if protonCLIVersion is set (and not empty),
+// it takes precedence over protonCLIPath.
+func renderManifestTemplate(arch string, protonCLIPath string, protonCLIVersion string) ([]byte, error) {
 	info, err := normalizeArchitecture(arch)
 	if err != nil {
 		return nil, err
 	}
 
-	m := defaultManifest(info)
+	m := defaultManifest(info, protonCLIPath, protonCLIVersion)
 
 	out, err := yaml.Marshal(m)
 	if err != nil {
@@ -50,7 +54,44 @@ func renderManifestTemplate(arch string) ([]byte, error) {
 }
 
 // defaultManifest 返回指定架构下的默认离线包目标清单。
-func defaultManifest(info architectureInfo) *Manifest {
+// protonCLIPath specifies the local path to proton-cli binary.
+// protonCLIVersion specifies the version of proton-cli to download.
+func defaultManifest(info architectureInfo, protonCLIPath string, protonCLIVersion string) *Manifest {
+	// Build proton-cli artifact based on parameters
+	// protonCLIVersion takes precedence over protonCLIPath
+	var protonCLIArtifact Artifact
+	if protonCLIVersion != "" {
+		protonCLIArtifact = httpArtifact(
+			"proton-cli",
+			"https://github.com/kweaver-ai/proton/releases/download/v"+protonCLIVersion+"/proton-cli-linux-"+info.goArch+".tar.gz",
+			"tar+gzip",
+			"proton-cli/bin/proton-cli",
+		)
+	} else if protonCLIPath != "" {
+		protonCLIArtifact = Artifact{
+			Name: "proton-cli",
+			Source: Source{
+				File: &FileSource{
+					Path: protonCLIPath,
+				},
+			},
+		}
+	}
+
+	// Build binaries list
+	binaries := []Artifact{}
+	// Add proton-cli if configured
+	if protonCLIVersion != "" || protonCLIPath != "" {
+		binaries = append(binaries, protonCLIArtifact)
+	}
+	// Add other binaries
+	binaries = append(binaries,
+		httpArtifact("calicoctl", "https://github.com/projectcalico/calico/releases/download/v3.25.2/calicoctl-linux-"+info.goArch, "", ""),
+		httpArtifact("helm", "https://get.helm.sh/helm-v3.20.0-linux-"+info.goArch+".tar.gz", "tar+gzip", "linux-"+info.goArch+"/helm"),
+		httpArtifact("nerdctl", "https://github.com/containerd/nerdctl/releases/download/v2.2.1/nerdctl-2.2.1-linux-"+info.goArch+".tar.gz", "tar+gzip", "nerdctl"),
+		httpArtifact("skopeo", "https://github.com/kweaver-ai/proton/releases/download/skopeo-1.19.0/skopeo-linux-"+info.goArch, "", ""),
+	)
+
 	return &Manifest{
 		TypeMeta: meta.TypeMeta{
 			APIVersion: "proton.kweaver.ai/v1alpha1",
@@ -61,12 +102,7 @@ func defaultManifest(info architectureInfo) *Manifest {
 		},
 		Spec: ManifestSpec{
 			Architecture: info.goArch,
-			Binaries: []Artifact{
-				httpArtifact("calicoctl", "https://github.com/projectcalico/calico/releases/download/v3.25.2/calicoctl-linux-"+info.goArch, "", ""),
-				httpArtifact("helm", "https://get.helm.sh/helm-v3.20.0-linux-"+info.goArch+".tar.gz", "tar+gzip", "linux-"+info.goArch+"/helm"),
-				httpArtifact("nerdctl", "https://github.com/containerd/nerdctl/releases/download/v2.2.1/nerdctl-2.2.1-linux-"+info.goArch+".tar.gz", "tar+gzip", "nerdctl"),
-				httpArtifact("skopeo", "https://github.com/kweaver-ai/proton/releases/download/skopeo-1.19.0/skopeo-linux-"+info.goArch, "", ""),
-			},
+			Binaries:     binaries,
 			Charts: []Artifact{
 				httpArtifact("component-manage-0.0.2.tgz", "https://github.com/kweaver-ai/proton/releases/download/component-manage-0.0.2/component-manage-0.0.2.tgz", "", ""),
 				httpArtifact("ingress-nginx-4.15.0.tgz", "https://github.com/kweaver-ai/proton/releases/download/ingress-nginx-4.15.0/ingress-nginx-4.15.0.tgz", "", ""),
@@ -107,7 +143,7 @@ func defaultManifest(info architectureInfo) *Manifest {
 				ociArtifact("public/oliver006/redis_exporter:v1.77.0", "swr.cn-east-3.myhuaweicloud.com/kweaver-ai/mirror/quay.io/oliver006/redis_exporter:v1.77.0"),
 				ociArtifact("proton/proton-zookeeper-exporter:5.6.0-20250625.2.138fb9", "swr.cn-east-3.myhuaweicloud.com/kweaver-ai/mirror/ghcr.io/kweaver-ai/proton/proton-zookeeper-exporter:5.6.0-20250625.2.138fb9"),
 				ociArtifact("proton/proton-zookeeper:5.6.0-20250625.2.138fb9", "swr.cn-east-3.myhuaweicloud.com/kweaver-ai/mirror/ghcr.io/kweaver-ai/proton/proton-zookeeper:5.6.0-20250625.2.138fb9"),
-				ociArtifact("kweaver-ai/proton/rds-etcd:0.0.1", "swr.cn-east-3.myhuaweicloud.com/kweaver-ai/mirror/ghcr.io/kweaver-ai/proton/rds-etcd:0.0.1"),
+				ociArtifact("kweaver-ai/proton/rds-etcd:0.0.2", "swr.cn-east-3.myhuaweicloud.com/kweaver-ai/mirror/ghcr.io/kweaver-ai/proton/rds-etcd:0.0.2"),
 				ociArtifact("kweaver-ai/proton/rds-exporter:0.0.1", "swr.cn-east-3.myhuaweicloud.com/kweaver-ai/mirror/ghcr.io/kweaver-ai/proton/rds-exporter:0.0.1"),
 				ociArtifact("kweaver-ai/proton/rds-mgmt:0.0.1", "swr.cn-east-3.myhuaweicloud.com/kweaver-ai/mirror/ghcr.io/kweaver-ai/proton/rds-mgmt:0.0.1"),
 				ociArtifact("kweaver-ai/proton/rds-mariadb:0.0.1", "swr.cn-east-3.myhuaweicloud.com/kweaver-ai/mirror/ghcr.io/kweaver-ai/proton/rds-mariadb:0.0.1"),
@@ -128,7 +164,7 @@ func defaultManifest(info architectureInfo) *Manifest {
 				httpArtifact("proton-cr-1.2.5-87.el7."+info.packageArch+".rpm", "https://github.com/kweaver-ai/proton/releases/download/proton-cr-1.2.5/proton-cr-1.2.5-87.el7."+info.packageArch+".rpm", "", ""),
 				httpArtifact("proton-cr-chartmuseum-0.15.0."+info.packageArch+".rpm", "https://github.com/kweaver-ai/proton/releases/download/proton-cr-chartmuseum-0.15.0/proton-cr-chartmuseum-0.15.0."+info.packageArch+".rpm", "", ""),
 				httpArtifact("proton-cr-registry-2.7.1."+info.packageArch+".rpm", "https://github.com/kweaver-ai/proton/releases/download/proton-cr-registry-2.7.1/proton-cr-registry-2.7.1."+info.packageArch+".rpm", "", ""),
-				httpArtifact("runc-1.4.0-1.el10_2.x86_64.rpm", "https://mirrors.aliyun.com/epel/10/Everything/"+info.packageArch+"/Packages/r/runc-1.4.0-1.el10_2."+info.packageArch+".rpm", "", ""),
+				ociArtifact("runc-1.4.2-1.proton."+info.packageArch+".rpm", "swr.cn-east-3.myhuaweicloud.com/kweaver-ai/proton/rpm/runc:1.4.2-1.proton."+info.packageArch),
 			},
 		},
 	}

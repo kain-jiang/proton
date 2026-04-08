@@ -1,5 +1,5 @@
 # Name. (required)
-name: containerd
+name: runc
 
 # Architecture. (required)
 # This will expand any env var you set in the field, e.g. arch: ${GOARCH}
@@ -14,7 +14,7 @@ arch: ${ARCH}
 # This will expand any env var you set in the field, e.g. platform: ${GOOS}
 # This is only used by the rpm and deb packagers.
 # Examples: `linux` (default), `darwin`
-platform: ${PLATFORM}
+platform: linux
 
 # Version. (required)
 # This will expand any env var you set in the field, e.g. version: ${SEMVER}
@@ -81,11 +81,8 @@ maintainer: 吴毓喆（Bedivere） <wu.yuzhe@kweaver.ai>
 # Most packagers call for a one-line synopsis of the package. Some (like deb)
 # also call for a multi-line description starting on the second line.
 description: |
-  Containerd is an industry-standard container runtime with an emphasis on
-  simplicity, robustness and portability. It is available as a daemon for Linux
-  and Windows, which can manage the complete container lifecycle of its host
-  system: image transfer and storage, container execution and supervision,
-  low-level storage and network attachments, etc.
+  CLI tool for spawning and running containers according to the OCI
+  specification.
 
 # Vendor.
 # This will expand any env var you set in the field, e.g. vendor: ${VENDOR}
@@ -94,10 +91,10 @@ vendor: Proton
 
 # Package's homepage.
 # This will expand any env var you set in the field, e.g. homepage: ${CI_PROJECT_URL}
-homepage: https://github.com/containerd/containerd
+homepage: https://github.com/opencontainers/runc
 
 # License.
-license: Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND ISC AND MIT AND MPL-2.0
+license: Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND MIT AND MPL-2.0
 
 # Date to be used as mtime on internal files.
 #
@@ -122,15 +119,15 @@ license: Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND ISC AND MIT AND MPL-2.
 # Packages it provides. (overridable)
 # This will expand any env var you set in the field, e.g. ${PROVIDES_BLA}
 # the env var approach can be used to account for differences in platforms
-# provides:
-#   - containerd = ${VERSION}.${RELEASE}
+provides:
+  - oci-runtime
 
 # Dependencies. (overridable)
 # This will expand any env var you set in the field, e.g. ${DEPENDS_NGINX}
 # the env var approach can be used to account for differences in platforms
 # e.g. rhel needs nginx >= 1:1.18 and deb needs nginx (>= 1.18.0)
 depends:
-  - runc
+  - oci-runtime
 
 # Recommended packages. (overridable)
 # This will expand any env var you set in the field, e.g. ${RECOMMENDS_BLA}
@@ -156,29 +153,9 @@ depends:
 # This can be binaries or any other files.
 contents:
   # Binaries
-  - src: build/${PLATFORM}-${ARCH}/bin/containerd
-    dst: /usr/bin/containerd
+  - src: bin/runc.${ARCH}
+    dst: /usr/bin/runc
     expand: true
-  - src: build/${PLATFORM}-${ARCH}/bin/containerd-stress
-    dst: /usr/bin/containerd-stress
-    expand: true
-  - src: build/${PLATFORM}-${ARCH}/bin/containerd-shim-runc-v2
-    dst: /usr/bin/containerd-shim-runc-v2
-    expand: true
-  - src: build/${PLATFORM}-${ARCH}/bin/ctr
-    dst: /usr/bin/ctr
-    expand: true
-
-  # Config files
-  - src: config.toml
-    dst: /etc/containerd/config.toml
-    type: config
-  - dst: /etc/containerd/certs.d
-    type: dir
-
-  # Systemd units
-  - src: containerd.service
-    dst: /usr/lib/systemd/system/containerd.service
 
 # Umask to be used on files without explicit mode set.
 #
@@ -194,14 +171,9 @@ contents:
 # Default: 0o002 (will remove world-writable permissions)
 umask: 0o002
 
-# Scripts to run at specific stages. (overridable)
-scripts:
-  postinstall: scripts/postinstall.sh
-  preremove: scripts/preremove.sh
-  postremove: scripts/postremove.sh
-
-# Custom configuration applied only to the RPM packager.
 rpm:
-  # The package summary. This is, by default, the first line of the
-  # description, but can be explicitly provided here.
-  summary: An open and reliable container runtime
+  summary: CLI tool for spawning and running containers according to the OCI specification
+
+  # Compression algorithm (gzip (default), zstd, lzma or xz).
+  # Optionally compression level (gzip:-1 (default), gzip:1, gzip:9, zstd:1, zstd:19)
+  compression: xz
