@@ -118,22 +118,7 @@ func build(ctx context.Context, m *Manifest) error {
 		return err
 	}
 
-	// create bin/proton-cli (self)
-	{
-		p, err := os.Executable()
-		if err != nil {
-			return err
-		}
-		b, err := os.ReadFile(p)
-		if err != nil {
-			return err
-		}
-		if err := os.WriteFile(filepath.Join(binDir, "proton-cli"), b, 0o755); err != nil {
-			return err
-		}
-	}
-
-	// pull binaries
+	// pull binaries (including proton-cli if defined in manifest)
 	for _, a := range m.Spec.Binaries {
 		if err := pullForAch(ctx, artifactKindBinary, &a, binDir, m.Spec.Architecture); err != nil {
 			return err

@@ -33,13 +33,17 @@ func normalizeArchitecture(arch string) (architectureInfo, error) {
 }
 
 // renderManifestTemplate 根据目标架构生成离线包 manifest 的 YAML 模板。
-func renderManifestTemplate(arch string) ([]byte, error) {
+// protonCLIPath specifies the local path to proton-cli binary.
+// protonCLIVersion specifies the version of proton-cli to download.
+// These two parameters are mutually exclusive - if protonCLIVersion is set (and not empty),
+// it takes precedence over protonCLIPath.
+func renderManifestTemplate(arch string, protonCLIPath string, protonCLIVersion string) ([]byte, error) {
 	info, err := normalizeArchitecture(arch)
 	if err != nil {
 		return nil, err
 	}
 
-	m := defaultManifest(info)
+	m := defaultManifest(info, protonCLIPath, protonCLIVersion)
 
 	out, err := yaml.Marshal(m)
 	if err != nil {
@@ -50,7 +54,44 @@ func renderManifestTemplate(arch string) ([]byte, error) {
 }
 
 // defaultManifest 返回指定架构下的默认离线包目标清单。
-func defaultManifest(info architectureInfo) *Manifest {
+// protonCLIPath specifies the local path to proton-cli binary.
+// protonCLIVersion specifies the version of proton-cli to download.
+func defaultManifest(info architectureInfo, protonCLIPath string, protonCLIVersion string) *Manifest {
+	// Build proton-cli artifact based on parameters
+	// protonCLIVersion takes precedence over protonCLIPath
+	var protonCLIArtifact Artifact
+	if protonCLIVersion != "" {
+		protonCLIArtifact = httpArtifact(
+			"proton-cli",
+			"https://github.com/kweaver-ai/proton/releases/download/v"+protonCLIVersion+"/proton-cli-linux-"+info.goArch+".tar.gz",
+			"tar+gzip",
+			"proton-cli/bin/proton-cli",
+		)
+	} else if protonCLIPath != "" {
+		protonCLIArtifact = Artifact{
+			Name: "proton-cli",
+			Source: Source{
+				File: &FileSource{
+					Path: protonCLIPath,
+				},
+			},
+		}
+	}
+
+	// Build binaries list
+	binaries := []Artifact{}
+	// Add proton-cli if configured
+	if protonCLIVersion != "" || protonCLIPath != "" {
+		binaries = append(binaries, protonCLIArtifact)
+	}
+	// Add other binaries
+	binaries = append(binaries,
+		httpArtifact("calicoctl", "https://github.com/projectcalico/calico/releases/download/v3.25.2/calicoctl-linux-"+info.goArch, "", ""),
+		httpArtifact("helm", "https://get.helm.sh/helm-v3.20.0-linux-"+info.goArch+".tar.gz", "tar+gzip", "linux-"+info.goArch+"/helm"),
+		httpArtifact("nerdctl", "https://github.com/containerd/nerdctl/releases/download/v2.2.1/nerdctl-2.2.1-linux-"+info.goArch+".tar.gz", "tar+gzip", "nerdctl"),
+		httpArtifact("skopeo", "https://github.com/kweaver-ai/proton/releases/download/skopeo-1.19.0/skopeo-linux-"+info.goArch, "", ""),
+	)
+
 	return &Manifest{
 		TypeMeta: meta.TypeMeta{
 			APIVersion: "proton.kweaver.ai/v1alpha1",
@@ -61,12 +102,7 @@ func defaultManifest(info architectureInfo) *Manifest {
 		},
 		Spec: ManifestSpec{
 			Architecture: info.goArch,
-			Binaries: []Artifact{
-				httpArtifact("calicoctl", "https://github.com/projectcalico/calico/releases/download/v3.25.2/calicoctl-linux-"+info.goArch, "", ""),
-				httpArtifact("helm", "https://get.helm.sh/helm-v3.20.0-linux-"+info.goArch+".tar.gz", "tar+gzip", "linux-"+info.goArch+"/helm"),
-				httpArtifact("nerdctl", "https://github.com/containerd/nerdctl/releases/download/v2.2.1/nerdctl-2.2.1-linux-"+info.goArch+".tar.gz", "tar+gzip", "nerdctl"),
-				httpArtifact("skopeo", "https://github.com/kweaver-ai/proton/releases/download/skopeo-1.19.0/skopeo-linux-"+info.goArch, "", ""),
-			},
+			Binaries:     binaries,
 			Charts: []Artifact{
 				httpArtifact("component-manage-0.0.2.tgz", "https://github.com/kweaver-ai/proton/releases/download/component-manage-0.0.2/component-manage-0.0.2.tgz", "", ""),
 				httpArtifact("ingress-nginx-4.15.0.tgz", "https://github.com/kweaver-ai/proton/releases/download/ingress-nginx-4.15.0/ingress-nginx-4.15.0.tgz", "", ""),
