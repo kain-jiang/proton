@@ -3,7 +3,7 @@ name: proton-cli-build
 on:
   push:
     branches:
-      - '**'
+      - "**"
     paths:
       - "proton-cli/**"
   workflow_dispatch:
@@ -25,6 +25,7 @@ jobs:
         uses: actions/setup-go@v6
         with:
           go-version-file: proton-cli/go.mod
+          cache-dependency-path: proton-cli/go.sum
 
       - name: Build proton-cli binaries
         working-directory: proton-cli
