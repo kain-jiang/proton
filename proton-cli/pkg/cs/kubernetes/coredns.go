@@ -86,7 +86,7 @@ spec:
         node-role.kubernetes.io/control-plane: ""
       containers:
       - name: coredns
-        image: {{ .ImageRepository }}/coredns:v1.13.1
+        image: {{ .ImageRepository }}/coredns:v1.12.1
         imagePullPolicy: IfNotPresent
         resources:
           limits:
