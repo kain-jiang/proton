@@ -128,7 +128,7 @@ func defaultManifest(info architectureInfo) *Manifest {
 				httpArtifact("proton-cr-1.2.5-87.el7."+info.packageArch+".rpm", "https://github.com/kweaver-ai/proton/releases/download/proton-cr-1.2.5/proton-cr-1.2.5-87.el7."+info.packageArch+".rpm", "", ""),
 				httpArtifact("proton-cr-chartmuseum-0.15.0."+info.packageArch+".rpm", "https://github.com/kweaver-ai/proton/releases/download/proton-cr-chartmuseum-0.15.0/proton-cr-chartmuseum-0.15.0."+info.packageArch+".rpm", "", ""),
 				httpArtifact("proton-cr-registry-2.7.1."+info.packageArch+".rpm", "https://github.com/kweaver-ai/proton/releases/download/proton-cr-registry-2.7.1/proton-cr-registry-2.7.1."+info.packageArch+".rpm", "", ""),
-				httpArtifact("runc-1.4.0-1.el10_2.x86_64.rpm", "https://mirrors.aliyun.com/epel/10/Everything/"+info.packageArch+"/Packages/r/runc-1.4.0-1.el10_2."+info.packageArch+".rpm", "", ""),
+				ociArtifact("runc-1.4.2-1.proton."+info.packageArch+".rpm", "swr.cn-east-3.myhuaweicloud.com/kweaver-ai/proton/rpm/runc:1.4.2-1.proton."+info.packageArch),
 			},
 		},
 	}
