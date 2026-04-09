@@ -38,5 +38,4 @@ jobs:
         with:
           name: proton-cli-bins
           path: proton-cli/_output/local/bin
-          compression-level: 0
           if-no-files-found: error
