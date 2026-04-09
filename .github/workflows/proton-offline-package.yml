@@ -42,8 +42,7 @@ jobs:
       - name: Build offline package
         working-directory: proton-cli
         run: |
-          mv _output/local/bin/linux/${{ matrix.arch }}/proton-cli ./proton-cli
-          ./proton-cli offline-package build --manifest manifest.yaml
+          ./_output/local/bin/linux/${{ matrix.arch }}/proton-cli offline-package build --manifest manifest.yaml
 
       - name: Install ORAS
         uses: oras-project/setup-oras@v2
