@@ -156,16 +156,16 @@ depends:
 # This can be binaries or any other files.
 contents:
   # Binaries
-  - src: build/${PLATFORM}-${ARCH}/bin/containerd
+  - src: ${PLATFORM}-${ARCH}/bin/containerd
     dst: /usr/bin/containerd
     expand: true
-  - src: build/${PLATFORM}-${ARCH}/bin/containerd-stress
+  - src: ${PLATFORM}-${ARCH}/bin/containerd-stress
     dst: /usr/bin/containerd-stress
     expand: true
-  - src: build/${PLATFORM}-${ARCH}/bin/containerd-shim-runc-v2
+  - src: ${PLATFORM}-${ARCH}/bin/containerd-shim-runc-v2
     dst: /usr/bin/containerd-shim-runc-v2
     expand: true
-  - src: build/${PLATFORM}-${ARCH}/bin/ctr
+  - src: ${PLATFORM}-${ARCH}/bin/ctr
     dst: /usr/bin/ctr
     expand: true
 

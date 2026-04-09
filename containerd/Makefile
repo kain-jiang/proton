@@ -2,10 +2,11 @@
 #
 # This Makefile downloads official containerd release binaries and creates
 # RPM/DEB packages using nfpm.
+ALL_ARCH_LIST = amd64 arm64
 
 # Default architecture and version
 export VERSION	?= 2.2.2
-export RELEASE	?= 1.proton
+export RELEASE	?= 2.proton
 export ARCH   	?= amd64
 export PLATFORM	?= linux
 
@@ -26,14 +27,16 @@ endif
 OUTPUT_DIR := output
 
 # Build directory
-BUILD_DIR := build/$(PLATFORM)-$(ARCH)
+BUILD_DIR := $(PLATFORM)-$(ARCH)
 # .unpacked-success
 UNPACKED_SUCCESS := $(BUILD_DIR)/.unpacked-success-$(ARCH)
 
 # Artifact
-TARBALL ?= https://localhost/mirror/github.com/containerd/containerd/releases/download/v$(VERSION)/containerd-$(VERSION)-linux-$(ARCH).tar.gz
-RPM		?= containerd-$(VERSION)-$(RELEASE).$(OS_ARCH).rpm
-SWR		?= swr.cn-east-3.myhuaweicloud.com/kweaver-ai/proton/rpm/containerd:$(VERSION)-$(RELEASE).$(OS_ARCH)
+GITHUB  	?= https://github.com
+GITHUB_REPO ?= containerd/containerd
+TARBALL 	?= $(GITHUB)/$(GITHUB_REPO)/releases/download/v$(VERSION)/containerd-static-$(VERSION)-linux-$(ARCH).tar.gz
+RPM			?= containerd-$(VERSION)-$(RELEASE).$(OS_ARCH).rpm
+SWR			?= swr.cn-east-3.myhuaweicloud.com/kweaver-ai/proton/rpm/containerd:$(VERSION)-$(RELEASE).$(OS_ARCH)
 
 .PHONY: help
 help: ## Display this help.
@@ -42,33 +45,30 @@ help: ## Display this help.
 ##@ Build
 
 .PHONY: build
-build: $(OUTPUT_DIR)/$(RPM)
+build: $(RPM)
 build: ## Build containerd rpm package
 
-$(OUTPUT_DIR)/$(RPM): $(OUTPUT_DIR) $(UNPACKED_SUCCESS)
-# 	VERSION=$(VERSION) RELEASE=$(RELEASE) ARCH=$(ARCH) nfpm package --packager=rpm --target="$(OUTPUT_DIR)/$(RPM)"
-	nfpm package --packager=rpm --target="$(OUTPUT_DIR)/$(RPM)"
+$(RPM): $(UNPACKED_SUCCESS) nfpm.yaml config.toml containerd.service
+	nfpm package --packager=rpm --target="$(@)"
 
 $(UNPACKED_SUCCESS): $(BUILD_DIR)
 	curl --location --fail --silent $(TARBALL) | tar --extract --gzip --directory $(BUILD_DIR)
-	touch $(UNPACKED_SUCCESS)
+	touch "$(@)"
 
-$(OUTPUT_DIR):
-	mkdir --parent $(OUTPUT_DIR)
 $(BUILD_DIR):
 	mkdir --parent $(BUILD_DIR)
 
 ##@ Release
 .PHONY: release
 push: ## Push rpm packages to Huawei Cloud SWR
-push: $(OUTPUT_DIR)/$(RPM)
-	oras push $(SWR) $(OUTPUT_DIR)/$(RPM)
+push: $(RPM)
+	oras push $(SWR) $(RPM)
 
 ##@ Clean
 
 .PHONY: clean
 clean: ## Clean build artifacts
-	@rm -rf $(OUTPUT_DIR) $(BUILD_DIR)
+	rm -rf $(foreach arch,$(ALL_ARCH_LIST),$(PLATFORM)-$(arch)) *.rpm
 
 ##@ Info
 

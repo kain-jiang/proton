@@ -1,4 +1,4 @@
 *.rpm
 *.tar.gz
-output
-build
+linux-amd64
+linux-arm64
