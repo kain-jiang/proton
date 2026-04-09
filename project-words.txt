@@ -56,6 +56,16 @@ mongoshake
 # OpenSearch
 opensearch
 
+# Linux Distribution
+kylin
+openeuler
+
+# Linux Dynamic Library
+libdevmapper
+libmount
+libselinux
+libsystemd
+
 # Nebula
 graphd
 metad

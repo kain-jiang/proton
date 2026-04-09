@@ -36,6 +36,33 @@ function install_rpm_packages {
   dnf install "${names[@]}" --repo=proton
 }
 
+function patch_for_distro {
+  (
+    if [[ ! -f /etc/os-release ]]; then
+      echo >&2 "WARNING: /etc/os-release does't exist"
+      return
+    fi
+    # 在子 shell 载入 /etc/os-release 避免污染当前 shell 环境
+    source /etc/os-release
+    case "${ID}-${VERSION_ID}" in
+      kylin-V10)
+        # 如果存在 libselinux.so.1，ecms 调用 systemctl 失败
+        # systemctl: /usr/local/ecms/bin/libselinux.so.1: no version information available (required by /usr/lib/systemd/libsystemd-shared-243.so)
+        # systemctl: /usr/local/ecms/bin/libselinux.so.1: no version information available (required by /usr/lib64/libmount.so.1)
+        # systemctl: /usr/local/ecms/bin/libselinux.so.1: no version information available (required by /usr/lib64/libdevmapper.so.1.02)
+        local target="/usr/local/ecms/bin/libselinux.so.1"
+        if [[ -f "${target}" ]]; then
+          rm "${target}"
+        fi
+        ;;
+
+      *)
+        echo "Not any patches for ${ID}-${VERSION_ID}"
+        ;;
+    esac
+  )
+}
+
 function enable_and_start_services {
   local units=(
     ecms.service
@@ -46,4 +73,5 @@ function enable_and_start_services {
 
 install_binaries
 install_rpm_packages
+patch_for_distro
 enable_and_start_services
