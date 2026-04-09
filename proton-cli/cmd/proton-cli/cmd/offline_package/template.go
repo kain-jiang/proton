@@ -153,7 +153,7 @@ func defaultManifest(info architectureInfo, protonCLIPath string, protonCLIVersi
 			RPMs: []Artifact{
 				// Example: Pull RPM from OCI registry using oras
 				// ociArtifact("example-package."+info.packageArch+".rpm", "registry.example.com/rpms/example-package:1.0.0-"+info.packageArch),
-				ociArtifact("containerd-2.2.2-1.proton."+info.packageArch+".rpm", "swr.cn-east-3.myhuaweicloud.com/kweaver-ai/proton/rpm/containerd:2.2.2-1.proton."+info.packageArch),
+				ociArtifact("containerd-2.2.2-2.proton."+info.packageArch+".rpm", "swr.cn-east-3.myhuaweicloud.com/kweaver-ai/proton/rpm/containerd:2.2.2-2.proton."+info.packageArch),
 				httpArtifact("cri-tools-1.34.0-150500.1.1."+info.packageArch+".rpm", "https://mirrors.aliyun.com/kubernetes-new/core/stable/v1.34/rpm/"+info.packageArch+"/cri-tools-1.34.0-150500.1.1."+info.packageArch+".rpm", "", ""),
 				httpArtifact("ecms-1.1.8-120.el7."+info.packageArch+".rpm", "https://github.com/kweaver-ai/proton/releases/download/ecms%2F1.1.8/ecms-1.1.8-120.el7."+info.packageArch+".rpm", "", ""),
 				httpArtifact("haproxy-2.5.6."+info.packageArch+".rpm", "https://github.com/kweaver-ai/proton/releases/download/haproxy%2F2.5.6/haproxy-2.5.6."+info.packageArch+".rpm", "", ""),
@@ -164,7 +164,7 @@ func defaultManifest(info architectureInfo, protonCLIPath string, protonCLIVersi
 				httpArtifact("proton-cr-1.2.5-87.el7."+info.packageArch+".rpm", "https://github.com/kweaver-ai/proton/releases/download/proton-cr-1.2.5/proton-cr-1.2.5-87.el7."+info.packageArch+".rpm", "", ""),
 				httpArtifact("proton-cr-chartmuseum-0.15.0."+info.packageArch+".rpm", "https://github.com/kweaver-ai/proton/releases/download/proton-cr-chartmuseum-0.15.0/proton-cr-chartmuseum-0.15.0."+info.packageArch+".rpm", "", ""),
 				httpArtifact("proton-cr-registry-2.7.1."+info.packageArch+".rpm", "https://github.com/kweaver-ai/proton/releases/download/proton-cr-registry-2.7.1/proton-cr-registry-2.7.1."+info.packageArch+".rpm", "", ""),
-				ociArtifact("runc-1.4.2-1.proton."+info.packageArch+".rpm", "swr.cn-east-3.myhuaweicloud.com/kweaver-ai/proton/rpm/runc:1.4.2-1.proton."+info.packageArch),
+				ociArtifact("runc-1.4.2-2.proton."+info.packageArch+".rpm", "swr.cn-east-3.myhuaweicloud.com/kweaver-ai/proton/rpm/runc:1.4.2-2.proton."+info.packageArch),
 			},
 		},
 	}
