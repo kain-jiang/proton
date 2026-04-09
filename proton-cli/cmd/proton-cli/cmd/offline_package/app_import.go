@@ -22,11 +22,13 @@ type appImportOptions struct {
 	input               string
 	auto                bool
 	registry            string
+	registries          []string
 	registryUsername    string
 	registryPassword    string
 	registryPlainHTTP   bool
 	force               bool
 	chartmuseumURL      string
+	chartmuseumURLs     []string
 	chartmuseumUsername string
 	chartmuseumPassword string
 }
@@ -85,19 +87,29 @@ func runAppImport(ctx context.Context, opts *appImportOptions) error {
 	}
 	_ = manifestPath
 
-	log.Printf("pushing images")
-	imageCount, err := importAppImages(ctx, imagesDir, opts.registry, opts.registryUsername, opts.registryPassword, opts.registryPlainHTTP)
+	registries := opts.registries
+	if len(registries) == 0 && opts.registry != "" {
+		registries = []string{opts.registry}
+	}
+
+	log.Printf("pushing images to %d registry node(s)", len(registries))
+	imageCount, err := importAppImages(ctx, imagesDir, registries, opts.registryUsername, opts.registryPassword, opts.registryPlainHTTP)
 	if err != nil {
 		return err
 	}
 
-	log.Printf("uploading charts")
-	chartCount, err := importAppCharts(chartsDir, opts.chartmuseumURL, opts.chartmuseumUsername, opts.chartmuseumPassword, opts.force)
+	chartmuseumURLs := opts.chartmuseumURLs
+	if len(chartmuseumURLs) == 0 && opts.chartmuseumURL != "" {
+		chartmuseumURLs = []string{opts.chartmuseumURL}
+	}
+
+	log.Printf("uploading charts to %d chartmuseum node(s)", len(chartmuseumURLs))
+	chartCount, err := importAppCharts(chartsDir, chartmuseumURLs, opts.chartmuseumUsername, opts.chartmuseumPassword, opts.force)
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("import completed\n- registry: %s\n- chartmuseum: %s\n- charts imported: %d\n- images imported: %d\n", opts.registry, opts.chartmuseumURL, chartCount, imageCount)
+	fmt.Printf("import completed\n- registries: %v\n- chartmuseums: %v\n- charts imported: %d\n- images imported: %d\n", registries, chartmuseumURLs, chartCount, imageCount)
 	return nil
 }
 
@@ -143,7 +155,7 @@ func validateAppPackageLayout(root string) (string, string, string, error) {
 	return manifestPath, chartsDir, imagesDir, nil
 }
 
-func importAppImages(ctx context.Context, imagesDir, registryHost, username, password string, plainHTTP bool) (int, error) {
+func importAppImages(ctx context.Context, imagesDir string, registryHosts []string, username, password string, plainHTTP bool) (int, error) {
 	tags, err := loadOCIImageTags(imagesDir)
 	if err != nil {
 		return 0, fmt.Errorf("read image tags from package: %w", err)
@@ -160,32 +172,25 @@ func importAppImages(ctx context.Context, imagesDir, registryHost, username, pas
 			return 0, fmt.Errorf("parse image tag %s: %w", tag, err)
 		}
 
-		destination := fmt.Sprintf("%s/%s:%s", strings.TrimSuffix(registryHost, "/"), repositoryName, tagName)
-		log.Printf("push image %s", destination)
+		for _, registryHost := range registryHosts {
+			destination := fmt.Sprintf("%s/%s:%s", strings.TrimSuffix(registryHost, "/"), repositoryName, tagName)
+			log.Printf("push image %s", destination)
 
-		dstRepo, _, err := newRemoteRepositoryForReference(destination, username, password, plainHTTP)
-		if err != nil {
-			return 0, fmt.Errorf("prepare registry repository for %s: %w", destination, err)
-		}
+			dstRepo, _, err := newRemoteRepositoryForReference(destination, username, password, plainHTTP)
+			if err != nil {
+				return 0, fmt.Errorf("prepare registry repository for %s: %w", destination, err)
+			}
 
-		if _, err := oras.Copy(ctx, src, tag, dstRepo, tagName, oras.DefaultCopyOptions); err != nil {
-			return 0, fmt.Errorf("push image %s: %w", destination, err)
+			if _, err := oras.Copy(ctx, src, tag, dstRepo, tagName, oras.DefaultCopyOptions); err != nil {
+				return 0, fmt.Errorf("push image %s: %w", destination, err)
+			}
 		}
 	}
 
 	return len(tags), nil
 }
 
-func importAppCharts(chartsDir, host, username, password string, force bool) (int, error) {
-	client, err := chartmuseum.NewClient(
-		chartmuseum.URL(host),
-		chartmuseum.Username(username),
-		chartmuseum.Password(password),
-	)
-	if err != nil {
-		return 0, fmt.Errorf("create chartmuseum client: %w", err)
-	}
-
+func importAppCharts(chartsDir string, hosts []string, username, password string, force bool) (int, error) {
 	entries, err := os.ReadDir(chartsDir)
 	if err != nil {
 		return 0, err
@@ -198,15 +203,27 @@ func importAppCharts(chartsDir, host, username, password string, force bool) (in
 		}
 
 		chartPath := filepath.Join(chartsDir, entry.Name())
-		resp, err := client.UploadChartPackage(chartPath, force)
-		if err != nil {
-			return 0, fmt.Errorf("upload chart %s: %w", entry.Name(), err)
-		}
+		for _, host := range hosts {
+			client, err := chartmuseum.NewClient(
+				chartmuseum.URL(host),
+				chartmuseum.Username(username),
+				chartmuseum.Password(password),
+			)
+			if err != nil {
+				return 0, fmt.Errorf("create chartmuseum client: %w", err)
+			}
 
-		body, _ := io.ReadAll(resp.Body)
-		_ = resp.Body.Close()
-		if resp.StatusCode != 201 && resp.StatusCode != 202 {
-			return 0, fmt.Errorf("upload chart %s failed: http %d: %s", entry.Name(), resp.StatusCode, strings.TrimSpace(string(body)))
+			log.Printf("upload chart %s to %s", entry.Name(), host)
+			resp, err := client.UploadChartPackage(chartPath, force)
+			if err != nil {
+				return 0, fmt.Errorf("upload chart %s: %w", entry.Name(), err)
+			}
+
+			body, _ := io.ReadAll(resp.Body)
+			_ = resp.Body.Close()
+			if resp.StatusCode != 201 && resp.StatusCode != 202 {
+				return 0, fmt.Errorf("upload chart %s failed: http %d: %s", entry.Name(), resp.StatusCode, strings.TrimSpace(string(body)))
+			}
 		}
 
 		count++

@@ -131,6 +131,35 @@ func ImageRepository(cr *configuration.Cr) (host, username, password string) {
 	}
 }
 
+// ImageRepositoryMulti 返回访问指定 CR 的容器镜像仓库所用的多个节点地址、用户名、密码。
+// 当 CR 为 Local 类型时，返回所有节点地址；当为 External 类型时，返回单地址。
+func ImageRepositoryMulti(cr *configuration.Cr) (hosts []string, username, password string) {
+	switch {
+	case cr == nil:
+		return
+	case cr.Local != nil:
+		port := cr.Local.Ports.Registry
+		for _, h := range cr.Local.Hosts {
+			host := net.JoinHostPort(h, strconv.Itoa(port))
+			hosts = append(hosts, host)
+		}
+		return
+	case cr.External != nil:
+		switch cr.External.ImageRepo {
+		case configuration.RepoRegistry:
+			return []string{cr.External.Registry.Host}, strings.TrimSpace(cr.External.Registry.Username), strings.TrimSpace(cr.External.Registry.Password)
+		case configuration.RepoOCI:
+			return []string{cr.External.OCI.Registry}, strings.TrimSpace(cr.External.OCI.Username), strings.TrimSpace(cr.External.OCI.Password)
+		case configuration.RepoDefault:
+			return []string{cr.External.Registry.Host}, strings.TrimSpace(cr.External.Registry.Username), strings.TrimSpace(cr.External.Registry.Password)
+		default:
+			return nil, "", ""
+		}
+	default:
+		return
+	}
+}
+
 // Chartmuseum 返回访问指定 CR 的 chartmusem 所用的地址、用户名、密码。如果用户
 // 名非空则代表需要验证。如果CR 无可用的地址则返回空字符串
 func Chartmuseum(cr *configuration.Cr) (host, username, password string) {
@@ -160,6 +189,40 @@ func Chartmuseum(cr *configuration.Cr) (host, username, password string) {
 			return cr.External.Chartmuseum.Host, cr.External.Chartmuseum.Username, cr.External.Chartmuseum.Password
 		default:
 			return "", "", ""
+		}
+
+	default:
+	}
+	return
+}
+
+// ChartmuseumMulti 返回访问指定 CR 的 chartmuseum 所用的多个节点地址、用户名、密码。
+// 当 CR 为 Local 类型时，返回所有节点地址；当为 External 类型时，返回单地址。
+func ChartmuseumMulti(cr *configuration.Cr) (hosts []string, username, password string) {
+	switch {
+	case cr == nil:
+		return
+	case cr.Local != nil:
+		port := cr.Local.Ports.Chartmuseum
+		for _, h := range cr.Local.Hosts {
+			host := net.JoinHostPort(h, strconv.Itoa(port))
+			hostURL := url.URL{
+				Scheme: "http",
+				Host:   host,
+			}
+			hosts = append(hosts, hostURL.String())
+		}
+		return
+	case cr.External != nil:
+		switch cr.External.ChartRepo {
+		case configuration.RepoChartmuseum:
+			return []string{cr.External.Chartmuseum.Host}, cr.External.Chartmuseum.Username, cr.External.Chartmuseum.Password
+		case configuration.RepoOCI:
+			return nil, "", ""
+		case configuration.RepoDefault:
+			return []string{cr.External.Chartmuseum.Host}, cr.External.Chartmuseum.Username, cr.External.Chartmuseum.Password
+		default:
+			return nil, "", ""
 		}
 
 	default:

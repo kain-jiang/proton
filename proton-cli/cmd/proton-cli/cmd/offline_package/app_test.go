@@ -613,11 +613,11 @@ func TestHydrateAppImportOptionsUsesAutoTargets(t *testing.T) {
 	original := loadAppImportAutoTargetsFunc
 	loadAppImportAutoTargetsFunc = func(_ context.Context) (*appImportAutoTargets, error) {
 		return &appImportAutoTargets{
-			registry:            "registry.example.com",
+			registries:          []string{"registry.example.com"},
 			registryUsername:    "user",
 			registryPassword:    "pass",
 			registryPlainHTTP:   true,
-			chartmuseumURL:      "http://chartmuseum.example.com",
+			chartmuseumURLs:     []string{"http://chartmuseum.example.com"},
 			chartmuseumUsername: "chart-user",
 			chartmuseumPassword: "chart-pass",
 		}, nil
@@ -648,9 +648,9 @@ func TestHydrateAppImportOptionsManualOverridesAuto(t *testing.T) {
 	original := loadAppImportAutoTargetsFunc
 	loadAppImportAutoTargetsFunc = func(_ context.Context) (*appImportAutoTargets, error) {
 		return &appImportAutoTargets{
-			registry:          "auto.registry",
+			registries:        []string{"auto.registry"},
 			registryPlainHTTP: true,
-			chartmuseumURL:    "http://auto.chartmuseum",
+			chartmuseumURLs:   []string{"http://auto.chartmuseum"},
 		}, nil
 	}
 	defer func() {
@@ -696,10 +696,10 @@ func TestAppImportAutoTargetsFromExternalOCI(t *testing.T) {
 	if err != nil {
 		t.Fatalf("appImportAutoTargetsFromConfig returned error: %v", err)
 	}
-	if targets.registry != "registry.example.com" || !targets.registryPlainHTTP {
+	if len(targets.registries) != 1 || targets.registries[0] != "registry.example.com" || !targets.registryPlainHTTP {
 		t.Fatalf("unexpected registry targets: %+v", targets)
 	}
-	if targets.chartmuseumURL != "http://chartmuseum.example.com" {
+	if len(targets.chartmuseumURLs) != 1 || targets.chartmuseumURLs[0] != "http://chartmuseum.example.com" {
 		t.Fatalf("unexpected chartmuseum url: %+v", targets)
 	}
 }

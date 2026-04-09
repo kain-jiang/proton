@@ -58,6 +58,8 @@
 - 镜像推送目标为 `<registry>/<localRef>`
 - chart 上传到 ChartMuseum
 - `--force` 用于覆盖已存在 chart
+- 当 `--auto` 且 CR 为 Local 类型时，镜像和 chart 会推送到所有节点
+- `cr.Local.Hosts` 列出所有节点，`ha_ports` 或 `ports` 提供端口信息
 
 ## 文档要求
 
@@ -72,6 +74,7 @@
   - 镜像提取
   - override 逻辑
   - 导出 manifest 元数据
+  - 多节点导入（Local CR 场景）
 - 本目录代码变更后，优先执行：
 
 ```bash

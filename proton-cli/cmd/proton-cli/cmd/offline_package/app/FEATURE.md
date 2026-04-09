@@ -542,6 +542,29 @@ offlinePackage:
 - 默认 `--force=false`，如果远端已存在相同 chart+version，则报错并停止
 - 当 `--force=true` 时，允许覆盖远端已存在 chart
 
+### 6.4 多节点导入
+
+当使用 `--auto` 且当前 Proton CR 类型为 `local` 时，registry 和 chartmuseum 都可能有多个节点。
+
+行为：
+
+- 镜像会被推送到所有 registry 节点
+- Chart 会被上传到所有 chartmuseum 节点
+- 任一节点推送/上传失败都会导致整体失败
+
+多节点地址来源：
+
+- Local CR 的 `hosts` 字段列出所有节点
+- 节点地址格式为 `<host>:<port>`，port 来自 `ports.Registry` 或 `ports.Chartmuseum`
+
+示例：
+
+- Local CR 配置了 3 个节点：`["node1", "node2", "node3"]`，端口为 5000
+- 镜像会分别推送到：
+  - `node1:5000/<repository>:<tag>`
+  - `node2:5000/<repository>:<tag>`
+  - `node3:5000/<repository>:<tag>`
+
 ## 7. 错误处理
 
 ### 7.1 导出阶段

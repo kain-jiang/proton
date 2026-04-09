@@ -11,11 +11,11 @@ import (
 )
 
 type appImportAutoTargets struct {
-	registry            string
+	registries          []string
 	registryUsername    string
 	registryPassword    string
 	registryPlainHTTP   bool
-	chartmuseumURL      string
+	chartmuseumURLs     []string
 	chartmuseumUsername string
 	chartmuseumPassword string
 }
@@ -28,8 +28,11 @@ func hydrateAppImportOptions(ctx context.Context, opts *appImportOptions) error 
 		if err != nil {
 			return err
 		}
-		if opts.registry == "" {
-			opts.registry = resolved.registry
+		if len(opts.registries) == 0 && opts.registry == "" && len(resolved.registries) > 0 {
+			opts.registries = resolved.registries
+		}
+		if opts.registry == "" && len(resolved.registries) > 0 {
+			opts.registry = resolved.registries[0]
 		}
 		if opts.registryUsername == "" {
 			opts.registryUsername = resolved.registryUsername
@@ -40,8 +43,11 @@ func hydrateAppImportOptions(ctx context.Context, opts *appImportOptions) error 
 		if !opts.registryPlainHTTP && resolved.registryPlainHTTP {
 			opts.registryPlainHTTP = true
 		}
-		if opts.chartmuseumURL == "" {
-			opts.chartmuseumURL = resolved.chartmuseumURL
+		if len(opts.chartmuseumURLs) == 0 && opts.chartmuseumURL == "" && len(resolved.chartmuseumURLs) > 0 {
+			opts.chartmuseumURLs = resolved.chartmuseumURLs
+		}
+		if opts.chartmuseumURL == "" && len(resolved.chartmuseumURLs) > 0 {
+			opts.chartmuseumURL = resolved.chartmuseumURLs[0]
 		}
 		if opts.chartmuseumUsername == "" {
 			opts.chartmuseumUsername = resolved.chartmuseumUsername
@@ -51,10 +57,10 @@ func hydrateAppImportOptions(ctx context.Context, opts *appImportOptions) error 
 		}
 	}
 
-	if strings.TrimSpace(opts.registry) == "" {
+	if len(opts.registries) == 0 && strings.TrimSpace(opts.registry) == "" {
 		return fmt.Errorf("target registry is required, set --registry or enable --auto")
 	}
-	if strings.TrimSpace(opts.chartmuseumURL) == "" {
+	if len(opts.chartmuseumURLs) == 0 && strings.TrimSpace(opts.chartmuseumURL) == "" {
 		return fmt.Errorf("target chartmuseum is required, set --chartmuseum-url or enable --auto")
 	}
 	return nil
@@ -81,20 +87,20 @@ func appImportAutoTargetsFromConfig(clusterCfg *configuration.ClusterConfig) (*a
 		return nil, fmt.Errorf("auto-detect import targets: current proton cluster chart repository is not chartmuseum")
 	}
 
-	registryHost, registryUsername, registryPassword := global.ImageRepository(clusterCfg.Cr)
-	if strings.TrimSpace(registryHost) == "" {
+	registryHosts, registryUsername, registryPassword := global.ImageRepositoryMulti(clusterCfg.Cr)
+	if len(registryHosts) == 0 {
 		return nil, fmt.Errorf("auto-detect import targets: current proton cluster has no image registry")
 	}
-	chartmuseumURL, chartmuseumUsername, chartmuseumPassword := global.Chartmuseum(clusterCfg.Cr)
-	if strings.TrimSpace(chartmuseumURL) == "" {
+	chartmuseumURLs, chartmuseumUsername, chartmuseumPassword := global.ChartmuseumMulti(clusterCfg.Cr)
+	if len(chartmuseumURLs) == 0 {
 		return nil, fmt.Errorf("auto-detect import targets: current proton cluster has no chartmuseum")
 	}
 
 	targets := &appImportAutoTargets{
-		registry:            registryHost,
+		registries:          registryHosts,
 		registryUsername:    registryUsername,
 		registryPassword:    registryPassword,
-		chartmuseumURL:      chartmuseumURL,
+		chartmuseumURLs:     chartmuseumURLs,
 		chartmuseumUsername: chartmuseumUsername,
 		chartmuseumPassword: chartmuseumPassword,
 	}

@@ -428,6 +428,16 @@ Chart 导入通过 ChartMuseum 接口逐个上传：
 
 `--force` 用于覆盖已存在的 chart。
 
+### 13.3 多节点导入
+
+当 `--auto` 且 CR 为 `local` 类型时，支持多节点导入：
+
+- `appImportAutoTargets` 结构体使用 `registries []string` 和 `chartmuseumURLs []string` 存储多个地址
+- `global.ImageRepositoryMulti()` 和 `global.ChartmuseumMulti()` 从 Local CR 的 `hosts` 字段获取所有节点地址
+- 镜像会被推送到所有 registry 节点
+- Chart 会被上传到所有 chartmuseum 节点
+- 任一节点失败会导致整体导入失败
+
 ## 14. 错误处理策略
 
 ### 14.1 直接失败
@@ -466,7 +476,7 @@ Chart 导入通过 ChartMuseum 接口逐个上传：
 
 - 本地文件和 HTTP(S) manifest 输入
 - `VersionSet` 必填字段校验
-- 忽略 `dependencies`
+- `dependencies` 递归展开
 - 按 `source.helmRepoUrl` 下载 chart
 - 从 values 提取两类镜像结构
 - 镜像去重
@@ -478,10 +488,10 @@ Chart 导入通过 ChartMuseum 接口逐个上传：
 - `--ignore-missing-images`
 - `--force`
 - `--override-registry`
+- 多节点导入（Local CR 场景下自动推送到所有节点）
 
 ### 15.2 当前未实现
 
-- `dependencies` 递归展开
 - 更复杂的 values 模板求值
 - `global.imageRegistry`
 - `digest` 形式镜像
