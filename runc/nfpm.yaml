@@ -112,9 +112,9 @@ license: Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND MIT AND MPL-2.0
 # Packages it replaces. (overridable)
 # This will expand any env var you set in the field, e.g. ${REPLACE_BLA}
 # the env var approach can be used to account for differences in platforms
-# replaces:
-#   - foobar
-#   - ${REPLACE_BLA}
+replaces:
+  # kylin V10 提供的 docker-runc 无法使用，没研究原因，直接卸载
+  - docker-runc
 
 # Packages it provides. (overridable)
 # This will expand any env var you set in the field, e.g. ${PROVIDES_BLA}
@@ -126,8 +126,8 @@ provides:
 # This will expand any env var you set in the field, e.g. ${DEPENDS_NGINX}
 # the env var approach can be used to account for differences in platforms
 # e.g. rhel needs nginx >= 1:1.18 and deb needs nginx (>= 1.18.0)
-depends:
-  - oci-runtime
+# depends:
+#   - oci-runtime
 
 # Recommended packages. (overridable)
 # This will expand any env var you set in the field, e.g. ${RECOMMENDS_BLA}

@@ -6,7 +6,7 @@ ALL_ARCH_LIST = amd64 arm64
 
 # Default architecture and version
 export VERSION	?= 1.4.2
-export RELEASE	?= 2.proton
+export RELEASE	?= 3.proton
 export ARCH   	?= amd64
 export PLATFORM	?= linux
 
@@ -69,3 +69,4 @@ info: ## Display build information
 	@echo "  Version:      $(VERSION)"
 	@echo "  Release:      $(RELEASE)"
 	@echo "  Source:       $(GITHUB_REL)"
+	@echo "  SWR:          $(SWR)"
