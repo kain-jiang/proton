@@ -73,7 +73,7 @@ release: ${RELEASE}
 # This will expand any env var you set in the field, e.g. maintainer: ${GIT_COMMITTER_NAME} <${GIT_COMMITTER_EMAIL}>
 # Defaults to empty on rpm and apk
 # Leaving the 'maintainer' field unset will not be allowed in a future version
-maintainer: 吴毓喆（Bedivere） <wu.yuzhe@kweaver.ai>
+# maintainer: Carlos Alexandro Becker <root@carlosbecker.com>
 
 # Description.
 # This will expand any env var you set in the field, e.g. description: ${DESCRIPTION}
@@ -153,7 +153,7 @@ depends:
 # This can be binaries or any other files.
 contents:
   # Binaries
-  - src: bin/runc.${ARCH}
+  - src: runc.${ARCH}
     dst: /usr/bin/runc
     expand: true
 
