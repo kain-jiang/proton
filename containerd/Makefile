@@ -6,7 +6,7 @@ ALL_ARCH_LIST = amd64 arm64
 
 # Default architecture and version
 export VERSION	?= 2.2.2
-export RELEASE	?= 2.proton
+export RELEASE	?= 3.proton
 export ARCH   	?= amd64
 export PLATFORM	?= linux
 
@@ -32,11 +32,11 @@ BUILD_DIR := $(PLATFORM)-$(ARCH)
 UNPACKED_SUCCESS := $(BUILD_DIR)/.unpacked-success-$(ARCH)
 
 # Artifact
-GITHUB  	?= https://github.com
+GITHUB      ?= https://github.com
 GITHUB_REPO ?= containerd/containerd
-TARBALL 	?= $(GITHUB)/$(GITHUB_REPO)/releases/download/v$(VERSION)/containerd-static-$(VERSION)-linux-$(ARCH).tar.gz
-RPM			?= containerd-$(VERSION)-$(RELEASE).$(OS_ARCH).rpm
-SWR			?= swr.cn-east-3.myhuaweicloud.com/kweaver-ai/proton/rpm/containerd:$(VERSION)-$(RELEASE).$(OS_ARCH)
+GITHUB_REL  ?= $(GITHUB)/$(GITHUB_REPO)/releases/download/v$(VERSION)/containerd-static-$(VERSION)-linux-$(ARCH).tar.gz
+RPM         ?= containerd-$(VERSION)-$(RELEASE).$(OS_ARCH).rpm
+SWR         ?= swr.cn-east-3.myhuaweicloud.com/kweaver-ai/proton/rpm/containerd:$(VERSION)-$(RELEASE).$(OS_ARCH)
 
 .PHONY: help
 help: ## Display this help.
@@ -52,7 +52,7 @@ $(RPM): $(UNPACKED_SUCCESS) nfpm.yaml config.toml containerd.service
 	nfpm package --packager=rpm --target="$(@)"
 
 $(UNPACKED_SUCCESS): $(BUILD_DIR)
-	curl --location --fail --silent $(TARBALL) | tar --extract --gzip --directory $(BUILD_DIR)
+	curl --location --fail --silent $(GITHUB_REL) | tar --extract --gzip --directory $(BUILD_DIR)
 	touch "$(@)"
 
 $(BUILD_DIR):
@@ -78,4 +78,4 @@ info: ## Display build information
 	@echo "  Architecture: $(ARCH) (OS: $(OS_ARCH), NFPM: $(NFPM_ARCH))"
 	@echo "  Version:      $(VERSION)"
 	@echo "  Release:      $(RELEASE)"
-	@echo "  Source:       $(TARBALL)"
+	@echo "  Source:       $(GITHUB_REL)"

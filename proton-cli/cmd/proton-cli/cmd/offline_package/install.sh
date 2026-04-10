@@ -33,7 +33,7 @@ function install_rpm_packages {
     kubelet
     proton-cr
   )
-  dnf install "${names[@]}" --repo=proton
+  dnf install "${names[@]}" --repo=proton --allowerasing
 }
 
 function patch_for_distro {

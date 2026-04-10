@@ -130,6 +130,7 @@ license: Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND ISC AND MIT AND MPL-2.
 # the env var approach can be used to account for differences in platforms
 # e.g. rhel needs nginx >= 1:1.18 and deb needs nginx (>= 1.18.0)
 depends:
+  - oci-runtime
   - runc
 
 # Recommended packages. (overridable)
