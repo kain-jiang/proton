@@ -3,7 +3,9 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"os"
+	"strconv"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -46,9 +48,12 @@ type appInstallFlags struct {
 	helmRepoURL     string
 	configFile      string
 	imageRegistry   string
+	accessAddress   string
 	accessHost      string
 	accessPort      int
+	accessPortSet   bool
 	accessScheme    string
+	accessSchemeSet bool
 }
 
 func newAppInstallCmd() *cobra.Command {
@@ -69,6 +74,8 @@ Examples:
   proton-cli app install -f ./release-manifests/0.4.0/kweaver-dip.yaml --dry-run
   proton-cli app install -f ./release-manifests/0.4.0/kweaver-dip.yaml --config ~/.kweaver-ai/config.yaml`,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			f.accessPortSet = cmd.Flags().Changed("access-port")
+			f.accessSchemeSet = cmd.Flags().Changed("access-scheme")
 			return runAppInstall(cmd.Context(), f)
 		},
 	}
@@ -82,6 +89,7 @@ Examples:
 	cmd.Flags().StringVar(&f.helmRepoURL, "helm-repo-url", "", "override helm repo URL for all releases (adds/updates repo before install)")
 	cmd.Flags().StringVar(&f.configFile, "config", "", "path to deploy config.yaml (fallback if K8s secret unavailable)")
 	cmd.Flags().StringVar(&f.imageRegistry, "image-registry", "", "container image registry (e.g. swr.cn-east-3.myhuaweicloud.com/kweaver-ai)")
+	cmd.Flags().StringVar(&f.accessAddress, "access-address", "", "cluster access address URL (e.g. https://1.1.1.1:8443/)")
 	cmd.Flags().StringVar(&f.accessHost, "access-host", "", "cluster access address host (auto-detect from K8s nodes if not specified)")
 	cmd.Flags().IntVar(&f.accessPort, "access-port", 443, "cluster access address port")
 	cmd.Flags().StringVar(&f.accessScheme, "access-scheme", "https", "cluster access address scheme (http/https)")
@@ -132,25 +140,14 @@ func runAppInstall(ctx context.Context, f *appInstallFlags) error {
 	}
 
 	// Apply accessAddress override or auto-detect
-	accessAddr := make(map[string]interface{})
-	if f.accessHost != "" {
-		accessAddr["host"] = f.accessHost
-	} else if existingAddr, ok := values["accessAddress"].(map[string]interface{}); ok && existingAddr["host"] != nil {
-		// Keep existing from ClusterConfig
-		accessAddr = existingAddr
-	} else {
-		// Auto-detect from K8s nodes
-		if host := detectAccessHost(); host != "" {
-			accessAddr["host"] = host
-			log.Infof("Auto-detected access host: %s", host)
-		} else {
-			log.Warn("Could not auto-detect access host, using localhost")
-			accessAddr["host"] = "localhost"
-		}
+	if f.accessPortSet || f.accessSchemeSet || f.accessHost != "" || f.accessAddress != "" {
+		log.Info("Applying CLI accessAddress override")
 	}
-	accessAddr["port"] = f.accessPort
-	accessAddr["scheme"] = f.accessScheme
-	accessAddr["path"] = "/"
+	existingAddr, _ := values["accessAddress"].(map[string]interface{})
+	accessAddr, err := resolveAccessAddress(existingAddr, f, detectAccessHost)
+	if err != nil {
+		return fmt.Errorf("resolve access address: %w", err)
+	}
 	values["accessAddress"] = accessAddr
 
 	// 确定 Helm 仓库地址（优先级：CLI 参数 > ClusterConfig 内置仓库 > manifest）
@@ -289,6 +286,138 @@ func detectAccessHost() string {
 	}
 
 	return ""
+}
+
+func parseAccessAddressURL(raw string) (map[string]interface{}, error) {
+	u, err := url.Parse(raw)
+	if err != nil {
+		return nil, fmt.Errorf("parse access address url %q: %w", raw, err)
+	}
+	if u.Scheme != "http" && u.Scheme != "https" {
+		return nil, fmt.Errorf("access address scheme must be http or https")
+	}
+	if u.Hostname() == "" {
+		return nil, fmt.Errorf("access address host is required")
+	}
+	if u.RawQuery != "" {
+		return nil, fmt.Errorf("access address query is not supported")
+	}
+	if u.Fragment != "" {
+		return nil, fmt.Errorf("access address fragment is not supported")
+	}
+	if u.User != nil {
+		return nil, fmt.Errorf("access address userinfo is not supported")
+	}
+
+	port := 0
+	if u.Port() != "" {
+		port, err = strconv.Atoi(u.Port())
+		if err != nil {
+			return nil, fmt.Errorf("parse access address port: %w", err)
+		}
+	} else if u.Scheme == "https" {
+		port = 443
+	} else {
+		port = 80
+	}
+
+	path := u.EscapedPath()
+	if path == "" {
+		path = "/"
+	}
+
+	return map[string]interface{}{
+		"host":   u.Hostname(),
+		"port":   port,
+		"scheme": u.Scheme,
+		"path":   path,
+	}, nil
+}
+
+func resolveAccessAddress(existing map[string]interface{}, f *appInstallFlags, detectHost func() string) (map[string]interface{}, error) {
+	if f != nil && f.accessAddress != "" {
+		return parseAccessAddressURL(f.accessAddress)
+	}
+
+	resolved := normalizeAccessAddress(existing)
+
+	if f != nil {
+		if f.accessHost != "" {
+			resolved["host"] = f.accessHost
+		}
+		if f.accessPortSet {
+			resolved["port"] = f.accessPort
+		}
+		if f.accessSchemeSet {
+			resolved["scheme"] = f.accessScheme
+		}
+	}
+
+	if stringValue(resolved["host"]) == "" {
+		if detectHost != nil {
+			if host := detectHost(); host != "" {
+				resolved["host"] = host
+			}
+		}
+		if stringValue(resolved["host"]) == "" {
+			resolved["host"] = "localhost"
+		}
+	}
+	if intValue(resolved["port"]) == 0 {
+		if stringValue(resolved["scheme"]) == "http" {
+			resolved["port"] = 80
+		} else {
+			resolved["port"] = 443
+		}
+	}
+	if stringValue(resolved["scheme"]) == "" {
+		resolved["scheme"] = "https"
+	}
+	if stringValue(resolved["path"]) == "" {
+		resolved["path"] = "/"
+	}
+
+	return resolved, nil
+}
+
+func normalizeAccessAddress(existing map[string]interface{}) map[string]interface{} {
+	resolved := map[string]interface{}{}
+	if existing == nil {
+		return resolved
+	}
+	if host := stringValue(existing["host"]); host != "" {
+		resolved["host"] = host
+	}
+	if port := intValue(existing["port"]); port != 0 {
+		resolved["port"] = port
+	}
+	if scheme := stringValue(existing["scheme"]); scheme != "" {
+		resolved["scheme"] = scheme
+	}
+	if path := stringValue(existing["path"]); path != "" {
+		resolved["path"] = path
+	}
+	return resolved
+}
+
+func stringValue(v interface{}) string {
+	s, _ := v.(string)
+	return s
+}
+
+func intValue(v interface{}) int {
+	switch value := v.(type) {
+	case int:
+		return value
+	case int32:
+		return int(value)
+	case int64:
+		return int(value)
+	case float64:
+		return int(value)
+	default:
+		return 0
+	}
 }
 
 // loadConfigFileAsValues 将 deploy 格式的 config.yaml 直接加载为 map[string]interface{}，

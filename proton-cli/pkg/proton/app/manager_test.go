@@ -535,6 +535,104 @@ releases:
 	}
 }
 
+func TestUninstallKeepsStudioWebUntilAllDependentsAreRemoved(t *testing.T) {
+	dir := t.TempDir()
+	manifestPath := filepath.Join(dir, "manifest.yaml")
+	manifest := `apiVersion: deploy.kweaver.ai/v1alpha1
+kind: VersionSet
+product: kweaver-dip
+version: 0.5.0
+source:
+  helmRepoName: local
+releases:
+  dip-data-migrator:
+    chart: dip-data-migrator
+    version: 1.0.0
+    stage: pre
+  deploy-web:
+    chart: deploy-web
+    version: 1.0.0
+  studio-web:
+    chart: studio-web
+    version: 1.0.0
+  business-system-service:
+    chart: business-system-service
+    version: 1.0.0
+  data-semantic:
+    chart: data-semantic
+    version: 1.0.0
+  task-center:
+    chart: task-center
+    version: 1.0.0
+  business-system-frontend:
+    chart: business-system-frontend
+    version: 1.0.0
+    dependsOn:
+      - studio-web
+  mf-model-manager-nginx:
+    chart: mf-model-manager-nginx
+    version: 1.0.0
+    dependsOn:
+      - studio-web
+  vega-web:
+    chart: vega-web
+    version: 1.0.0
+    dependsOn:
+      - studio-web
+  operator-web:
+    chart: operator-web
+    version: 1.0.0
+    dependsOn:
+      - studio-web
+  agent-web:
+    chart: agent-web
+    version: 1.0.0
+    dependsOn:
+      - studio-web
+  flow-web:
+    chart: flow-web
+    version: 1.0.0
+    dependsOn:
+      - studio-web
+`
+	if err := os.WriteFile(manifestPath, []byte(manifest), 0o600); err != nil {
+		t.Fatalf("write manifest: %v", err)
+	}
+
+	logger := logrus.New()
+	fakeHelm := helm3testing.New("kweaver", logger.Printf)
+	manager := &Manager{
+		Helm:      fakeHelm,
+		Namespace: "kweaver",
+		Logger:    logger,
+	}
+
+	err := manager.Uninstall(context.Background(), manifestPath, UninstallOptions{
+		Namespace: "kweaver",
+		Timeout:   "2m",
+	})
+	if err != nil {
+		t.Fatalf("Uninstall() error = %v", err)
+	}
+
+	var studioIdx, mfIdx int = -1, -1
+	for i, release := range fakeHelm.UninstallCalls {
+		if release == "studio-web" {
+			studioIdx = i
+		}
+		if release == "mf-model-manager-nginx" {
+			mfIdx = i
+		}
+	}
+
+	if studioIdx == -1 || mfIdx == -1 {
+		t.Fatalf("UninstallCalls = %v, want both studio-web and mf-model-manager-nginx", fakeHelm.UninstallCalls)
+	}
+	if mfIdx > studioIdx {
+		t.Fatalf("UninstallCalls = %v, want mf-model-manager-nginx before studio-web", fakeHelm.UninstallCalls)
+	}
+}
+
 func TestUninstallUsesShorterDefaultTimeout(t *testing.T) {
 	dir := t.TempDir()
 	manifestPath := filepath.Join(dir, "manifest.yaml")

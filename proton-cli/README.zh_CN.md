@@ -257,6 +257,15 @@ proton-cli app install \
   --dry-run
 ```
 
+指定完整访问地址进行安装：
+
+```bash
+proton-cli app install \
+  -f kelu/deploy/release-manifests/0.5.0/kweaver-dip.yaml \
+  -n kweaver \
+  --access-address=https://1.1.1.1:8443/
+```
+
 卸载应用：
 
 ```bash
@@ -286,7 +295,8 @@ proton-cli app uninstall \
 - `--dry-run`：只打印安装计划，不执行安装
 - `--config`：无法从集群读取 `proton-cli-config` 时，改为从本地配置文件加载 values
 - `--image-registry`：安装时覆盖 values 中的镜像仓库地址
-- `--access-host` / `--access-port` / `--access-scheme`：覆盖安装时注入的访问地址
+- `--access-address`：以完整 URL 形式覆盖访问地址，例如 `https://1.1.1.1:8443/`；未显式指定端口时会按 `https=443`、`http=80` 补默认值
+- `--access-host` / `--access-port` / `--access-scheme`：兼容旧用法，按字段覆盖访问地址；未显式传参时会保留现有 values 中的对应字段
 - `app uninstall`
 - `-f, --file`：卸载所用的 VersionSet manifest 路径
 - `-n, --namespace`：目标 Kubernetes namespace，默认值为 `kweaver`

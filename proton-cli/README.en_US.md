@@ -257,6 +257,15 @@ proton-cli app install \
   --dry-run
 ```
 
+Install with an explicit access address URL:
+
+```bash
+proton-cli app install \
+  -f kelu/deploy/release-manifests/0.5.0/kweaver-dip.yaml \
+  -n kweaver \
+  --access-address=https://1.1.1.1:8443/
+```
+
 Uninstall the application:
 
 ```bash
@@ -286,7 +295,8 @@ Common `app` flags:
 - `--dry-run`: only print the install plan
 - `--config`: load values from a local config file when `proton-cli-config` cannot be read from the cluster
 - `--image-registry`: override the image registry injected into values during install
-- `--access-host` / `--access-port` / `--access-scheme`: override the access address injected during install
+- `--access-address`: override the access address using a full URL such as `https://1.1.1.1:8443/`; when the port is omitted, defaults are `443` for `https` and `80` for `http`
+- `--access-host` / `--access-port` / `--access-scheme`: legacy split overrides; fields already present in values are preserved unless you explicitly pass these flags
 - `app uninstall`
 - `-f, --file`: path to the VersionSet manifest used for uninstall
 - `-n, --namespace`: target Kubernetes namespace, default `kweaver`
