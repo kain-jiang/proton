@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -34,7 +35,9 @@ type appImportOptions struct {
 }
 
 func newAppImportCommand() *cobra.Command {
-	opts := &appImportOptions{}
+	opts := &appImportOptions{
+		registryPlainHTTP: true, // 默认允许 HTTP 仓库，不影响 HTTPS 推送
+	}
 
 	cmd := &cobra.Command{
 		Use:   "import",
@@ -50,7 +53,7 @@ func newAppImportCommand() *cobra.Command {
 	cmd.Flags().StringVar(&opts.registry, "registry", "", "Target registry host")
 	cmd.Flags().StringVar(&opts.registryUsername, "registry-username", "", "Target registry username")
 	cmd.Flags().StringVar(&opts.registryPassword, "registry-password", "", "Target registry password")
-	cmd.Flags().BoolVar(&opts.registryPlainHTTP, "registry-plain-http", false, "Allow plain HTTP registry pushes")
+	cmd.Flags().BoolVar(&opts.registryPlainHTTP, "registry-plain-http", true, "Allow plain HTTP registry pushes (default true)")
 	cmd.Flags().BoolVar(&opts.force, "force", false, "Overwrite existing charts in ChartMuseum")
 	cmd.Flags().StringVar(&opts.chartmuseumURL, "chartmuseum-url", "", "Target ChartMuseum URL")
 	cmd.Flags().StringVar(&opts.chartmuseumUsername, "chartmuseum-username", "", "Target ChartMuseum username")
@@ -107,6 +110,13 @@ func runAppImport(ctx context.Context, opts *appImportOptions) error {
 	chartCount, err := importAppCharts(chartsDir, chartmuseumURLs, opts.chartmuseumUsername, opts.chartmuseumPassword, opts.force)
 	if err != nil {
 		return err
+	}
+
+	// 更新 Helm 仓库索引，确保后续 app install 能找到新推送的 charts
+	log.Printf("updating helm repository index")
+	if err := updateHelmRepo(); err != nil {
+		log.Printf("warning: failed to update helm repo: %v", err)
+		// 不返回错误，因为 charts 已经上传成功
 	}
 
 	fmt.Printf("import completed\n- registries: %v\n- chartmuseums: %v\n- charts imported: %d\n- images imported: %d\n", registries, chartmuseumURLs, chartCount, imageCount)
@@ -203,6 +213,7 @@ func importAppCharts(chartsDir string, hosts []string, username, password string
 		}
 
 		chartPath := filepath.Join(chartsDir, entry.Name())
+		uploaded := false
 		for _, host := range hosts {
 			client, err := chartmuseum.NewClient(
 				chartmuseum.URL(host),
@@ -221,15 +232,37 @@ func importAppCharts(chartsDir string, hosts []string, username, password string
 
 			body, _ := io.ReadAll(resp.Body)
 			_ = resp.Body.Close()
+
+			// 409 表示 chart 已存在，跳过而不是报错
+			if resp.StatusCode == 409 {
+				log.Printf("chart %s already exists on %s, skipping", entry.Name(), host)
+				continue
+			}
+
 			if resp.StatusCode != 201 && resp.StatusCode != 202 {
 				return 0, fmt.Errorf("upload chart %s failed: http %d: %s", entry.Name(), resp.StatusCode, strings.TrimSpace(string(body)))
 			}
+
+			log.Printf("chart %s uploaded successfully to %s", entry.Name(), host)
+			uploaded = true
 		}
 
-		count++
+		if uploaded {
+			count++
+		}
 	}
 
 	return count, nil
+}
+
+// updateHelmRepo 执行 helm repo update 更新本地仓库索引
+func updateHelmRepo() error {
+	cmd := exec.Command("helm", "repo", "update")
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("helm repo update failed: %w (output: %s)", err, string(output))
+	}
+	return nil
 }
 
 func splitAppLocalRef(localRef string) (string, string, error) {

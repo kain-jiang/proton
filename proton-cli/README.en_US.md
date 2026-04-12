@@ -205,7 +205,104 @@ Behavior confirmed from the code:
 - `plan` prints a generated manifest template to stdout and supports `--architecture` for `amd64` or `arm64`
 - `install` extracts into `.proton-offline-package/` and runs `install.sh`
 
-### 7. Kubernetes utilities
+### 7. Export, import, install, and uninstall an application offline package
+
+The `app` subcommand works with a VersionSet manifest to export, import, install, and uninstall an application package.
+
+Export an application offline package:
+
+```bash
+proton-cli app export \
+  -f kelu/deploy/release-manifests/0.5.0/kweaver-dip.yaml \
+  --cache-dir /tmp/cache \
+  --override-registry swr.cn-east-3.myhuaweicloud.com/kweaver-ai
+```
+
+If you want to set the output filename explicitly:
+
+```bash
+proton-cli app export \
+  -f kelu/deploy/release-manifests/0.5.0/kweaver-dip.yaml \
+  -o kweaver-dip-0.5.0-offline-package.tar \
+  --cache-dir /tmp/cache \
+  --override-registry swr.cn-east-3.myhuaweicloud.com/kweaver-ai
+```
+
+When importing an application offline package, it is recommended to always add `--auto` so the built-in registry and ChartMuseum of the current Proton cluster are discovered automatically:
+
+```bash
+proton-cli app import -i kweaver-dip-0.5.0-offline-package.tar --auto
+```
+
+Overwrite existing charts if needed:
+
+```bash
+proton-cli app import -i kweaver-dip-0.5.0-offline-package.tar --auto --force
+```
+
+Install the application after import:
+
+```bash
+proton-cli app install \
+  -f kelu/deploy/release-manifests/0.5.0/kweaver-dip.yaml \
+  -n kweaver
+```
+
+Only print the install plan without executing it:
+
+```bash
+proton-cli app install \
+  -f kelu/deploy/release-manifests/0.5.0/kweaver-dip.yaml \
+  -n kweaver \
+  --dry-run
+```
+
+Uninstall the application:
+
+```bash
+proton-cli app uninstall \
+  -f kelu/deploy/release-manifests/0.5.0/kweaver-dip.yaml \
+  -n kweaver
+```
+
+Common `app` flags:
+
+- `app export`
+- `-f, --manifest`: path to the VersionSet manifest
+- `-o, --output`: output tar filename; if omitted, it is generated from the manifest
+- `--cache-dir`: image export cache directory, useful when exporting the same image set repeatedly
+- `--override-registry`: override `.image.registry` in chart values during export
+- `--platform`: target export platform, auto-detected from the current host by default
+- `--disable-dependencies`: only process the root manifest and skip recursive dependencies
+- `--ignore-missing-images`: continue exporting even if some images cannot be pulled
+- `app import`
+- `--auto`: auto-discover the current Proton cluster registry and ChartMuseum, recommended by default
+- `--force`: overwrite charts that already exist in ChartMuseum
+- `--registry` / `--chartmuseum-url`: specify import targets manually; required if `--auto` is not used
+- `app install`
+- `-f, --file`: path to the VersionSet manifest used for installation
+- `-n, --namespace`: target Kubernetes namespace, default `kweaver`
+- `--timeout`: install timeout for each release, default `30m`
+- `--dry-run`: only print the install plan
+- `--config`: load values from a local config file when `proton-cli-config` cannot be read from the cluster
+- `--image-registry`: override the image registry injected into values during install
+- `--access-host` / `--access-port` / `--access-scheme`: override the access address injected during install
+- `app uninstall`
+- `-f, --file`: path to the VersionSet manifest used for uninstall
+- `-n, --namespace`: target Kubernetes namespace, default `kweaver`
+- `--timeout`: uninstall timeout for each release, default `1m`
+- `--dry-run`: only print the uninstall plan
+
+Behavior confirmed from the code:
+
+- `app export` reuses the `offline-package app export` implementation, including `--cache-dir` and `--override-registry`
+- `app import` reuses the `offline-package app import` implementation, and `--auto` is recommended for regular use
+- `app install` prints a completion message with the manifest and namespace after success
+- `app install` expands manifest dependencies first, then computes install order using `stage: pre` and `dependsOn`
+- `dependsOn` means a ready dependency between releases in the same manifest; the dependency release is installed and waited for first
+- `app uninstall` runs in reverse install order
+
+### 8. Kubernetes utilities
 
 Show the current Kubernetes-related state:
 
@@ -221,7 +318,7 @@ proton-cli kubernetes calico upgrade <version>
 
 The command validates the target version against a built-in supported version list before starting the upgrade.
 
-### 8. Shell completion and version
+### 9. Shell completion and version
 
 Print version info:
 
@@ -248,6 +345,7 @@ Root commands exposed by the committed code include:
 - `backup`: create and inspect backups
 - `recover`: create and inspect recoveries
 - `offline-package`: print a manifest template, build packages, install packages
+- `app`: export, import, install, and uninstall VersionSet-based application packages
 - `kubernetes`: show Kubernetes state and manage Calico
 - `completion`: generate shell completion
 - `version`: print version information
@@ -258,7 +356,7 @@ Root commands exposed by the committed code include:
 - `images`: manage images
 - `push-images`: push images to a repository
 - `push-charts`: push charts to a repository
-- `package`: package-related commands
+- `package`: packaging-related commands
 - `component`: data component management
 - `delete-images`: delete images to reclaim disk space
 - `server`: run the CLI server mode

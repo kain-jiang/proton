@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"embed"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -19,6 +20,7 @@ import (
 	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/configuration"
 	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/configuration/validation"
 	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/core/apply"
+	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/core/global"
 	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/core/logger"
 	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/version"
 )
@@ -29,6 +31,13 @@ const durationBeforeShutdownHTTPServer = 30 * time.Second
 var res embed.FS
 
 var log = logger.NewLogger()
+
+var applyClusterConfigForTestHook = apply.Apply
+
+type initRequest struct {
+	ServicePackageDir string                       `json:"service_package_dir"`
+	ClusterConfig     *configuration.ClusterConfig `json:"cluster_config"`
+}
 
 // serverCmd represents the server command
 var (
@@ -128,7 +137,7 @@ func (h *initialHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Debugf("Request Body: %s", string(body))
 	_ = os.WriteFile("/tmp/proton-cli.json", body, 0666)
 
-	conf, err := configuration.LoadFromBytes(body)
+	initReq, err := decodeInitRequest(body)
 	if err != nil {
 		log.Error(err)
 		w.WriteHeader(http.StatusBadRequest)
@@ -137,6 +146,7 @@ func (h *initialHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+	conf := initReq.ClusterConfig
 
 	if conf.Deploy != nil {
 		if err := configuration.UpdateProtonCliEnvConfig(conf.Deploy.Namespace); err != nil {
@@ -146,7 +156,9 @@ func (h *initialHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var errInvalidClusterConfig = new(validation.InvalidError)
-	err = apply.Apply(conf)
+	err = withServicePackageOverride(initReq.ServicePackageDir, func() error {
+		return applyClusterConfigForTestHook(conf)
+	})
 	if errors.As(err, &errInvalidClusterConfig) {
 		w.WriteHeader(http.StatusBadRequest)
 		for _, e := range errInvalidClusterConfig.ErrorList {
@@ -173,6 +185,37 @@ func (h *initialHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		log.Print("Shutdown http server")
 		h.cancel()
 	}()
+}
+
+func decodeInitRequest(body []byte) (*initRequest, error) {
+	req := new(initRequest)
+	if err := json.Unmarshal(body, req); err != nil {
+		return nil, err
+	}
+	if req.ClusterConfig != nil {
+		return req, nil
+	}
+
+	conf, err := configuration.LoadFromBytes(body)
+	if err != nil {
+		return nil, err
+	}
+	req.ClusterConfig = conf
+	return req, nil
+}
+
+func withServicePackageOverride(servicePackageDir string, fn func() error) error {
+	if servicePackageDir == "" {
+		return fn()
+	}
+
+	previous := global.ServicePackage
+	global.ServicePackage = servicePackageDir
+	defer func() {
+		global.ServicePackage = previous
+	}()
+
+	return fn()
 }
 
 // 设置状态为运行中。并返回 true。如果已经处于运行中或已经成功执行过则返回 false。

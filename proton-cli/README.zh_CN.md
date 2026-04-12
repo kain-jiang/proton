@@ -205,7 +205,104 @@ proton-cli offline-package install proton-offline-package.tar --remain
 - `plan` 会把生成的 manifest 模板输出到标准输出，并支持用 `--architecture` 切换 `amd64` 或 `arm64`
 - `install` 会先解压到 `.proton-offline-package/`，然后执行 `install.sh`
 
-### 7. Kubernetes 工具
+### 7. 导出、导入并安装应用离线包
+
+`app` 子命令用于围绕 `VersionSet` manifest 执行应用离线包导出、导入、安装和卸载。
+
+导出应用离线包：
+
+```bash
+proton-cli app export \
+  -f kelu/deploy/release-manifests/0.5.0/kweaver-dip.yaml \
+  --cache-dir /tmp/cache \
+  --override-registry swr.cn-east-3.myhuaweicloud.com/kweaver-ai
+```
+
+如果需要显式指定输出文件名：
+
+```bash
+proton-cli app export \
+  -f kelu/deploy/release-manifests/0.5.0/kweaver-dip.yaml \
+  -o kweaver-dip-0.5.0-offline-package.tar \
+  --cache-dir /tmp/cache \
+  --override-registry swr.cn-east-3.myhuaweicloud.com/kweaver-ai
+```
+
+导入应用离线包时，建议启用 `--auto`，自动探测当前 Proton 集群的内置镜像仓库和 ChartMuseum：
+
+```bash
+proton-cli app import -i kweaver-dip-0.5.0-offline-package.tar --auto
+```
+
+如需覆盖已存在的 chart：
+
+```bash
+proton-cli app import -i kweaver-dip-0.5.0-offline-package.tar --auto --force
+```
+
+导入完成后安装应用：
+
+```bash
+proton-cli app install \
+  -f kelu/deploy/release-manifests/0.5.0/kweaver-dip.yaml \
+  -n kweaver
+```
+
+仅查看安装计划而不真正执行：
+
+```bash
+proton-cli app install \
+  -f kelu/deploy/release-manifests/0.5.0/kweaver-dip.yaml \
+  -n kweaver \
+  --dry-run
+```
+
+卸载应用：
+
+```bash
+proton-cli app uninstall \
+  -f kelu/deploy/release-manifests/0.5.0/kweaver-dip.yaml \
+  -n kweaver
+```
+
+`app` 相关常用参数：
+
+- `app export`
+- `-f, --manifest`：VersionSet manifest 路径
+- `-o, --output`：输出 tar 包文件名；不指定时会根据 manifest 自动生成
+- `--cache-dir`：导出镜像缓存目录，适合重复导出同一批镜像时复用
+- `--override-registry`：导出时覆盖 chart values 中的 `.image.registry`
+- `--platform`：导出目标平台，默认自动检测当前主机架构
+- `--disable-dependencies`：只处理根 manifest，不递归处理 dependencies
+- `--ignore-missing-images`：遇到部分镜像拉取失败时继续导出
+- `app import`
+- `--auto`：自动探测当前 Proton 集群配置中的镜像仓库和 ChartMuseum，推荐默认带上
+- `--force`：覆盖 ChartMuseum 中已存在的 chart
+- `--registry` / `--chartmuseum-url`：手工指定导入目标；未使用 `--auto` 时需要显式提供
+- `app install`
+- `-f, --file`：安装所用的 VersionSet manifest 路径
+- `-n, --namespace`：目标 Kubernetes namespace，默认值为 `kweaver`
+- `--timeout`：单个 release 的安装超时时间，默认 `30m`
+- `--dry-run`：只打印安装计划，不执行安装
+- `--config`：无法从集群读取 `proton-cli-config` 时，改为从本地配置文件加载 values
+- `--image-registry`：安装时覆盖 values 中的镜像仓库地址
+- `--access-host` / `--access-port` / `--access-scheme`：覆盖安装时注入的访问地址
+- `app uninstall`
+- `-f, --file`：卸载所用的 VersionSet manifest 路径
+- `-n, --namespace`：目标 Kubernetes namespace，默认值为 `kweaver`
+- `--timeout`：单个 release 的卸载超时时间，默认 `1m`
+- `--dry-run`：只打印卸载计划，不执行卸载
+
+根据代码确认的行为：
+
+- `app export` 复用了 `offline-package app export` 的实现，支持 `--cache-dir` 和 `--override-registry`
+- `app import` 复用了 `offline-package app import` 的实现，推荐始终带 `--auto`
+- `app install` 成功后会打印安装完成提示，并显示所使用的 manifest 和 namespace
+- `app install` 会先展开 manifest dependencies，再根据 `stage: pre` 和 `dependsOn` 生成安装顺序
+- `dependsOn` 表示同一 manifest 内 release 之间的 ready 依赖；被依赖的 release 会先安装并等待就绪
+- `app uninstall` 会按安装计划的逆序执行卸载
+
+### 8. Kubernetes 工具
 
 查看当前 Kubernetes 相关状态：
 
@@ -221,7 +318,7 @@ proton-cli kubernetes calico upgrade <version>
 
 该命令会先根据内置支持版本列表校验目标版本，再开始升级。
 
-### 8. Shell 补全与版本信息
+### 9. Shell 补全与版本信息
 
 输出版本信息：
 
@@ -248,6 +345,7 @@ proton-cli completion powershell
 - `backup`：创建并查看备份
 - `recover`：创建并查看恢复任务
 - `offline-package`：输出 manifest 模板、构建离线包、安装离线包
+- `app`：导出、导入、安装和卸载基于 VersionSet 的应用包
 - `kubernetes`：查看 Kubernetes 状态并管理 Calico
 - `completion`：生成 shell 补全脚本
 - `version`：输出版本信息

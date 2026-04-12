@@ -70,6 +70,12 @@ func Reconcile(ctx context.Context, lg logrus.FieldLogger, h helm3.Client, pkg *
 	}
 
 	chartInfo := pkg.Charts().Get(chart, "")
+	if chartInfo == nil {
+		return fmt.Errorf("chart %s for addon %s not found in service package", chart, name)
+	}
+	if chartInfo.Metadata.Version == "" {
+		return fmt.Errorf("chart %s for addon %s has empty version in service package", chart, name)
+	}
 	latestVersion, err := version.ParseSemantic(chartInfo.Metadata.Version)
 	if err != nil {
 		return err
@@ -99,9 +105,13 @@ func Reconcile(ctx context.Context, lg logrus.FieldLogger, h helm3.Client, pkg *
 
 	// 期望的 release values
 	var values = helmValuesForAddon(name, registry)
+	currentValues := map[string]any(nil)
+	if r != nil {
+		currentValues = r.Config
+	}
 
 	// 如果 release 的版本小于 chart 仓库的最新版本或 values 与期望不同则更新
-	if !(releaseVersion.LessThan(latestVersion) || deep.Equal(r.Config, toMap(values)) != nil) {
+	if !(releaseVersion.LessThan(latestVersion) || deep.Equal(currentValues, toMap(values)) != nil) {
 		lg.Infof("skip update helm release %v, because helm values are satisfied", release)
 		return nil
 	}

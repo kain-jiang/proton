@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strings"
 	"time"
@@ -44,9 +45,12 @@ type appExportOptions struct {
 }
 
 func newAppExportCommand() *cobra.Command {
+	// 自动检测当前系统架构作为默认平台
+	defaultPlatform := fmt.Sprintf("%s/%s", runtime.GOOS, runtime.GOARCH)
+
 	opts := &appExportOptions{
 		output:   "offline-app-package.tar",
-		platform: "linux/amd64",
+		platform: defaultPlatform,
 	}
 
 	cmd := &cobra.Command{
@@ -60,7 +64,7 @@ func newAppExportCommand() *cobra.Command {
 
 	cmd.Flags().StringVarP(&opts.manifest, "manifest", "f", "", "Path or URL to a VersionSet manifest")
 	cmd.Flags().StringVarP(&opts.output, "output", "o", opts.output, "Output tar file")
-	cmd.Flags().StringVar(&opts.platform, "platform", opts.platform, "Target platform")
+	cmd.Flags().StringVar(&opts.platform, "platform", opts.platform, "Target platform (auto-detected: "+defaultPlatform+")")
 	cmd.Flags().StringVar(&opts.cacheDir, "cache-dir", "", "Directory used to persist the exported OCI image layout")
 	cmd.Flags().StringVar(&opts.overrideRegistry, "override-registry", "", "Override chart values .image.registry when pulling images")
 	cmd.Flags().BoolVar(&opts.ignoreMissingImages, "ignore-missing-images", false, "Continue exporting when some images cannot be pulled")
@@ -72,9 +76,17 @@ func newAppExportCommand() *cobra.Command {
 
 func runAppExport(ctx context.Context, opts *appExportOptions) error {
 	log.Printf("reading manifest %q", opts.manifest)
-	manifestBytes, _, manifestDocuments, err := loadAppManifestTree(ctx, opts.manifest, !opts.disableDependencies)
+	manifestBytes, rootManifest, manifestDocuments, err := loadAppManifestTree(ctx, opts.manifest, !opts.disableDependencies)
 	if err != nil {
 		return err
+	}
+
+	// 如果用户未指定输出文件名，根据 manifest 的 product 和 version 自动生成
+	if opts.output == "offline-app-package.tar" && rootManifest != nil {
+		if rootManifest.Product != "" && rootManifest.Version != "" {
+			opts.output = fmt.Sprintf("%s-%s-offline-package.tar", rootManifest.Product, rootManifest.Version)
+			log.Printf("auto-generated output filename: %s", opts.output)
+		}
 	}
 
 	platforms, err := normalizeAppPlatforms(opts.platform)
@@ -140,6 +152,13 @@ func runAppExport(ctx context.Context, opts *appExportOptions) error {
 
 	exportedImages := countExportedAppImages(imageMetadata)
 	fmt.Printf("export completed\n- platform: %s\n- charts: %d\n- images: %d/%d\n- output: %s\n", platformLabel, len(charts), exportedImages, len(imageMetadata), opts.output)
+
+	// 提示用户 cache-dir 内容已保留
+	if opts.cacheDir != "" {
+		absCacheDir, _ := filepath.Abs(opts.cacheDir)
+		fmt.Printf("- cache: %s (preserved for future exports)\n", absCacheDir)
+	}
+
 	return nil
 }
 

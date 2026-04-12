@@ -12,6 +12,25 @@ func GetConf(valueTag bool) string {
 	return string(b)
 }
 
+// AccessAddress 描述集群的对外访问地址
+type AccessAddress struct {
+	Host   string `json:"host,omitempty"`
+	Port   int    `json:"port,omitempty"`
+	Scheme string `json:"scheme,omitempty"`
+	Path   string `json:"path,omitempty"`
+}
+
+// StorageConfig 描述集群存储配置
+type StorageConfig struct {
+	StorageClassName string `json:"storageClassName,omitempty"`
+}
+
+// EnvConfig 描述运行环境配置
+type EnvConfig struct {
+	Language string `json:"language,omitempty"`
+	Timezone string `json:"timezone,omitempty"`
+}
+
 // cluster conf
 type ClusterConfig struct {
 	ApiVersion           string          `json:"apiVersion"`
@@ -48,6 +67,13 @@ type ClusterConfig struct {
 
 	// Nebula Graph 的部署酝置，如果为 nil 则丝会安装 Nebula Graph
 	Nebula *Nebula `json:"nebula,omitempty"`
+
+	// 集群对外访问地址（用于 helm values 生成）
+	AccessAddress *AccessAddress `json:"access_address,omitempty"`
+	// 存储配置（用于 helm values 生成）
+	Storage *StorageConfig `json:"storage,omitempty"`
+	// 运行环境配置（language/timezone）
+	Env *EnvConfig `json:"env,omitempty"`
 
 	//  基础组件连接信息都在此保存，替代cms的保存
 	ResourceConnectInfo *ResourceConnectInfo `json:"resource_connect_info,omitempty" mapstructure:"resourceConnectInfo"`

@@ -3,6 +3,7 @@ package helm3
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/storage/driver"
@@ -12,6 +13,7 @@ type uninstallParams struct {
 	dryRun         bool
 	keepHistory    bool
 	ignoreNotFound bool
+	timeout        time.Duration
 }
 
 type UninstallOption func(uninstallParams *uninstallParams)
@@ -34,6 +36,12 @@ func WithUninstallIgnoreNotFound(ignoreNotFound bool) UninstallOption {
 	}
 }
 
+func WithUninstallTimeout(timeout time.Duration) UninstallOption {
+	return func(uninstallParams *uninstallParams) {
+		uninstallParams.timeout = timeout
+	}
+}
+
 func (c *helmv3) Uninstall(release string, opts ...UninstallOption) error {
 	log := c.log.WithField("release", release).WithField("operation", "uninstall")
 
@@ -45,6 +53,9 @@ func (c *helmv3) Uninstall(release string, opts ...UninstallOption) error {
 	uninstaller := action.NewUninstall(c.actionConfig)
 	uninstaller.DryRun = param.dryRun
 	uninstaller.KeepHistory = param.keepHistory
+	if param.timeout > 0 {
+		uninstaller.Timeout = param.timeout
+	}
 
 	_, err := uninstaller.Run(release)
 	if errors.Is(err, driver.ErrReleaseNotFound) && param.ignoreNotFound {

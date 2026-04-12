@@ -20,6 +20,7 @@ type upgradeParams struct {
 	createNamespace bool
 	skipCRDs        bool
 	reCreatePods    bool
+	devel           bool
 }
 
 type UpgradeOption func(upgradeParams *upgradeParams)
@@ -96,6 +97,12 @@ func WithUpgradeSkipCRDs(skipCRDs bool) UpgradeOption {
 	}
 }
 
+func WithUpgradeDevel(devel bool) UpgradeOption {
+	return func(upgradeParams *upgradeParams) {
+		upgradeParams.devel = devel
+	}
+}
+
 func (c *helmv3) Upgrade(release string, chartRef *ChartRef, opts ...UpgradeOption) error {
 
 	log := c.log.WithField("release", release).WithField("operation", "upgrade")
@@ -126,6 +133,7 @@ func (c *helmv3) Upgrade(release string, chartRef *ChartRef, opts ...UpgradeOpti
 	upgrader.SkipCRDs = param.skipCRDs
 	upgrader.Atomic = param.atomic
 	upgrader.Recreate = param.reCreatePods
+	upgrader.Devel = param.devel
 
 	if param.install {
 		installer := action.NewInstall(c.actionConfig)
