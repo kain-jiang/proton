@@ -6,6 +6,101 @@
 
 ## 快速开始
 
+### 离线安装快速开始
+
+以下步骤适用于通过预构建二进制和离线依赖包快速安装 Proton。
+
+1. 下载 `proton-cli`
+
+请从 GitHub Releases 下载最新版本，并根据机器架构选择对应的压缩包。以下以 `v0.1.0-alpha.7` 为例：
+
+```bash
+# amd64
+wget https://github.com/kweaver-ai/proton/releases/download/v0.1.0-alpha.7/proton-cli-linux-amd64.tar.gz
+
+# arm64
+wget https://github.com/kweaver-ai/proton/releases/download/v0.1.0-alpha.7/proton-cli-linux-arm64.tar.gz
+
+tar xf proton-cli-linux-<arch>.tar.gz
+```
+
+2. 下载 Proton 离线依赖包
+
+同样需要根据机器架构选择对应的离线包：
+
+```bash
+# amd64
+proton-cli oras pull swr.cn-east-3.myhuaweicloud.com/kweaver-ai/offline-pkg/proton-offline-package-amd64:24308056846
+
+# arm64
+proton-cli oras pull swr.cn-east-3.myhuaweicloud.com/kweaver-ai/offline-pkg/proton-offline-package-arm64:24308056846
+```
+
+3. 预装系统依赖
+
+当前系统需要预先手动安装 `net-tools` 和 `rpm`：
+
+```bash
+# Debian/Ubuntu
+sudo apt-get update
+sudo apt-get install -y net-tools rpm
+
+# RHEL/CentOS/OpenEuler
+sudo yum install -y net-tools rpm
+```
+
+说明：这两个依赖当前需要手动安装，后续版本会内置处理。
+
+4. 安装离线包
+
+```bash
+tar xf proton-offline-package.tar
+bash install.sh
+```
+
+5. 启动初始化服务
+
+```bash
+proton-cli server -ldebug
+```
+
+然后通过浏览器访问 `http://<ip>:8888` 进入初始化页面。
+
+6. 完成初始化
+
+在初始化页面中自定义 `MariaDB` 和 `Redis` 密码，最后点击“完成”，等待初始化成功。
+
+7. 导出应用离线安装包
+
+可以通过以下命令下载指定 `yaml` 文件中定义的 chart 和 images，并打包为离线安装包：
+
+```bash
+proton-cli app export \
+  -f release-manifest/x.y.z/kweaver-dip.yaml \
+  --cache-dir /tmp/cache \
+  --override-registry swr.cn-east-3.myhuaweicloud.com/kweaver-ai
+```
+
+8. 导入应用离线安装包
+
+通过以下命令将离线应用包中的 chart 和 image 导入到内置仓库：
+
+```bash
+proton-cli app import \
+  -i kweaver-dip-x.y.z-offline-package.tar \
+  --auto
+```
+
+9. 安装指定产品版本
+
+通过以下命令将指定产品的指定版本安装到 `kweaver` 命名空间：
+
+```bash
+proton-cli app install \
+  -f release-manifest/x.y.z/kweaver-dip.yaml \
+  -n kweaver
+```
+
 ### 环境要求
 
 - Linux 环境

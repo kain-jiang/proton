@@ -6,6 +6,101 @@ This README is written from the committed source code in this directory. It focu
 
 ## Quick Start
 
+### Offline Installation Quick Start
+
+The following steps are for quickly installing Proton with a prebuilt `proton-cli` binary and an offline dependency package.
+
+1. Download `proton-cli`
+
+Download the latest release from GitHub Releases and choose the archive that matches your CPU architecture. The examples below use `v0.1.0-alpha.7`:
+
+```bash
+# amd64
+wget https://github.com/kweaver-ai/proton/releases/download/v0.1.0-alpha.7/proton-cli-linux-amd64.tar.gz
+
+# arm64
+wget https://github.com/kweaver-ai/proton/releases/download/v0.1.0-alpha.7/proton-cli-linux-arm64.tar.gz
+
+tar xf proton-cli-linux-<arch>.tar.gz
+```
+
+2. Download the Proton offline dependency package
+
+Choose the offline package that matches your CPU architecture:
+
+```bash
+# amd64
+proton-cli oras pull swr.cn-east-3.myhuaweicloud.com/kweaver-ai/offline-pkg/proton-offline-package-amd64:24308056846
+
+# arm64
+proton-cli oras pull swr.cn-east-3.myhuaweicloud.com/kweaver-ai/offline-pkg/proton-offline-package-arm64:24308056846
+```
+
+3. Install required system packages first
+
+The system currently requires `net-tools` and `rpm` to be installed manually before installation:
+
+```bash
+# Debian/Ubuntu
+sudo apt-get update
+sudo apt-get install -y net-tools rpm
+
+# RHEL/CentOS/OpenEuler
+sudo yum install -y net-tools rpm
+```
+
+Note: these dependencies currently need to be installed manually and will be bundled in a future version.
+
+4. Install the offline package
+
+```bash
+tar xf proton-offline-package.tar
+bash install.sh
+```
+
+5. Start the initialization service
+
+```bash
+proton-cli server -ldebug
+```
+
+Then open `http://<ip>:8888` in a browser to enter the initialization page.
+
+6. Complete initialization
+
+Set custom `MariaDB` and `Redis` passwords on the initialization page, then click `Complete` and wait for initialization to finish successfully.
+
+7. Export an application offline package
+
+Use the following command to download the charts and images defined in the specified `yaml` file and package them as an offline installation bundle:
+
+```bash
+proton-cli app export \
+  -f release-manifest/x.y.z/kweaver-dip.yaml \
+  --cache-dir /tmp/cache \
+  --override-registry swr.cn-east-3.myhuaweicloud.com/kweaver-ai
+```
+
+8. Import an application offline package
+
+Use the following command to import the charts and images from the offline application package into the built-in registry:
+
+```bash
+proton-cli app import \
+  -i kweaver-dip-x.y.z-offline-package.tar \
+  --auto
+```
+
+9. Install a specific product version
+
+Use the following command to install the specified product version into the `kweaver` namespace:
+
+```bash
+proton-cli app install \
+  -f release-manifest/x.y.z/kweaver-dip.yaml \
+  -n kweaver
+```
+
 ### Requirements
 
 - Linux environment
