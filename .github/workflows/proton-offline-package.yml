@@ -57,7 +57,7 @@ jobs:
       - name: Push to OCI registry
         working-directory: proton-cli
         env:
-          REGISTRY_IMAGE: ${{ vars.REGISTRY_URL }}/${{ vars.REGISTRY_BASE }}/proton-offline-package-${{ matrix.arch }}:${{ github.run_id }}
+          REGISTRY_IMAGE: ${{ vars.REGISTRY_URL }}/${{ vars.REGISTRY_BASE }}/proton-offline-package:${{ github.run_id }}-${{ matrix.arch }}
         run: |
           echo "Pushing ${REGISTRY_IMAGE}"
           oras push "${REGISTRY_IMAGE}" --artifact-type application/x-tar proton-offline-package.tar
