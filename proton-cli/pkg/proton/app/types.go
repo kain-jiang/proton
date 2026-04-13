@@ -26,6 +26,7 @@ type VersionSetDependency struct {
 	Manifest       string `json:"manifest,omitempty" yaml:"manifest,omitempty"`
 	Optional       bool   `json:"optional,omitempty" yaml:"optional,omitempty"`
 	DefaultEnabled bool   `json:"defaultEnabled,omitempty" yaml:"defaultEnabled,omitempty"`
+	EnabledIf      string `json:"enabledIf,omitempty" yaml:"enabledIf,omitempty"`
 }
 
 // ReleaseEntry 描述单个 Helm release 的安装参数
@@ -87,6 +88,8 @@ type InstallOptions struct {
 	HelmRepoName string
 	// HelmRepoURL 覆盖 manifest 中的 helmRepoURL（用于离线部署时指向内置仓库）
 	HelmRepoURL string
+	// SetValues 保存来自 CLI --set 的 install-time values overrides。
+	SetValues map[string]interface{}
 }
 
 // UninstallOptions 控制 app uninstall 行为

@@ -224,3 +224,48 @@ func TestResolveAccessAddress(t *testing.T) {
 		})
 	}
 }
+
+func TestParseAppInstallSetFlags(t *testing.T) {
+	t.Parallel()
+	entries := []string{
+		"auth.enabled=false",
+		"businessDomain.enabled=false",
+		"services.replicas=3",
+		"name=prod",
+		"auth.tls.enabled=true",
+	}
+	got, err := parseAppInstallSet(entries)
+	if err != nil {
+		t.Fatalf("parseAppInstallSet() error = %v", err)
+	}
+	want := map[string]interface{}{
+		"auth": map[string]interface{}{
+			"enabled": false,
+			"tls": map[string]interface{}{
+				"enabled": true,
+			},
+		},
+		"businessDomain": map[string]interface{}{"enabled": false},
+		"services":        map[string]interface{}{"replicas": 3},
+		"name":            "prod",
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("parseAppInstallSet() = %#v, want %#v", got, want)
+	}
+}
+
+func TestParseAppInstallSetFlagsRejectsInvalid(t *testing.T) {
+	t.Parallel()
+	invalid := []string{
+		"noequals",
+		"auth..enabled=true",
+		".leading=1",
+		"trailing.=",
+		"=missingkey",
+	}
+	for _, input := range invalid {
+		if _, err := parseAppInstallSet([]string{input}); err == nil {
+			t.Fatalf("parseAppInstallSet(%q) error = nil, want error", input)
+		}
+	}
+}

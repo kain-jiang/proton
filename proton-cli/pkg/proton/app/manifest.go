@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 
 	"sigs.k8s.io/yaml"
 )
@@ -35,10 +36,16 @@ func LoadManifest(path string) (*VersionSet, error) {
 //
 // 依赖去重：同一 product+version 只安装一次（按首次出现顺序）。
 func BuildInstallPlan(manifestPath string) (*InstallPlan, error) {
+	return BuildInstallPlanWithValues(manifestPath, nil)
+}
+
+// BuildInstallPlanWithValues 根据 manifest 文件路径递归展开 dependencies，
+// 并结合 install-time values 判断 optional dependency 是否启用。
+func BuildInstallPlanWithValues(manifestPath string, values map[string]interface{}) (*InstallPlan, error) {
 	seen := make(map[string]bool)
 	var allSteps [][]InstallItem
 
-	if err := buildPlanRecursive(manifestPath, seen, &allSteps); err != nil {
+	if err := buildPlanRecursive(manifestPath, values, seen, &allSteps); err != nil {
 		return nil, err
 	}
 
@@ -46,7 +53,7 @@ func BuildInstallPlan(manifestPath string) (*InstallPlan, error) {
 }
 
 // buildPlanRecursive 递归处理一个 manifest，将生成的步骤追加到 allSteps。
-func buildPlanRecursive(manifestPath string, seen map[string]bool, allSteps *[][]InstallItem) error {
+func buildPlanRecursive(manifestPath string, values map[string]interface{}, seen map[string]bool, allSteps *[][]InstallItem) error {
 	absPath, err := filepath.Abs(manifestPath)
 	if err != nil {
 		return fmt.Errorf("resolve path %q: %w", manifestPath, err)
@@ -67,6 +74,14 @@ func buildPlanRecursive(manifestPath string, seen map[string]bool, allSteps *[][
 
 	// 先递归处理 dependencies
 	for _, dep := range vs.Dependencies {
+		enabled, err := dependencyEnabled(dep, values)
+		if err != nil {
+			return fmt.Errorf("dependency %s: %w", dep.Product, err)
+		}
+		if !enabled {
+			continue
+		}
+
 		depManifestPath := dep.Manifest
 		if depManifestPath == "" {
 			continue
@@ -74,7 +89,7 @@ func buildPlanRecursive(manifestPath string, seen map[string]bool, allSteps *[][
 		if !filepath.IsAbs(depManifestPath) {
 			depManifestPath = filepath.Join(manifestDir, depManifestPath)
 		}
-		if err := buildPlanRecursive(depManifestPath, seen, allSteps); err != nil {
+		if err := buildPlanRecursive(depManifestPath, values, seen, allSteps); err != nil {
 			if dep.Optional {
 				fmt.Fprintf(os.Stderr, "warning: optional dependency %s skipped: %v\n", dep.Product, err)
 				continue
@@ -114,6 +129,48 @@ func buildPlanRecursive(manifestPath string, seen map[string]bool, allSteps *[][
 	}
 
 	return nil
+}
+
+func dependencyEnabled(dep VersionSetDependency, values map[string]interface{}) (bool, error) {
+	if dep.EnabledIf != "" {
+		resolved, found, err := lookupBooleanValue(values, dep.EnabledIf)
+		if err != nil {
+			return false, fmt.Errorf("enabledIf %q must be a boolean: %w", dep.EnabledIf, err)
+		}
+		if found {
+			return resolved, nil
+		}
+		return dep.DefaultEnabled, nil
+	}
+	if dep.Optional {
+		return dep.DefaultEnabled, nil
+	}
+	return true, nil
+}
+
+func lookupBooleanValue(values map[string]interface{}, path string) (bool, bool, error) {
+	if len(values) == 0 {
+		return false, false, nil
+	}
+
+	var current interface{} = values
+	for _, part := range strings.Split(path, ".") {
+		node, ok := current.(map[string]interface{})
+		if !ok {
+			return false, false, fmt.Errorf("path %q traverses non-map value", path)
+		}
+		next, exists := node[part]
+		if !exists {
+			return false, false, nil
+		}
+		current = next
+	}
+
+	value, ok := current.(bool)
+	if !ok {
+		return false, false, fmt.Errorf("path %q resolved to %T", path, current)
+	}
+	return value, true, nil
 }
 
 func buildManifestSteps(releaseNames []string, itemsByRelease map[string]InstallItem) ([][]InstallItem, error) {
