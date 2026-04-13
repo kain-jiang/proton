@@ -227,6 +227,132 @@ releases:
 	}
 }
 
+func TestBuildInstallPlanHonorsOptionalDependencyEnabledIf(t *testing.T) {
+	dir := t.TempDir()
+	dependencyPath := filepath.Join(dir, "isf.yaml")
+	dependencyManifest := `apiVersion: deploy.kweaver.ai/v1alpha1
+kind: VersionSet
+product: isf
+version: 1.0.0
+source:
+  helmRepoName: local
+releases:
+  isf-server:
+    chart: isf-server
+    version: 1.0.0
+`
+	if err := os.WriteFile(dependencyPath, []byte(dependencyManifest), 0o600); err != nil {
+		t.Fatalf("write dependency manifest: %v", err)
+	}
+
+	rootPath := filepath.Join(dir, "manifest.yaml")
+	rootManifest := `apiVersion: deploy.kweaver.ai/v1alpha1
+kind: VersionSet
+product: demo
+version: 1.0.0
+source:
+  helmRepoName: local
+dependencies:
+  - product: isf
+    version: 1.0.0
+    manifest: ./isf.yaml
+    defaultEnabled: true
+    enabledIf: auth.enabled
+releases:
+  demo-release:
+    chart: demo-release
+    version: 1.0.0
+`
+	if err := os.WriteFile(rootPath, []byte(rootManifest), 0o600); err != nil {
+		t.Fatalf("write root manifest: %v", err)
+	}
+
+	plan, err := BuildInstallPlanWithValues(rootPath, map[string]interface{}{
+		"auth": map[string]interface{}{
+			"enabled": false,
+		},
+	})
+	if err != nil {
+		t.Fatalf("BuildInstallPlanWithValues() error = %v", err)
+	}
+
+	if len(plan.Steps) != 1 {
+		t.Fatalf("len(plan.Steps) = %d, want 1", len(plan.Steps))
+	}
+	if len(plan.Steps[0]) != 1 || plan.Steps[0][0].ReleaseName != "demo-release" {
+		t.Fatalf("plan.Steps = %#v, want only demo-release", plan.Steps)
+	}
+
+	plan, err = BuildInstallPlanWithValues(rootPath, map[string]interface{}{
+		"auth": map[string]interface{}{
+			"enabled": true,
+		},
+	})
+	if err != nil {
+		t.Fatalf("BuildInstallPlanWithValues() error = %v", err)
+	}
+
+	if len(plan.Steps) != 2 {
+		t.Fatalf("len(plan.Steps) = %d, want 2 when auth.enabled=true", len(plan.Steps))
+	}
+	if len(plan.Steps[0]) != 1 || plan.Steps[0][0].ReleaseName != "isf-server" {
+		t.Fatalf("first step = %#v, want isf-server", plan.Steps[0])
+	}
+}
+
+func TestBuildInstallPlanRejectsNonBoolEnabledIfValue(t *testing.T) {
+	dir := t.TempDir()
+	dependencyPath := filepath.Join(dir, "isf.yaml")
+	dependencyManifest := `apiVersion: deploy.kweaver.ai/v1alpha1
+kind: VersionSet
+product: isf
+version: 1.0.0
+source:
+  helmRepoName: local
+releases:
+  isf-server:
+    chart: isf-server
+    version: 1.0.0
+`
+	if err := os.WriteFile(dependencyPath, []byte(dependencyManifest), 0o600); err != nil {
+		t.Fatalf("write dependency manifest: %v", err)
+	}
+
+	rootPath := filepath.Join(dir, "manifest.yaml")
+	rootManifest := `apiVersion: deploy.kweaver.ai/v1alpha1
+kind: VersionSet
+product: demo
+version: 1.0.0
+source:
+  helmRepoName: local
+dependencies:
+  - product: isf
+    version: 1.0.0
+    manifest: ./isf.yaml
+    defaultEnabled: true
+    enabledIf: auth.enabled
+releases:
+  demo-release:
+    chart: demo-release
+    version: 1.0.0
+`
+	if err := os.WriteFile(rootPath, []byte(rootManifest), 0o600); err != nil {
+		t.Fatalf("write root manifest: %v", err)
+	}
+
+	_, err := BuildInstallPlanWithValues(rootPath, map[string]interface{}{
+		"auth": map[string]interface{}{
+			"enabled": "disabled",
+		},
+	})
+	if err == nil {
+		t.Fatal("BuildInstallPlanWithValues() error = nil, want non-bool enabledIf error")
+	}
+	if !strings.Contains(err.Error(), "must be a boolean") {
+		t.Fatalf("BuildInstallPlanWithValues() error = %v, want boolean type error", err)
+	}
+}
+
 func TestInstallWithValuesWaitsOnlyForStagePre(t *testing.T) {
 	dir := t.TempDir()
 	manifestPath := filepath.Join(dir, "manifest.yaml")
@@ -482,6 +608,142 @@ releases:
 	}
 	if got := image["registry"]; got != "example.com/demo" {
 		t.Fatalf("call.Values[image][registry] = %#v, want example.com/demo", got)
+	}
+}
+
+func TestInstallWithValuesMergesReleaseValuesOverCLISetValues(t *testing.T) {
+	dir := t.TempDir()
+	manifestPath := filepath.Join(dir, "manifest.yaml")
+	manifest := `apiVersion: deploy.kweaver.ai/v1alpha1
+kind: VersionSet
+product: demo
+version: 1.0.0
+source:
+  helmRepoName: local
+releases:
+  demo-release:
+    chart: demo-release
+    version: 1.0.0
+    values:
+      auth:
+        enabled: true
+`
+	if err := os.WriteFile(manifestPath, []byte(manifest), 0o600); err != nil {
+		t.Fatalf("write manifest: %v", err)
+	}
+
+	logger := logrus.New()
+	manager := &Manager{
+		Helm:      helm3testing.New("kweaver", logger.Printf),
+		Namespace: "kweaver",
+		Logger:    logger,
+	}
+
+	err := manager.InstallWithValues(context.Background(), manifestPath, map[string]interface{}{
+		"auth": map[string]interface{}{
+			"enabled": false,
+			"issuer":  "cli",
+		},
+	}, InstallOptions{
+		Namespace: "kweaver",
+		Timeout:   "2m",
+		SetValues: map[string]interface{}{
+			"auth": map[string]interface{}{
+				"enabled": false,
+			},
+		},
+	})
+	if err != nil {
+		t.Fatalf("InstallWithValues() error = %v", err)
+	}
+
+	fakeHelm := manager.Helm.(*helm3testing.FakeHelm3)
+	if len(fakeHelm.UpgradeCalls) != 1 {
+		t.Fatalf("len(UpgradeCalls) = %d, want 1", len(fakeHelm.UpgradeCalls))
+	}
+
+	auth, ok := fakeHelm.UpgradeCalls[0].Values["auth"].(map[string]interface{})
+	if !ok {
+		t.Fatalf("auth values = %#v, want map", fakeHelm.UpgradeCalls[0].Values["auth"])
+	}
+	if got := auth["enabled"]; got != true {
+		t.Fatalf("auth.enabled = %#v, want true from release values override", got)
+	}
+	if got := auth["issuer"]; got != "cli" {
+		t.Fatalf("auth.issuer = %#v, want cli preserved from base/CLI values", got)
+	}
+}
+
+func TestInstallWithValuesHonorsOptionalDependencyEnabledIf(t *testing.T) {
+	dir := t.TempDir()
+	dependencyPath := filepath.Join(dir, "isf.yaml")
+	dependencyManifest := `apiVersion: deploy.kweaver.ai/v1alpha1
+kind: VersionSet
+product: isf
+version: 1.0.0
+source:
+  helmRepoName: local
+releases:
+  isf-server:
+    chart: isf-server
+    version: 1.0.0
+`
+	if err := os.WriteFile(dependencyPath, []byte(dependencyManifest), 0o600); err != nil {
+		t.Fatalf("write dependency manifest: %v", err)
+	}
+
+	rootPath := filepath.Join(dir, "manifest.yaml")
+	rootManifest := `apiVersion: deploy.kweaver.ai/v1alpha1
+kind: VersionSet
+product: demo
+version: 1.0.0
+source:
+  helmRepoName: local
+dependencies:
+  - product: isf
+    version: 1.0.0
+    manifest: ./isf.yaml
+    defaultEnabled: true
+    enabledIf: auth.enabled
+releases:
+  demo-release:
+    chart: demo-release
+    version: 1.0.0
+`
+	if err := os.WriteFile(rootPath, []byte(rootManifest), 0o600); err != nil {
+		t.Fatalf("write root manifest: %v", err)
+	}
+
+	logger := logrus.New()
+	manager := &Manager{
+		Helm:      helm3testing.New("kweaver", logger.Printf),
+		Namespace: "kweaver",
+		Logger:    logger,
+	}
+
+	err := manager.InstallWithValues(context.Background(), rootPath, map[string]interface{}{
+		"auth": map[string]interface{}{
+			"enabled": false,
+		},
+	}, InstallOptions{
+		Namespace: "kweaver",
+		Timeout:   "2m",
+		SetValues: map[string]interface{}{
+			"auth": map[string]interface{}{
+				"enabled": false,
+			},
+		},
+	})
+	if err != nil {
+		t.Fatalf("InstallWithValues() error = %v", err)
+	}
+
+	fakeHelm := manager.Helm.(*helm3testing.FakeHelm3)
+	if len(fakeHelm.UpgradeCalls) != 1 {
+		t.Fatalf("len(UpgradeCalls) = %d, want 1 when dependency disabled", len(fakeHelm.UpgradeCalls))
+	}
+	if got := fakeHelm.UpgradeCalls[0].Release; got != "demo-release" {
+		t.Fatalf("UpgradeCalls[0].Release = %q, want demo-release", got)
 	}
 }
 

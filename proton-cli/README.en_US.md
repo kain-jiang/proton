@@ -361,6 +361,16 @@ proton-cli app install \
   --access-address=https://1.1.1.1:8443/
 ```
 
+Pass shared install values to all charts and use values to control optional dependencies:
+
+```bash
+proton-cli app install \
+  -f release-manifests/0.6.0/kweaver-core.yaml \
+  -n kweaver \
+  --set auth.enabled=false \
+  --set businessDomain.enabled=false
+```
+
 Uninstall the application:
 
 ```bash
@@ -390,6 +400,7 @@ Common `app` flags:
 - `--dry-run`: only print the install plan
 - `--config`: load values from a local config file when `proton-cli-config` cannot be read from the cluster
 - `--image-registry`: override the image registry injected into values during install
+- `--set`: pass install-time values as `key=value`; repeatable and supports dotted keys such as `auth.enabled=false`
 - `--access-address`: override the access address using a full URL such as `https://1.1.1.1:8443/`; when the port is omitted, defaults are `443` for `https` and `80` for `http`
 - `--access-host` / `--access-port` / `--access-scheme`: legacy split overrides; fields already present in values are preserved unless you explicitly pass these flags
 - `app uninstall`
@@ -404,7 +415,18 @@ Behavior confirmed from the code:
 - `app import` reuses the `offline-package app import` implementation, and `--auto` is recommended for regular use
 - `app install` prints a completion message with the manifest and namespace after success
 - `app install` expands manifest dependencies first, then computes install order using `stage: pre` and `dependsOn`
+- `app install` merges cluster config values, `--set` overrides, and release-local `values` before calling Helm, with precedence `release.values > --set > cluster config`
 - `dependsOn` means a ready dependency between releases in the same manifest; the dependency release is installed and waited for first
+- optional dependencies can be controlled by manifest `enabledIf` plus `--set`, for example:
+
+```yaml
+dependencies:
+  - product: isf
+    version: 0.6.0
+    manifest: ./isf.yaml
+    defaultEnabled: true
+    enabledIf: auth.enabled
+```
 - `app uninstall` runs in reverse install order
 
 ### 8. Kubernetes utilities

@@ -43,17 +43,16 @@ func NewManager(namespace string, logger logrus.FieldLogger) (*Manager, error) {
 
 // Install 按 manifest 文件路径构建安装计划并执行。
 func (m *Manager) Install(ctx context.Context, manifestPath string, cfg *configuration.ClusterConfig, opts InstallOptions) error {
-	plan, err := BuildInstallPlan(manifestPath)
-	if err != nil {
-		return fmt.Errorf("build install plan: %w", err)
-	}
-
 	ns := opts.Namespace
 	if ns == "" {
 		ns = m.Namespace
 	}
 
 	values := BuildHelmValues(cfg, ns)
+	plan, err := BuildInstallPlanWithValues(manifestPath, values)
+	if err != nil {
+		return fmt.Errorf("build install plan: %w", err)
+	}
 
 	timeout := 5 * time.Minute
 	if opts.Timeout != "" {
@@ -95,7 +94,7 @@ func (m *Manager) Install(ctx context.Context, manifestPath string, cfg *configu
 
 // InstallWithValues 按 manifest 文件路径构建安装计划，使用已构建好的 values map 执行安装。
 func (m *Manager) InstallWithValues(ctx context.Context, manifestPath string, values map[string]interface{}, opts InstallOptions) error {
-	plan, err := BuildInstallPlan(manifestPath)
+	plan, err := BuildInstallPlanWithValues(manifestPath, values)
 	if err != nil {
 		return fmt.Errorf("build install plan: %w", err)
 	}
@@ -244,6 +243,12 @@ func deepMergeValues(base, override map[string]interface{}) map[string]interface
 	}
 
 	return result
+}
+
+// DeepMergeValues exposes the existing install-time merge behavior for callers
+// that need to combine generated values with CLI overrides before install.
+func DeepMergeValues(base, override map[string]interface{}) map[string]interface{} {
+	return deepMergeValues(base, override)
 }
 
 // Uninstall 按 manifest 文件路径构建卸载计划并执行卸载。

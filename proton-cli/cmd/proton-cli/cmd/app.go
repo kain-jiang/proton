@@ -54,6 +54,7 @@ type appInstallFlags struct {
 	accessPortSet   bool
 	accessScheme    string
 	accessSchemeSet bool
+	setValues       []string
 }
 
 func newAppInstallCmd() *cobra.Command {
@@ -93,6 +94,7 @@ Examples:
 	cmd.Flags().StringVar(&f.accessHost, "access-host", "", "cluster access address host (auto-detect from K8s nodes if not specified)")
 	cmd.Flags().IntVar(&f.accessPort, "access-port", 443, "cluster access address port")
 	cmd.Flags().StringVar(&f.accessScheme, "access-scheme", "https", "cluster access address scheme (http/https)")
+	cmd.Flags().StringSliceVar(&f.setValues, "set", nil, "set install values (repeatable key=value, supports dotted keys)")
 	_ = cmd.MarkFlagRequired("file")
 
 	return cmd
@@ -150,6 +152,12 @@ func runAppInstall(ctx context.Context, f *appInstallFlags) error {
 	}
 	values["accessAddress"] = accessAddr
 
+	setValues, err := parseAppInstallSet(f.setValues)
+	if err != nil {
+		return fmt.Errorf("parse --set values: %w", err)
+	}
+	values = protonapp.DeepMergeValues(values, setValues)
+
 	// 确定 Helm 仓库地址（优先级：CLI 参数 > ClusterConfig 内置仓库 > manifest）
 	helmRepoName := f.helmRepoName
 	helmRepoURL := f.helmRepoURL
@@ -191,6 +199,7 @@ func runAppInstall(ctx context.Context, f *appInstallFlags) error {
 		CreateNamespace: f.createNamespace,
 		HelmRepoName:    helmRepoName,
 		HelmRepoURL:     helmRepoURL,
+		SetValues:       setValues,
 	}
 
 	if err := mgr.InstallWithValues(ctx, f.manifestFile, values, opts); err != nil {
@@ -398,6 +407,82 @@ func normalizeAccessAddress(existing map[string]interface{}) map[string]interfac
 		resolved["path"] = path
 	}
 	return resolved
+}
+
+func parseAppInstallSet(entries []string) (map[string]interface{}, error) {
+	result := make(map[string]interface{})
+	for _, entry := range entries {
+		key, rawValue, ok := splitKeyValue(entry)
+		if !ok {
+			return nil, fmt.Errorf("invalid --set entry %q: expected key=value", entry)
+		}
+
+		parts, err := parseDottedKey(key)
+		if err != nil {
+			return nil, fmt.Errorf("invalid --set entry %q: %w", entry, err)
+		}
+
+		cursor := result
+		for _, part := range parts[:len(parts)-1] {
+			existing, ok := cursor[part]
+			if !ok {
+				next := make(map[string]interface{})
+				cursor[part] = next
+				cursor = next
+				continue
+			}
+			next, ok := existing.(map[string]interface{})
+			if !ok {
+				return nil, fmt.Errorf("invalid --set entry %q: key %q conflicts with scalar value", entry, part)
+			}
+			cursor = next
+		}
+		cursor[parts[len(parts)-1]] = parseSetScalar(rawValue)
+	}
+
+	return result, nil
+}
+
+func splitKeyValue(entry string) (string, string, bool) {
+	for i := 0; i < len(entry); i++ {
+		if entry[i] == '=' {
+			return entry[:i], entry[i+1:], true
+		}
+	}
+	return "", "", false
+}
+
+func parseDottedKey(key string) ([]string, error) {
+	if key == "" {
+		return nil, fmt.Errorf("key is required")
+	}
+	parts := make([]string, 0, 4)
+	start := 0
+	for i := 0; i <= len(key); i++ {
+		if i != len(key) && key[i] != '.' {
+			continue
+		}
+		part := key[start:i]
+		if part == "" {
+			return nil, fmt.Errorf("key %q contains an empty path segment", key)
+		}
+		parts = append(parts, part)
+		start = i + 1
+	}
+	return parts, nil
+}
+
+func parseSetScalar(raw string) interface{} {
+	switch raw {
+	case "true":
+		return true
+	case "false":
+		return false
+	}
+	if n, err := strconv.Atoi(raw); err == nil {
+		return n
+	}
+	return raw
 }
 
 func stringValue(v interface{}) string {

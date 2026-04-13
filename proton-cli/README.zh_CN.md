@@ -361,6 +361,16 @@ proton-cli app install \
   --access-address=https://1.1.1.1:8443/
 ```
 
+安装时向所有 chart 传入统一 values，并按 values 控制可选依赖：
+
+```bash
+proton-cli app install \
+  -f release-manifests/0.6.0/kweaver-core.yaml \
+  -n kweaver \
+  --set auth.enabled=false \
+  --set businessDomain.enabled=false
+```
+
 卸载应用：
 
 ```bash
@@ -390,6 +400,7 @@ proton-cli app uninstall \
 - `--dry-run`：只打印安装计划，不执行安装
 - `--config`：无法从集群读取 `proton-cli-config` 时，改为从本地配置文件加载 values
 - `--image-registry`：安装时覆盖 values 中的镜像仓库地址
+- `--set`：以 `key=value` 形式传入安装时 values，可重复传递，支持点路径，如 `auth.enabled=false`
 - `--access-address`：以完整 URL 形式覆盖访问地址，例如 `https://1.1.1.1:8443/`；未显式指定端口时会按 `https=443`、`http=80` 补默认值
 - `--access-host` / `--access-port` / `--access-scheme`：兼容旧用法，按字段覆盖访问地址；未显式传参时会保留现有 values 中的对应字段
 - `app uninstall`
@@ -404,7 +415,18 @@ proton-cli app uninstall \
 - `app import` 复用了 `offline-package app import` 的实现，推荐始终带 `--auto`
 - `app install` 成功后会打印安装完成提示，并显示所使用的 manifest 和 namespace
 - `app install` 会先展开 manifest dependencies，再根据 `stage: pre` 和 `dependsOn` 生成安装顺序
+- `app install` 会把 cluster config、`--set` 和 release 自身的 `values` 合并后传给 chart，优先级为 `release.values > --set > cluster config`
 - `dependsOn` 表示同一 manifest 内 release 之间的 ready 依赖；被依赖的 release 会先安装并等待就绪
+- optional dependency 可通过 manifest 中的 `enabledIf` 结合 `--set` 控制，例如：
+
+```yaml
+dependencies:
+  - product: isf
+    version: 0.6.0
+    manifest: ./isf.yaml
+    defaultEnabled: true
+    enabledIf: auth.enabled
+```
 - `app uninstall` 会按安装计划的逆序执行卸载
 
 ### 8. Kubernetes 工具
