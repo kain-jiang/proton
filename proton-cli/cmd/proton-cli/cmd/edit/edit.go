@@ -1,7 +1,7 @@
 /*
 Copyright © 2025 NAME HERE <EMAIL ADDRESS>
 */
-package cmd
+package edit
 
 import (
 	"github.com/spf13/cobra"
@@ -16,6 +16,6 @@ For example:
     proton-cli edit conf`,
 }
 
-func init() {
-	rootCmd.AddCommand(editCmd)
+func NewEditCommand() *cobra.Command {
+	return editCmd
 }

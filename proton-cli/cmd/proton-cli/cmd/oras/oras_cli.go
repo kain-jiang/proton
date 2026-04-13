@@ -1,4 +1,4 @@
-package cmd
+package oras
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 	"oras.land/oras/cmd/oras/root"
 )
 
-func newOrasCommand() *cobra.Command {
+func NewOrasCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                "oras",
 		Short:              "oras OCI artifact CLI",

@@ -1,7 +1,7 @@
 /*
 Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 */
-package cmd
+package cluster
 
 import (
 	"encoding/json"
@@ -20,7 +20,6 @@ import (
 var configPath string
 var namespace string
 
-// applyCmd represents the apply command
 var applyCmd = &cobra.Command{
 	Use:   "apply",
 	Short: "apply proton cluster by file name",
@@ -54,17 +53,13 @@ var applyCmd = &cobra.Command{
 			"content": toJSON(conf),
 		}).Debug("load config file")
 
-		// Determine which namespace to use
 		nsToUse := ""
 		if namespace != "" {
-			// Command line namespace takes precedence
 			nsToUse = namespace
 		} else if conf.Deploy != nil && conf.Deploy.Namespace != "" {
-			// Fall back to config file namespace
 			nsToUse = conf.Deploy.Namespace
 		}
 
-		// Update the local configuration file if a namespace is specified
 		if nsToUse != "" {
 			fmt.Printf("Updating local configuration with namespace: %s\n", nsToUse)
 			if err := configuration.UpdateProtonCliEnvConfig(nsToUse); err != nil {
@@ -77,7 +72,6 @@ var applyCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(applyCmd)
 	applyCmd.PersistentFlags().StringVarP(&configPath,
 		"file",
 		"f",
@@ -87,22 +81,15 @@ func init() {
 		panic(err)
 	}
 
-	// Use empty string as default value to allow falling back to config file
 	applyCmd.PersistentFlags().StringVarP(&namespace,
 		"namespace",
 		"n",
 		"",
 		"namespace to use for deployment, overrides the namespace in config file")
+}
 
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// applyCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// applyCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+func NewApplyCommand() *cobra.Command {
+	return applyCmd
 }
 
 func toJSON(v any) string {

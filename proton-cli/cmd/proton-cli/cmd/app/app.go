@@ -1,4 +1,4 @@
-package cmd
+package app
 
 import (
 	"context"
@@ -746,5 +746,8 @@ func init() {
 	appCmd.AddCommand(newAppExportCmd())
 	appCmd.AddCommand(newAppInstallCmd())
 	appCmd.AddCommand(newAppUninstallCmd())
-	rootCmd.AddCommand(appCmd)
+}
+
+func NewAppCommand() *cobra.Command {
+	return appCmd
 }

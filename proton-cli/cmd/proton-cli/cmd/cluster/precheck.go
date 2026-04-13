@@ -1,4 +1,4 @@
-package cmd
+package cluster
 
 import (
 	"github.com/spf13/cobra"
@@ -20,7 +20,10 @@ var preCheckCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(preCheckCmd)
 	preCheckCmd.Flags().StringVarP(&sshpassword, "password", "p", "", "SSH password")
 	preCheckCmd.Flags().StringVarP(&ntpServer, "ntpserver", "t", "", "NTP Server Address")
+}
+
+func NewPrecheckCommand() *cobra.Command {
+	return preCheckCmd
 }

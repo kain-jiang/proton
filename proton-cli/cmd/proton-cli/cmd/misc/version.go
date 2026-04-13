@@ -1,4 +1,4 @@
-package cmd
+package misc
 
 import (
 	"os"
@@ -9,10 +9,6 @@ import (
 
 	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/version"
 )
-
-func init() {
-	rootCmd.AddCommand(versionCmd)
-}
 
 var versionExample = dedent.Dedent(`
 	# Print the version information
@@ -27,4 +23,8 @@ var versionCmd = &cobra.Command{
 		b, _ := yaml.Marshal(version.Get())
 		os.Stdout.Write(b)
 	},
+}
+
+func NewVersionCommand() *cobra.Command {
+	return versionCmd
 }

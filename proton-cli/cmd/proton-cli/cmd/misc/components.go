@@ -1,7 +1,7 @@
 /*
 Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 */
-package cmd
+package misc
 
 import (
 	"context"
@@ -13,9 +13,12 @@ import (
 	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/client"
 	rgr "devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/client/registry"
 	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/configuration"
+	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/core/logger"
 	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/proton/componentmanage"
 	cmpkg "devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/proton/componentmanage/packages"
 )
+
+var log = logger.NewLogger()
 
 var componentPackage string
 var componentClusterConf string
@@ -31,7 +34,10 @@ func init() {
 	componentApplyCmd.PersistentFlags().StringVar(&componentTmpDir, "tempdir", "", "component tempary directory")
 	componentApplyCmd.PersistentFlags().BoolVar(&componentPullImage, "pull", true, "pull image when push images")
 	componentCmd.AddCommand(componentApplyCmd)
-	rootCmd.AddCommand(componentCmd)
+}
+
+func NewComponentCommand() *cobra.Command {
+	return componentCmd
 }
 
 var componentCmd = &cobra.Command{

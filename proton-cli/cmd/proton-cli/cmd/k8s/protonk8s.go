@@ -1,4 +1,4 @@
-package cmd
+package k8s
 
 import (
 	"fmt"
@@ -6,8 +6,11 @@ import (
 	"github.com/spf13/cobra"
 
 	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/client"
+	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/core/logger"
 	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/proton/protonk8s"
 )
+
+var log = logger.NewLogger()
 
 var kubernetesCmd = &cobra.Command{
 	Use:   "kubernetes",
@@ -74,6 +77,6 @@ func init() {
 	calicoCmd.AddCommand(calicoUpgradeCmd)
 }
 
-func K8SCmd() *cobra.Command {
+func K8sCommand() *cobra.Command {
 	return kubernetesCmd
 }

@@ -1,7 +1,7 @@
 /*
 Copyright Â© 2022 NAME HERE <EMAIL ADDRESS>
 */
-package cmd
+package cluster
 
 import (
 	"bufio"
@@ -119,11 +119,14 @@ var resetCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(resetCmd)
 	resetCmd.Flags().StringVarP(&ResetClusterConfigFilePath, "file", "f", ResetClusterConfigFilePath, "reset the nodes of the cluster config file")
 	resetCmd.Flags().BoolVar(&global.ClearData, "clear-data", true, "clear service storage data")
 	resetCmd.Flags().StringVar(&FirewallMode, "firewall-mode", "", "how proton manage firewall. firewalld: use firewalld as firewall. usermanaged: the firewall is managed by the user, proton doesn't modify it.")
 	resetCmd.Flags().BoolVarP(&AssumeYes, "assumeyes", "y", false, "answer yes for all questions")
+}
+
+func NewResetCommand() *cobra.Command {
+	return resetCmd
 }
 
 // set default data path for clear when reseting

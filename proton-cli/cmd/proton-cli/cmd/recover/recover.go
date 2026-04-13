@@ -22,3 +22,7 @@ func init() {
 	RecoverCmd.AddCommand(recoverLogCmd)
 
 }
+
+func NewRecoverCommand() *cobra.Command {
+	return RecoverCmd
+}

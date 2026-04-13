@@ -1,7 +1,7 @@
 /*
 Copyright © 2023 NAME HERE <EMAIL ADDRESS>
 */
-package cmd
+package misc
 
 import (
 	"bytes"
@@ -27,6 +27,14 @@ var (
 	deployInstallerNamespace = "anyshare"
 	uploadRecordFileName     = ".upload.txt"
 	_WorkDir                 = ""
+)
+
+var (
+	username      string
+	password      string
+	registry      string
+	packagePath   string
+	prePullImages bool
 )
 
 var packageCmd = &cobra.Command{
@@ -83,16 +91,7 @@ func pushImagesApp(ctx context.Context) error {
 
 func init() {
 	packageCmd.AddCommand(pushImagesAppCmd)
-	rootCmd.AddCommand(packageCmd)
 
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// pushImagesAppCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
 	pushImagesAppCmd.Flags().StringVarP(&username, "username", "u", "", "Username used in docker registry authentication")
 	pushImagesAppCmd.Flags().StringVarP(&password, "password", "p", "", "Password used in docker registry authentication")
 	pushImagesAppCmd.Flags().StringVar(&registry, "registry", "", "ImageRepository address for push images to")
@@ -107,6 +106,10 @@ func init() {
 	if err := pushImagesAppCmd.MarkFlagRequired("package"); err != nil {
 		panic(err)
 	}
+}
+
+func NewPackageCommand() *cobra.Command {
+	return packageCmd
 }
 
 type costSpan struct {

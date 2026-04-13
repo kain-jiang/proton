@@ -1,4 +1,4 @@
-package cmd
+package misc
 
 import (
 	"os"
@@ -58,5 +58,8 @@ $ proton-cli completion fish > ~/.config/fish/completions/proton-cli.fish
 }
 
 func init() {
-	rootCmd.AddCommand(completionCmd)
+}
+
+func NewCompletionCommand() *cobra.Command {
+	return completionCmd
 }

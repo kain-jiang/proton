@@ -1,4 +1,4 @@
-package cmd
+package cluster
 
 import (
 	"github.com/spf13/cobra"
@@ -14,6 +14,6 @@ var checkCmd = &cobra.Command{
 	},
 }
 
-func init() {
-	rootCmd.AddCommand(checkCmd)
+func NewCheckCommand() *cobra.Command {
+	return checkCmd
 }

@@ -1,7 +1,7 @@
 /*
 Copyright © 2023 NAME HERE <EMAIL ADDRESS>
 */
-package cmd
+package misc
 
 import (
 	"fmt"
@@ -17,10 +17,10 @@ import (
 )
 
 var (
-	username    string // Account name on repo, used for Authentication when push charts
-	password    string // Account password on repo, used for Authentication when push charts
-	repoUrl     string
-	packagePath string
+	chartsUsername    string
+	chartsPassword    string
+	chartsRepoUrl     string
+	chartsPackagePath string
 )
 
 // pushChartsCmd represents the pushCharts command
@@ -35,14 +35,14 @@ proton-cli push-charts --package /path/to/directory`,
 
 		lg.Debugf("%#v", version.Get())
 
-		ociPkgPath, err := filepath.Abs(packagePath)
+		ociPkgPath, err := filepath.Abs(chartsPackagePath)
 		if err != nil {
 			return fmt.Errorf("unable get absolute path of charts package: %w", err)
 		}
 		lg.Debugf("charts package: %s", ociPkgPath)
 
-		chartsDir := packagePath
-		if fi, err := os.Stat(packagePath); err != nil {
+		chartsDir := chartsPackagePath
+		if fi, err := os.Stat(chartsPackagePath); err != nil {
 			return err
 		} else if !fi.IsDir() {
 			// Decompress the compressed archive file
@@ -52,37 +52,31 @@ proton-cli push-charts --package /path/to/directory`,
 				return err
 			}
 			defer os.RemoveAll(dir)
-			if err = archiver.Unarchive(packagePath, dir); err != nil {
-				return fmt.Errorf("Decompress %s failed: %v", packagePath, err)
+			if err = archiver.Unarchive(chartsPackagePath, dir); err != nil {
+				return fmt.Errorf("Decompress %s failed: %v", chartsPackagePath, err)
 			}
 			chartsDir = dir
 		}
 		return push.PushCharts(push.ChartPushOpts{
-			HelmRepo:  repoUrl,
-			Username:  username,
-			Password:  password,
+			HelmRepo:  chartsRepoUrl,
+			Username:  chartsUsername,
+			Password:  chartsPassword,
 			ChartsDir: chartsDir,
 		})
 	},
 }
 
 func init() {
-	rootCmd.AddCommand(pushChartsCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// pushChartsCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	pushChartsCmd.Flags().StringVarP(&username, "username", "u", "", "Username used in chart repo authentication")
-	pushChartsCmd.Flags().StringVarP(&password, "password", "p", "", "Password used in chart repo authentication")
-	pushChartsCmd.Flags().StringVar(&repoUrl, "helm-repo", "", "Repo url for push charts to. eg: https://repo.domain/chartrepo/project")
-	pushChartsCmd.Flags().StringVar(&packagePath, "package", "", "Directory where charts is located or compressed archive file containing charts")
+	pushChartsCmd.Flags().StringVarP(&chartsUsername, "username", "u", "", "Username used in chart repo authentication")
+	pushChartsCmd.Flags().StringVarP(&chartsPassword, "password", "p", "", "Password used in chart repo authentication")
+	pushChartsCmd.Flags().StringVar(&chartsRepoUrl, "helm-repo", "", "Repo url for push charts to. eg: https://repo.domain/chartrepo/project")
+	pushChartsCmd.Flags().StringVar(&chartsPackagePath, "package", "", "Directory where charts is located or compressed archive file containing charts")
 	pushChartsCmd.MarkFlagsRequiredTogether("username", "password")
 	if err := pushChartsCmd.MarkFlagRequired("package"); err != nil {
 		panic(err)
 	}
+}
+
+func NewPushChartsCommand() *cobra.Command {
+	return pushChartsCmd
 }

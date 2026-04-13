@@ -1,4 +1,4 @@
-package cmd
+package server
 
 import (
 	"context"
@@ -273,8 +273,9 @@ func (h *resultHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func init() {
-	// 添加命令
-	rootCmd.AddCommand(serverCmd)
-	// 接收参数port
 	serverCmd.Flags().StringVar(&port, "port", "8888", "端口号")
+}
+
+func NewServerCommand() *cobra.Command {
+	return serverCmd
 }

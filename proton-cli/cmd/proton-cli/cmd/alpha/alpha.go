@@ -1,4 +1,4 @@
-package cmd
+package alpha
 
 import (
 	"fmt"
@@ -9,7 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 )
 
-func newAlphaCmd() *cobra.Command {
+func NewAlphaCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "alpha",
 		Short: "Proton-cli experimental sub-commands",

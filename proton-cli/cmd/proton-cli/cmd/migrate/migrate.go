@@ -1,7 +1,7 @@
 /*
 Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 */
-package cmd
+package migrate
 
 import (
 	"fmt"
@@ -20,6 +20,7 @@ import (
 )
 
 // templateCmd represents the template command
+var configPath string
 var migrateMode string
 var tlsSecretName string
 var certificatePath string
@@ -72,7 +73,6 @@ Currently only ECeph deployed with anyshare is supported by this command.`,
 }
 
 func init() {
-	rootCmd.AddCommand(migrateCmd)
 	migrateCmd.PersistentFlags().StringVarP(&configPath,
 		"file",
 		"f",
@@ -101,13 +101,8 @@ func init() {
 	if err := migrateCmd.MarkPersistentFlagRequired("migrate-mode"); err != nil {
 		panic(err)
 	}
-	// Here you will define your flags and configuration settings.
+}
 
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// templateCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// templateCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+func NewMigrateCommand() *cobra.Command {
+	return migrateCmd
 }

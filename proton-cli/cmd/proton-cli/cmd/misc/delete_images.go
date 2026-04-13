@@ -1,4 +1,4 @@
-package cmd
+package misc
 
 import (
 	"github.com/spf13/cobra"
@@ -59,6 +59,9 @@ proton-cli delete-images`,
 }
 
 func init() {
-	rootCmd.AddCommand(deleteImages)
 	deleteImages.Flags().StringVarP(&ClusterConfigFilePath, "file", "f", ClusterConfigFilePath, "Clearing the nodes of the cluster config file")
+}
+
+func NewDeleteImagesCommand() *cobra.Command {
+	return deleteImages
 }
