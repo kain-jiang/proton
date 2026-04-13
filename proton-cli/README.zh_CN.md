@@ -30,35 +30,20 @@ tar xf proton-cli-linux-<arch>.tar.gz
 
 ```bash
 # amd64
-proton-cli oras pull swr.cn-east-3.myhuaweicloud.com/kweaver-ai/offline-pkg/proton-offline-package-amd64:24308056846
+proton-cli oras pull swr.cn-east-3.myhuaweicloud.com/kweaver-ai/offline-pkg/proton-offline-package-amd64:24325651105
 
 # arm64
-proton-cli oras pull swr.cn-east-3.myhuaweicloud.com/kweaver-ai/offline-pkg/proton-offline-package-arm64:24308056846
+proton-cli oras pull swr.cn-east-3.myhuaweicloud.com/kweaver-ai/offline-pkg/proton-offline-package-arm64:24325651105
 ```
 
-3. 预装系统依赖
-
-当前系统需要预先手动安装 `net-tools` 和 `rpm`：
-
-```bash
-# Debian/Ubuntu
-sudo apt-get update
-sudo apt-get install -y net-tools rpm
-
-# RHEL/CentOS/OpenEuler
-sudo yum install -y net-tools rpm
-```
-
-说明：这两个依赖当前需要手动安装，后续版本会内置处理。
-
-4. 安装离线包
+3. 安装离线包
 
 ```bash
 tar xf proton-offline-package.tar
 bash install.sh
 ```
 
-5. 启动初始化服务
+4. 启动初始化服务
 
 ```bash
 proton-cli server -ldebug
@@ -66,11 +51,11 @@ proton-cli server -ldebug
 
 然后通过浏览器访问 `http://<ip>:8888` 进入初始化页面。
 
-6. 完成初始化
+5. 完成初始化
 
 在初始化页面中自定义 `MariaDB` 和 `Redis` 密码，最后点击“完成”，等待初始化成功。
 
-7. 导出应用离线安装包
+6. 导出应用离线安装包
 
 可以通过以下命令下载指定 `yaml` 文件中定义的 chart 和 images，并打包为离线安装包：
 
@@ -81,7 +66,7 @@ proton-cli app export \
   --override-registry swr.cn-east-3.myhuaweicloud.com/kweaver-ai
 ```
 
-8. 导入应用离线安装包
+7. 导入应用离线安装包
 
 通过以下命令将离线应用包中的 chart 和 image 导入到内置仓库：
 
@@ -91,7 +76,7 @@ proton-cli app import \
   --auto
 ```
 
-9. 安装指定产品版本
+8. 安装指定产品版本
 
 通过以下命令将指定产品的指定版本安装到 `kweaver` 命名空间：
 
@@ -100,6 +85,18 @@ proton-cli app install \
   -f release-manifest/x.y.z/kweaver-dip.yaml \
   -n kweaver
 ```
+
+如果需要在安装时覆盖 values，例如关闭可选能力：
+
+```bash
+proton-cli app install \
+  -f release-manifest/x.y.z/kweaver-dip.yaml \
+  -n kweaver \
+  --set auth.enabled=false \
+  --set businessDomain.enabled=false
+```
+
+`--set` 用于安装时覆盖 values；详细的优先级规则以及与 manifest YAML 的关系，见后文 `app install` 说明。
 
 ### 环境要求
 
@@ -416,6 +413,38 @@ proton-cli app uninstall \
 - `app install` 成功后会打印安装完成提示，并显示所使用的 manifest 和 namespace
 - `app install` 会先展开 manifest dependencies，再根据 `stage: pre` 和 `dependsOn` 生成安装顺序
 - `app install` 会把 cluster config、`--set` 和 release 自身的 `values` 合并后传给 chart，优先级为 `release.values > --set > cluster config`
+- `--set` 与 YAML 的关系如下：
+
+```yaml
+dependencies:
+  - product: isf
+    version: 0.6.0
+    manifest: ./isf.yaml
+    optional: true
+    defaultEnabled: true
+    enabledIf: auth.enabled
+
+releases:
+  mf-model-manager:
+    chart: mf-model-manager
+    version: 0.6.0
+    values:
+      auth:
+        enabled: true
+```
+
+  对应命令：
+
+```bash
+proton-cli app install \
+  -f release-manifests/0.6.0/kweaver-core.yaml \
+  --set auth.enabled=false \
+  --set businessDomain.enabled=false
+```
+
+  语义：
+  `--set auth.enabled=false` 会作为全局 values 传给所有 chart；如果某个 release 在 manifest 的 `values` 里再次定义 `auth.enabled`，则以该 release 自己的 `values` 为准。
+  `dependencies[].enabledIf: auth.enabled` 会读取同一份合并后的 install-time values；当值为 `false` 时跳过该 dependency，当未传值时回退到 `defaultEnabled`。
 - `dependsOn` 表示同一 manifest 内 release 之间的 ready 依赖；被依赖的 release 会先安装并等待就绪
 - optional dependency 可通过 manifest 中的 `enabledIf` 结合 `--set` 控制，例如：
 

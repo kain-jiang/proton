@@ -36,29 +36,14 @@ proton-cli oras pull swr.cn-east-3.myhuaweicloud.com/kweaver-ai/offline-pkg/prot
 proton-cli oras pull swr.cn-east-3.myhuaweicloud.com/kweaver-ai/offline-pkg/proton-offline-package-arm64:24308056846
 ```
 
-3. Install required system packages first
-
-The system currently requires `net-tools` and `rpm` to be installed manually before installation:
-
-```bash
-# Debian/Ubuntu
-sudo apt-get update
-sudo apt-get install -y net-tools rpm
-
-# RHEL/CentOS/OpenEuler
-sudo yum install -y net-tools rpm
-```
-
-Note: these dependencies currently need to be installed manually and will be bundled in a future version.
-
-4. Install the offline package
+3. Install the offline package
 
 ```bash
 tar xf proton-offline-package.tar
 bash install.sh
 ```
 
-5. Start the initialization service
+4. Start the initialization service
 
 ```bash
 proton-cli server -ldebug
@@ -66,11 +51,11 @@ proton-cli server -ldebug
 
 Then open `http://<ip>:8888` in a browser to enter the initialization page.
 
-6. Complete initialization
+5. Complete initialization
 
 Set custom `MariaDB` and `Redis` passwords on the initialization page, then click `Complete` and wait for initialization to finish successfully.
 
-7. Export an application offline package
+6. Export an application offline package
 
 Use the following command to download the charts and images defined in the specified `yaml` file and package them as an offline installation bundle:
 
@@ -81,7 +66,7 @@ proton-cli app export \
   --override-registry swr.cn-east-3.myhuaweicloud.com/kweaver-ai
 ```
 
-8. Import an application offline package
+7. Import an application offline package
 
 Use the following command to import the charts and images from the offline application package into the built-in registry:
 
@@ -91,7 +76,7 @@ proton-cli app import \
   --auto
 ```
 
-9. Install a specific product version
+8. Install a specific product version
 
 Use the following command to install the specified product version into the `kweaver` namespace:
 
@@ -100,6 +85,18 @@ proton-cli app install \
   -f release-manifest/x.y.z/kweaver-dip.yaml \
   -n kweaver
 ```
+
+If you need to override values at install time, for example to disable optional capabilities:
+
+```bash
+proton-cli app install \
+  -f release-manifest/x.y.z/kweaver-dip.yaml \
+  -n kweaver \
+  --set auth.enabled=false \
+  --set businessDomain.enabled=false
+```
+
+`--set` overrides install-time values. See the later `app install` section for precedence rules and how it relates to manifest YAML.
 
 ### Requirements
 
@@ -416,6 +413,38 @@ Behavior confirmed from the code:
 - `app install` prints a completion message with the manifest and namespace after success
 - `app install` expands manifest dependencies first, then computes install order using `stage: pre` and `dependsOn`
 - `app install` merges cluster config values, `--set` overrides, and release-local `values` before calling Helm, with precedence `release.values > --set > cluster config`
+- The relationship between `--set` and manifest YAML is:
+
+```yaml
+dependencies:
+  - product: isf
+    version: 0.6.0
+    manifest: ./isf.yaml
+    optional: true
+    defaultEnabled: true
+    enabledIf: auth.enabled
+
+releases:
+  mf-model-manager:
+    chart: mf-model-manager
+    version: 0.6.0
+    values:
+      auth:
+        enabled: true
+```
+
+  Matching command:
+
+```bash
+proton-cli app install \
+  -f release-manifests/0.6.0/kweaver-core.yaml \
+  --set auth.enabled=false \
+  --set businessDomain.enabled=false
+```
+
+  Semantics:
+  `--set auth.enabled=false` is injected as a global values override for every chart; if a release defines `auth.enabled` again under manifest `values`, that release-local value wins.
+  `dependencies[].enabledIf: auth.enabled` reads from the same merged install-time values; when the value is `false`, the dependency is skipped, and when the value is absent, the planner falls back to `defaultEnabled`.
 - `dependsOn` means a ready dependency between releases in the same manifest; the dependency release is installed and waited for first
 - optional dependencies can be controlled by manifest `enabledIf` plus `--set`, for example:
 
