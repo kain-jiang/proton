@@ -1018,12 +1018,6 @@ func (c *Cs) addNodes(list *corev1.NodeList, chartRepo *k.ChartmuseumInfo) error
 			if err := n.EnableKubeletService(); err != nil {
 				return fmt.Errorf("%s: enable kubelet service failed: %v", n.HostName, err)
 			}
-			if err := n.InitHelm2Client(); err != nil {
-				return fmt.Errorf("%s: init helm2 client failed: %v", n.HostName, err)
-			}
-			if err := n.SetHelm2Repo(chartRepo); err != nil {
-				return fmt.Errorf("%s: set helm2 repo %s failed: %v", n.HostName, chartRepo, err)
-			}
 		}
 		// 移除新增 control plane 节点的 taint
 		master.RemoveTaint(joinMasters)
@@ -1057,12 +1051,6 @@ func (c *Cs) addNodes(list *corev1.NodeList, chartRepo *k.ChartmuseumInfo) error
 			}
 			if err := n.EnableKubeletService(); err != nil {
 				return fmt.Errorf("%s: enable kubelet service: %w", n.Ipaddress, err)
-			}
-			if err := n.InitHelm2Client(); err != nil {
-				return fmt.Errorf("%s: init helm2 client: %w", n.HostName, err)
-			}
-			if err := n.SetHelm2Repo(chartRepo); err != nil {
-				return fmt.Errorf("%s: set helm2 repo: %w", n.HostName, err)
 			}
 		}
 	}

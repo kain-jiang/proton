@@ -9,8 +9,6 @@ import (
 	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/client/ecms/v1alpha1"
 	firewalld "devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/client/firewalld/v1alpha1"
 	firewalld_testing "devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/client/firewalld/v1alpha1/testing"
-	helm "devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/client/helm/v2"
-	helm_testing "devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/client/helm/v2/testing"
 	node "devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/client/node/v1alpha1"
 	slb_v1 "devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/client/slb/v1"
 	slb_v1_testing "devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/client/slb/v1/testing"
@@ -114,11 +112,6 @@ func (*Client) SLB_V1() slb_v1.SLB_V1Interface {
 // SLB_V2 implements v1alpha1.Interface.
 func (*Client) SLB_V2() slb_v2.SLB_V2Interface {
 	return new(slb_v2_testing.Client)
-}
-
-// Deprecated: use helm/v3 instead
-func (*Client) Helm() helm.Interface {
-	return new(helm_testing.Client)
 }
 
 var _ node.Interface = &Client{}

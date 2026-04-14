@@ -16,7 +16,6 @@ import (
 	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/cmd/proton-cli/cmd/edit"
 	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/cmd/proton-cli/cmd/images"
 	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/cmd/proton-cli/cmd/k8s"
-	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/cmd/proton-cli/cmd/migrate"
 	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/cmd/proton-cli/cmd/misc"
 	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/cmd/proton-cli/cmd/offline_package"
 	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/cmd/proton-cli/cmd/oras"
@@ -59,7 +58,6 @@ func Execute() {
 	rootCmd.AddCommand(misc.NewDeleteImagesCommand())
 	rootCmd.AddCommand(misc.NewComponentCommand())
 	rootCmd.AddCommand(k8s.K8sCommand())
-	rootCmd.AddCommand(migrate.NewMigrateCommand())
 	rootCmd.AddCommand(server.NewServerCommand())
 	rootCmd.AddCommand(backup.NewBackupCommand())
 	rootCmd.AddCommand(recover.NewRecoverCommand())

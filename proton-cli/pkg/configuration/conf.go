@@ -80,9 +80,6 @@ type ClusterConfig struct {
 
 	// Proton 包管睆朝务
 	PackageStore *PackageStore `json:"package-store,omitempty"`
-
-	// Proton ECeph
-	ECeph *ECeph `json:"eceph,omitempty"`
 }
 
 type Deploy struct {

@@ -20,12 +20,10 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
-	"gopkg.in/yaml.v2"
 
 	ecms "devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/client/ecms/v1alpha1"
 	exec "devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/client/exec/v1alpha1"
 	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/configuration"
-	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/core/global"
 )
 
 type Node struct {
@@ -534,54 +532,6 @@ func (n *Node) WaitTillerReady() error {
 			n.Logger.Printf("%s: tiller ready", n.Ipaddress)
 			return nil
 		}
-	}
-
-	return nil
-}
-
-func (n *Node) InitHelm2Client() error {
-	var executor = exec.NewECMSExecutorForHost(n.ECMS.Exec())
-	if err := executor.Command("helm", "init", "--client-only", "--service-account=tiller", "--skip-refresh").Run(); err != nil {
-		return fmt.Errorf("%s: failed to init helm2: %v", n.Ipaddress, err)
-	}
-	return nil
-}
-
-func (n *Node) SetHelm2Repo(repo *ChartmuseumInfo) error {
-	if repo == nil {
-		n.Logger.Infof("%s: skip set helm2 repo %s", n.Ipaddress, repo)
-		return nil
-	}
-	var executor = exec.NewECMSExecutorForHost(n.ECMS.Exec())
-	n.Logger.Printf("%s: set helm2 repo %s", n.Ipaddress, repo)
-	out, err := executor.Command("helm", "repo", "list", "--output=yaml").Output()
-	if err != nil {
-		return fmt.Errorf("%s: failed to list helm repo: %v", n.Ipaddress, err)
-	}
-	var actual []map[string]interface{}
-	if err := yaml.Unmarshal(out, &actual); err != nil {
-		return fmt.Errorf("%s: failed to unmarshal helm repo: %v", n.Ipaddress, err)
-	}
-	var repoRemove []string
-	for _, repo := range actual {
-		repoName, ok := repo["Name"].(string)
-		if !ok {
-			continue
-		}
-		repoRemove = append(repoRemove, repoName)
-	}
-
-	if len(repoRemove) > 0 {
-		for _, name := range repoRemove {
-			n.Logger.Printf("%s: remove helm repo: %s", n.Ipaddress, name)
-			if err := executor.Command("helm", "repo", "remove", name).Run(); err != nil {
-				return fmt.Errorf("%s: failed to remove helm repo: %v", n.Ipaddress, err)
-			}
-		}
-	}
-	n.Logger.Printf("%s: add helm repo: %v", n.Ipaddress, repo)
-	if err := executor.Command("helm", "repo", "add", global.HelmRepo, repo.Address, "--username", repo.Username, "--password", repo.Password).Run(); err != nil {
-		return fmt.Errorf("%s: failed to add helm repo: %v", n.Ipaddress, err)
 	}
 
 	return nil

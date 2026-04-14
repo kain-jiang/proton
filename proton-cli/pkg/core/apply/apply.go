@@ -12,8 +12,6 @@ import (
 	controller_runtime_client "sigs.k8s.io/controller-runtime/pkg/client"
 
 	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/client"
-	exec "devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/client/exec/v1alpha1"
-	v2 "devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/client/helm/v2"
 	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/client/helm3"
 	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/client/node/v1alpha1"
 	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/client/registry"
@@ -112,12 +110,6 @@ func Apply(clusterConf *configuration.ClusterConfig) error {
 		nodes = append(nodes, n)
 	}
 
-	var helm2client *v2.Client
-	// Helm2客户端基于命令执行，且可以在集群的任意节点上执行
-	if clusterConf.Cs.Provisioner == configuration.KubernetesProvisionerLocal {
-		helm2client = v2.New(exec.NewLocalShellExecutor())
-	}
-
 	// do checks and completion that requires clients created after initial checks here
 	completion.CompleteClusterConfigPost(clusterConf, pkg, nodes)
 
@@ -154,7 +146,7 @@ func Apply(clusterConf *configuration.ClusterConfig) error {
 	}
 
 	// 可选模块
-	for _, m := range appendOptionalModules(nil, kube, helm3client, helm2client, controllerClient, clusterConf, olClusterConf, registry, pkg, nodes) {
+	for _, m := range appendOptionalModules(nil, kube, helm3client, controllerClient, clusterConf, olClusterConf, registry, pkg, nodes) {
 		if err := m.applier.Apply(); err != nil {
 			return fmt.Errorf("apply module %s fail: %w", m.name, err)
 		}
@@ -268,7 +260,6 @@ func appendOptionalModules(
 	modules []module,
 	kube kubernetes.Interface,
 	helm3 helm3.Client,
-	helm2 *v2.Client,
 	controllerClient controller_runtime_client.Client,
 	clusterConf, olClusterConf *configuration.ClusterConfig,
 	registry registry.Interface,

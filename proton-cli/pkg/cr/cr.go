@@ -108,14 +108,6 @@ func (c *Cr) Apply() error {
 	if err := c.PushImages(filepath.Join(global.ServicePackage, "images")); err != nil {
 		return fmt.Errorf("push docker images fail: %w", err)
 	}
-	if c.ClusterConf.ECeph != nil && len(c.ClusterConf.ECeph.Hosts) > 0 && !c.ClusterConf.ECeph.SkipECephUpdate {
-		if err := c.PushImages(filepath.Join(global.ServicePackageECeph, "images")); err != nil {
-			return fmt.Errorf("push ECeph related images fail: %w", err)
-		}
-		if err := c.PushCharts(filepath.Join(global.ServicePackageECeph, "charts")); err != nil {
-			return fmt.Errorf("push ECeph related helm charts fail: %w", err)
-		}
-	}
 
 	if err := c.PushCharts(filepath.Join(global.ServicePackage, "charts")); err != nil {
 		return fmt.Errorf("push helm charts fail: %w", err)
