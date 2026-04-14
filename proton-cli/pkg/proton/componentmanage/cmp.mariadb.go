@@ -2,6 +2,7 @@ package componentmanage
 
 import (
 	"fmt"
+	"time"
 
 	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/configuration"
 	componentmanageCli "devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/core/componentmanage"
@@ -74,6 +75,9 @@ func (m *Applier) applyMariaDB(cli componentmanageCli.Client, name string) error
 	if err != nil {
 		return fmt.Errorf("get mariadb error: %s", err)
 	}
+
+	// 等待一段时间，让 operater 就绪
+	time.Sleep(time.Second * 5)
 
 	params := mustToMap(m.NewCfg.Proton_mariadb)
 	//额外参数，使用内置数据库时连接信息必须包含业务账户用户名密码
