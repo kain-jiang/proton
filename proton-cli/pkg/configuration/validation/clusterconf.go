@@ -3,8 +3,6 @@ package validation
 import (
 	"reflect"
 
-	"golang.org/x/exp/slices"
-
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/configuration"
@@ -21,15 +19,6 @@ func ValidateClusterConfig(c *configuration.ClusterConfig) (allErrs field.ErrorL
 
 	// validate that replica_count should be set in external k8s cluster mode and should not be set in internal k8s mode
 	allErrs = append(allErrs, ValidateReplicaCount(c)...)
-
-	if c.Deploy == nil {
-		allErrs = append(allErrs, field.Required(field.NewPath("deploy"), "must set deploy mode and devicespec"))
-	} else {
-		validModes := []string{"standard", "cloud"}
-		if !slices.Contains(validModes, c.Deploy.Mode) {
-			allErrs = append(allErrs, field.NotSupported(field.NewPath("deploy", "mode"), c.Deploy.Mode, validModes))
-		}
-	}
 
 	if c.Cs == nil {
 		allErrs = append(allErrs, field.Required(field.NewPath("cs"), ""))

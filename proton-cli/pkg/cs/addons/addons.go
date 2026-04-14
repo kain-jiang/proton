@@ -54,7 +54,7 @@ var releaseNameMap = map[configuration.CSAddonName]string{
 //   - release 版本高于 chart 仓库中的最新版本，无操作
 //   - release 版本等于 chart 仓库中的最新版本，如果 values 不符合期望则更新
 //   - release 版本低于 chart 仓库中的最新版本，更新至 chart 仓库的最新版本
-func Reconcile(ctx context.Context, lg logrus.FieldLogger, h helm3.Client, pkg *servicepackage.ServicePackage, registry string, name configuration.CSAddonName) error {
+func Reconcile(ctx context.Context, lg logrus.FieldLogger, h helm3.Client, pkg *servicepackage.ServicePackage, registry string, addonsConfig *configuration.CSAddonsConfig, name configuration.CSAddonName) error {
 	var ok bool
 
 	// addon 的 chart 名称
@@ -104,7 +104,7 @@ func Reconcile(ctx context.Context, lg logrus.FieldLogger, h helm3.Client, pkg *
 	}
 
 	// 期望的 release values
-	var values = helmValuesForAddon(name, registry)
+	var values = helmValuesForAddon(name, registry, addonsConfig)
 	currentValues := map[string]any(nil)
 	if r != nil {
 		currentValues = r.Config
@@ -149,6 +149,10 @@ type ValuesIngressNginx struct {
 			Image  string  `json:"image,omitzero"`
 			Digest *string `json:"digest"`
 		} `json:"image,omitzero"`
+		ContainerPort struct {
+			HTTP  *int `json:"http,omitzero"`
+			HTTPS *int `json:"https,omitzero"`
+		} `json:"containerPort,omitzero"`
 		Kind        string `json:"kind,omitzero"`
 		HostNetwork *bool  `json:"hostNetwork,omitzero"`
 		Service     struct {
@@ -183,12 +187,15 @@ func toMap(v any) map[string]any {
 	return r
 }
 
-func helmValuesForAddon(name configuration.CSAddonName, registry string) (values any) {
+func helmValuesForAddon(name configuration.CSAddonName, registry string, addonsConfig *configuration.CSAddonsConfig) (values any) {
 	switch name {
 	case configuration.CSAddonNameIngressNginx:
 		var v ValuesIngressNginx
+		httpPort, httpsPort := ingressNginxPorts(addonsConfig)
 		v.Global.Image.Registry = registry
 		v.Controller.Image.Image = "ingress-nginx-controller"
+		v.Controller.ContainerPort.HTTP = ptr.To(httpPort)
+		v.Controller.ContainerPort.HTTPS = ptr.To(httpsPort)
 		v.Controller.Kind = "DaemonSet"
 		v.Controller.HostNetwork = ptr.To(true)
 		v.Controller.Service.Enabled = ptr.To(false)
@@ -202,6 +209,21 @@ func helmValuesForAddon(name configuration.CSAddonName, registry string) (values
 				Registry: registry,
 			},
 		}
+	}
+	return
+}
+
+func ingressNginxPorts(addonsConfig *configuration.CSAddonsConfig) (httpPort, httpsPort int) {
+	httpPort = 80
+	httpsPort = 443
+	if addonsConfig == nil || addonsConfig.IngressNginx == nil {
+		return
+	}
+	if addonsConfig.IngressNginx.HTTPPort > 0 {
+		httpPort = addonsConfig.IngressNginx.HTTPPort
+	}
+	if addonsConfig.IngressNginx.HTTPSPort > 0 {
+		httpsPort = addonsConfig.IngressNginx.HTTPSPort
 	}
 	return
 }

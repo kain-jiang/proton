@@ -200,6 +200,10 @@ function joinValues(values: string[]) {
   return values.join(', ')
 }
 
+function hasIngressNginx(addons: string[]) {
+  return addons.includes('ingress-nginx')
+}
+
 function getCurrentStepIssues(step: StepKey, issues: ReturnType<typeof validateWizardState>['issues']) {
   const prefixes: Record<StepKey, string[]> = {
     node: ['nodes', 'chrony', 'firewall'],
@@ -753,6 +757,54 @@ function NetworkStep({
                 </label>
               ))}
             </div>
+            {hasIngressNginx(state.cs.local.addons) ? (
+              <div className="legacy-form-grid">
+                <label>
+                  <span>ingress-nginx HTTP 端口</span>
+                  <input
+                    type="number"
+                    value={state.cs.local.ingressNginx.httpPort}
+                    onChange={(event) =>
+                      updateState(setState, (current) => ({
+                        ...current,
+                        cs: {
+                          ...current.cs,
+                          local: {
+                            ...current.cs.local,
+                            ingressNginx: {
+                              ...current.cs.local.ingressNginx,
+                              httpPort: Number(event.target.value),
+                            },
+                          },
+                        },
+                      }))
+                    }
+                  />
+                </label>
+                <label>
+                  <span>ingress-nginx HTTPS 端口</span>
+                  <input
+                    type="number"
+                    value={state.cs.local.ingressNginx.httpsPort}
+                    onChange={(event) =>
+                      updateState(setState, (current) => ({
+                        ...current,
+                        cs: {
+                          ...current.cs,
+                          local: {
+                            ...current.cs.local,
+                            ingressNginx: {
+                              ...current.cs.local.ingressNginx,
+                              httpsPort: Number(event.target.value),
+                            },
+                          },
+                        },
+                      }))
+                    }
+                  />
+                </label>
+              </div>
+            ) : null}
           </div>
         </>
       ) : (
@@ -823,6 +875,54 @@ function NetworkStep({
                 </label>
               ))}
             </div>
+            {hasIngressNginx(state.cs.managed.addons) ? (
+              <div className="legacy-form-grid">
+                <label>
+                  <span>ingress-nginx HTTP 端口</span>
+                  <input
+                    type="number"
+                    value={state.cs.managed.ingressNginx.httpPort}
+                    onChange={(event) =>
+                      updateState(setState, (current) => ({
+                        ...current,
+                        cs: {
+                          ...current.cs,
+                          managed: {
+                            ...current.cs.managed,
+                            ingressNginx: {
+                              ...current.cs.managed.ingressNginx,
+                              httpPort: Number(event.target.value),
+                            },
+                          },
+                        },
+                      }))
+                    }
+                  />
+                </label>
+                <label>
+                  <span>ingress-nginx HTTPS 端口</span>
+                  <input
+                    type="number"
+                    value={state.cs.managed.ingressNginx.httpsPort}
+                    onChange={(event) =>
+                      updateState(setState, (current) => ({
+                        ...current,
+                        cs: {
+                          ...current.cs,
+                          managed: {
+                            ...current.cs.managed,
+                            ingressNginx: {
+                              ...current.cs.managed.ingressNginx,
+                              httpsPort: Number(event.target.value),
+                            },
+                          },
+                        },
+                      }))
+                    }
+                  />
+                </label>
+              </div>
+            ) : null}
           </div>
         </>
       )}

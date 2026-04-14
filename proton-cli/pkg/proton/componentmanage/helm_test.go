@@ -78,3 +78,55 @@ func TestNewManager(t *testing.T) {
 	assert.Equal(t, newCfgMock, manager.NewCfg)
 	assert.Equal(t, expectedValues, manager.Values)
 }
+
+func TestNewManagerWithoutDeploy(t *testing.T) {
+	helm3Mock := (helm3.Client)(nil)
+	oldCfgMock := &configuration.ClusterConfig{}
+	newCfgMock := &configuration.ClusterConfig{
+		Cr: &configuration.Cr{
+			External: &configuration.ExternalCR{
+				ChartRepo: configuration.RepoChartmuseum,
+				Chartmuseum: &configuration.Chartmuseum{
+					Host: "https://chartmuseum.example.com",
+				},
+			},
+		},
+		ComponentManage: &configuration.ComponentManagement{},
+	}
+	registryMock := "registry.example.com"
+	servicePackageMock := "my-service-package"
+	chartsMock := servicepackage.Charts{
+		{Metadata: chart.Metadata{
+			Name:    ChartName,
+			Version: "1.0.0",
+		}},
+	}
+	imagesMock := make([]string, 0)
+
+	manager := NewManager(helm3Mock, oldCfgMock, newCfgMock, registryMock, servicePackageMock, chartsMock, imagesMock, "resource")
+
+	expectedValues := map[string]interface{}{
+		"image": map[string]interface{}{
+			"registry": registryMock,
+		},
+		"serviceAccount": map[string]interface{}{
+			"create": true,
+			"name":   "",
+		},
+		"namespace": "resource",
+		"service": map[string]interface{}{
+			"enableDualStack": false,
+			"config": map[string]interface{}{
+				"chartmuseum": map[string]interface{}{
+					"url":      "https://chartmuseum.example.com",
+					"username": "",
+					"password": "",
+					"enable":   true,
+				},
+			},
+		},
+		"nodeSelector": (map[string]string)(nil),
+	}
+
+	assert.Equal(t, expectedValues, manager.Values)
+}

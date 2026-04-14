@@ -60,6 +60,32 @@ describe('Wizard', () => {
   it('defaults kubernetes addons to ingress-nginx only', () => {
     expect(defaultWizardState.cs.local.addons).toEqual(['ingress-nginx'])
     expect(defaultWizardState.cs.managed.addons).toEqual(['ingress-nginx'])
+    expect(defaultWizardState.cs.local.ingressNginx).toEqual({ httpPort: 80, httpsPort: 443 })
+    expect(defaultWizardState.cs.managed.ingressNginx).toEqual({ httpPort: 80, httpsPort: 443 })
+  })
+
+  it('shows ingress-nginx port inputs in kubernetes config and allows editing', async () => {
+    const user = userEvent.setup()
+    render(<Wizard />)
+
+    await user.click(screen.getByRole('button', { name: '标准模式部署' }))
+    await user.click(screen.getByRole('button', { name: '新增节点' }))
+    await user.type(screen.getByLabelText('Node IPv4'), '192.168.40.11')
+    await user.click(screen.getByRole('button', { name: '下一步' }))
+
+    const httpPortInput = screen.getByLabelText('ingress-nginx HTTP 端口')
+    const httpsPortInput = screen.getByLabelText('ingress-nginx HTTPS 端口')
+
+    expect(httpPortInput).toHaveValue(80)
+    expect(httpsPortInput).toHaveValue(443)
+
+    await user.clear(httpPortInput)
+    await user.type(httpPortInput, '8080')
+    await user.clear(httpsPortInput)
+    await user.type(httpsPortInput, '8443')
+
+    expect(httpPortInput).toHaveValue(8080)
+    expect(httpsPortInput).toHaveValue(8443)
   })
 
   it('renders global node settings above a multi-node table and supports add/remove', async () => {

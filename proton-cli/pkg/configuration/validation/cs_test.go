@@ -2,6 +2,7 @@ package validation
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/go-test/deep"
@@ -121,7 +122,15 @@ func TestValidateCSAddons(t *testing.T) {
 				},
 				fldPath: fldPath,
 			},
-			wantErr: field.NotSupported(fldPath.Index(1), configuration.CSAddonName("not-supported-addon"), []string{string(configuration.CSAddonNameStateMetrics), string(configuration.CSAddonNameNodeExporter)}),
+			wantErr: field.NotSupported(
+				fldPath.Index(1),
+				configuration.CSAddonName("not-supported-addon"),
+				[]string{
+					string(configuration.CSAddonNameIngressNginx),
+					string(configuration.CSAddonNameStateMetrics),
+					string(configuration.CSAddonNameNodeExporter),
+				},
+			),
 		},
 	}
 	for _, tt := range tests {
@@ -138,6 +147,84 @@ func TestValidateCSAddons(t *testing.T) {
 				}
 			default:
 				t.Error("validateCSAddons() returns multi errors")
+			}
+		})
+	}
+}
+
+func TestValidateCSIngressNginxPorts(t *testing.T) {
+	tests := []struct {
+		name string
+		cs   *configuration.Cs
+		want string
+	}{
+		{
+			name: "accepts unset config",
+			cs: &configuration.Cs{
+				Provisioner: configuration.KubernetesProvisionerExternal,
+			},
+		},
+		{
+			name: "accepts valid ports",
+			cs: &configuration.Cs{
+				Provisioner: configuration.KubernetesProvisionerExternal,
+				AddonsConfig: &configuration.CSAddonsConfig{
+					IngressNginx: &configuration.CSAddonIngressNginxConfig{
+						HTTPPort:  8080,
+						HTTPSPort: 8443,
+					},
+				},
+			},
+		},
+		{
+			name: "rejects invalid http port",
+			cs: &configuration.Cs{
+				Provisioner: configuration.KubernetesProvisionerExternal,
+				AddonsConfig: &configuration.CSAddonsConfig{
+					IngressNginx: &configuration.CSAddonIngressNginxConfig{
+						HTTPPort: 65536,
+					},
+				},
+			},
+			want: "httpPort",
+		},
+		{
+			name: "rejects invalid https port",
+			cs: &configuration.Cs{
+				Provisioner: configuration.KubernetesProvisionerExternal,
+				AddonsConfig: &configuration.CSAddonsConfig{
+					IngressNginx: &configuration.CSAddonIngressNginxConfig{
+						HTTPSPort: -1,
+					},
+				},
+			},
+			want: "httpsPort",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			errs := ValidateCS(tt.cs, nil, field.NewPath("cs"))
+			if tt.want == "" {
+				if len(errs) != 0 {
+					t.Fatalf("expected no errors, got %v", errs)
+				}
+				return
+			}
+
+			if len(errs) == 0 {
+				t.Fatalf("expected validation error containing %q", tt.want)
+			}
+
+			found := false
+			for _, err := range errs {
+				if strings.Contains(err.Field, tt.want) {
+					found = true
+					break
+				}
+			}
+			if !found {
+				t.Fatalf("expected field containing %q, got %v", tt.want, errs)
 			}
 		})
 	}

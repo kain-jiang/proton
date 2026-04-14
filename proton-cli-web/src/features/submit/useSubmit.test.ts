@@ -44,6 +44,14 @@ describe('useSubmit', () => {
     })
     expect(JSON.parse(fetchMock.mock.calls[0]?.[1]?.body as string)).not.toHaveProperty('service_package_dir')
     expect(JSON.parse(fetchMock.mock.calls[0]?.[1]?.body as string).cluster_config).not.toHaveProperty('deploy')
+    expect(JSON.parse(fetchMock.mock.calls[0]?.[1]?.body as string).cluster_config.cs).toMatchObject({
+      addonsConfig: {
+        'ingress-nginx': {
+          httpPort: 80,
+          httpsPort: 443,
+        },
+      },
+    })
     expect(fetchMock).toHaveBeenNthCalledWith(2, '/alpha/result', expect.objectContaining({ method: 'GET' }))
     expect(result.current.status).toBe('success')
 

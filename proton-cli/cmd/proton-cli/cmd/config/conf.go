@@ -41,25 +41,12 @@ You can specify a namespace with -n flag, For Example:
 		}
 
 		/// 新版本升级逻辑 start
-		// 新版本proton自动从组件对应的secret中补全连接信息
 		if c.ResourceConnectInfo == nil {
 			if err := completion.CompleteOldClusterConfFromSecret(c, k); err != nil {
 				return err
 			}
 		}
-		// 新版本升级尽量加上component-manage
-		if c.ResourceConnectInfo != nil {
-			c.ComponentManage = &configuration.ComponentManagement{}
-		}
-		if c.Deploy == nil {
-			c.Deploy, err = completion.GuessDeployConfig(cmd.Context(), k, getNamespaceFlag)
-			if err != nil {
-				c.Deploy = &configuration.Deploy{
-					Mode:       "standard",
-					Devicespec: "AS10000",
-				}
-			}
-		}
+		upgradeConfigForDisplay(c)
 		completion.CompletionCR(c.Cr)
 		/// 新版本升级逻辑 end
 
@@ -74,6 +61,17 @@ You can specify a namespace with -n flag, For Example:
 
 		return nil
 	},
+}
+
+func upgradeConfigForDisplay(c *configuration.ClusterConfig) {
+	if c.ResourceConnectInfo != nil {
+		c.ComponentManage = &configuration.ComponentManagement{}
+	}
+	if c.Deploy != nil {
+		if c.Deploy.Namespace == "" && c.Deploy.ServiceAccount == "" {
+			c.Deploy = nil
+		}
+	}
 }
 
 func init() {

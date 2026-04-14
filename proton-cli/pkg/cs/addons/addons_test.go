@@ -39,6 +39,7 @@ func TestReconcileReturnsErrorWhenAddonChartMissing(t *testing.T) {
 		h,
 		pkg,
 		"node1:5000",
+		nil,
 		configuration.CSAddonNameNodeExporter,
 	)
 	if err == nil {
@@ -69,6 +70,7 @@ func TestReconcileInstallsAddonWhenReleaseDoesNotExist(t *testing.T) {
 		h,
 		pkg,
 		"node1:5000",
+		nil,
 		configuration.CSAddonNameNodeExporter,
 	)
 	if err != nil {
@@ -76,6 +78,43 @@ func TestReconcileInstallsAddonWhenReleaseDoesNotExist(t *testing.T) {
 	}
 	if !h.CallUpgrade {
 		t.Fatal("expected addon reconcile to install via upgrade --install when release is absent")
+	}
+}
+
+func TestHelmValuesForIngressNginxDefaultsPorts(t *testing.T) {
+	values, ok := helmValuesForAddon(configuration.CSAddonNameIngressNginx, "node1:5000", nil).(ValuesIngressNginx)
+	if !ok {
+		t.Fatalf("expected ingress-nginx values type, got %T", values)
+	}
+
+	if values.Controller.ContainerPort.HTTP == nil || *values.Controller.ContainerPort.HTTP != 80 {
+		t.Fatalf("expected default http port 80, got %#v", values.Controller.ContainerPort.HTTP)
+	}
+	if values.Controller.ContainerPort.HTTPS == nil || *values.Controller.ContainerPort.HTTPS != 443 {
+		t.Fatalf("expected default https port 443, got %#v", values.Controller.ContainerPort.HTTPS)
+	}
+}
+
+func TestHelmValuesForIngressNginxUsesConfiguredPorts(t *testing.T) {
+	values, ok := helmValuesForAddon(
+		configuration.CSAddonNameIngressNginx,
+		"node1:5000",
+		&configuration.CSAddonsConfig{
+			IngressNginx: &configuration.CSAddonIngressNginxConfig{
+				HTTPPort:  8080,
+				HTTPSPort: 8443,
+			},
+		},
+	).(ValuesIngressNginx)
+	if !ok {
+		t.Fatalf("expected ingress-nginx values type, got %T", values)
+	}
+
+	if values.Controller.ContainerPort.HTTP == nil || *values.Controller.ContainerPort.HTTP != 8080 {
+		t.Fatalf("expected configured http port 8080, got %#v", values.Controller.ContainerPort.HTTP)
+	}
+	if values.Controller.ContainerPort.HTTPS == nil || *values.Controller.ContainerPort.HTTPS != 8443 {
+		t.Fatalf("expected configured https port 8443, got %#v", values.Controller.ContainerPort.HTTPS)
 	}
 }
 

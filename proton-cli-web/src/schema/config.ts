@@ -18,6 +18,10 @@ export interface NodeFormValue {
 export interface LocalCsFormValue {
   master: string[]
   addons: string[]
+  ingressNginx: {
+    httpPort: number
+    httpsPort: number
+  }
   ipFamilies: string[]
   enableDualStack: boolean
   ha_port: number
@@ -36,6 +40,10 @@ export interface ManagedCsFormValue {
   namespace: string
   serviceaccount: string
   addons: string[]
+  ingressNginx: {
+    httpPort: number
+    httpsPort: number
+  }
 }
 
 export interface LocalCrFormValue {

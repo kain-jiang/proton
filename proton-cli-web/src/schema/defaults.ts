@@ -16,6 +16,10 @@ export const defaultWizardState: WizardState = {
     local: {
       master: ['node1'],
       addons: ['ingress-nginx'],
+      ingressNginx: {
+        httpPort: 80,
+        httpsPort: 443,
+      },
       ipFamilies: ['IPv4'],
       enableDualStack: false,
       ha_port: 8443,
@@ -33,6 +37,10 @@ export const defaultWizardState: WizardState = {
       namespace: '',
       serviceaccount: '',
       addons: ['ingress-nginx'],
+      ingressNginx: {
+        httpPort: 80,
+        httpsPort: 443,
+      },
     },
   },
   cr: {

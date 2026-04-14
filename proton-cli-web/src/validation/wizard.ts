@@ -28,6 +28,23 @@ function hasValidPort(value: number | null) {
   return Number.isInteger(value) && value !== null && value > 0 && value <= 65535
 }
 
+function validateIngressNginxPorts(
+  value: { addons: string[]; ingressNginx: { httpPort: number; httpsPort: number } },
+  field: string,
+  issues: ValidationIssue[],
+) {
+  if (!value.addons.includes('ingress-nginx')) {
+    return
+  }
+
+  if (!hasValidPort(value.ingressNginx.httpPort)) {
+    push(issues, `${field}.ingressNginx.httpPort`, 'ingress-nginx HTTP port must be a valid TCP port.')
+  }
+  if (!hasValidPort(value.ingressNginx.httpsPort)) {
+    push(issues, `${field}.ingressNginx.httpsPort`, 'ingress-nginx HTTPS port must be a valid TCP port.')
+  }
+}
+
 function validateNodeSection(state: WizardState, issues: ValidationIssue[]) {
   if (!state.nodes.length) {
     push(issues, 'nodes', 'At least one node is required.')
@@ -114,6 +131,8 @@ function validateLocalCluster(state: WizardState, issues: ValidationIssue[]) {
   if (state.chrony.mode === 'usermanaged' && state.chrony.server.length) {
     push(issues, 'chrony.server', 'User managed chrony should not include time servers.')
   }
+
+  validateIngressNginxPorts(local, 'cs.local', issues)
 }
 
 function validateExternalRepo(repo: ExternalCrRepository, field: string, label: string, issues: ValidationIssue[]) {
@@ -158,6 +177,8 @@ function validateManagedCluster(state: WizardState, issues: ValidationIssue[]) {
       push(issues, 'cr.external.oci.password', 'OCI password is required.')
     }
   }
+
+  validateIngressNginxPorts(state.cs.managed, 'cs.managed', issues)
 }
 
 function validateManagedService(

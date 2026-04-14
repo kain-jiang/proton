@@ -49,6 +49,36 @@ func TestAppendOptionalModulesDoesNotIncludeECeph(t *testing.T) {
 	}
 }
 
+func TestAppendOptionalModulesWithoutDeploy(t *testing.T) {
+	clusterConf := &configuration.ClusterConfig{
+		Cr: &configuration.Cr{
+			Local: &configuration.LocalCR{},
+		},
+		ComponentManage: &configuration.ComponentManagement{},
+	}
+
+	pkg := loadMinimalServicePackageForTest(t)
+	modules := appendOptionalModules(
+		nil,
+		nil,
+		nil,
+		nil,
+		nil,
+		clusterConf,
+		nil,
+		registryfake.New("registry.example.com", nil),
+		pkg,
+		nil,
+	)
+
+	if len(modules) != 1 {
+		t.Fatalf("expected component_manage module, got %d", len(modules))
+	}
+	if modules[0].name != "component_manage" {
+		t.Fatalf("expected module component_manage, got %q", modules[0].name)
+	}
+}
+
 func loadMinimalServicePackageForTest(t *testing.T) *servicepackage.ServicePackage {
 	t.Helper()
 

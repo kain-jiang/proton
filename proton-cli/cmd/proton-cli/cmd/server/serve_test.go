@@ -76,3 +76,35 @@ func TestInitialHandlerUsesRequestScopedServicePackage(t *testing.T) {
 	require.Equal(t, "./service-package", global.ServicePackage)
 }
 
+func TestInitialHandlerUpdatesNamespaceFromDeployCompatibilityField(t *testing.T) {
+	patches := gomonkey.NewPatches()
+	defer patches.Reset()
+
+	updatedNamespace := ""
+	patches.ApplyFunc(configuration.UpdateProtonCliEnvConfig, func(ns string) error {
+		updatedNamespace = ns
+		return nil
+	})
+	patches.ApplyFunc(applyClusterConfigForTestHook, func(conf *configuration.ClusterConfig) error {
+		require.NotNil(t, conf.Deploy)
+		require.Equal(t, "custom-ns", conf.Deploy.Namespace)
+		return nil
+	})
+
+	handler := &initialHandler{cancel: func() {}}
+	requestBody := `{"cluster_config":{"apiVersion":"v1","deploy":{"namespace":"custom-ns"},"nodes":[],"chrony":{"mode":"usermanaged"},"firewall":{"mode":"usermanaged"},"cs":{"provisioner":"external","addons":[]},"cr":{"external":{"chart_repository":"chartmuseum","image_repository":"registry","registry":{"host":"","username":"","password":""},"chartmuseum":{"host":"","username":"","password":""},"oci":{"registry":"","username":"","password":"","plain_http":false}}},"component_management":{},"resource_connect_info":{"rds":{"source_type":"external","rds_type":"MySQL","auto_create_database":false,"admin_user":"","admin_passwd":"","hosts":"","port":3306,"username":"","password":""},"redis":{"source_type":"external","connect_type":"standalone","username":"","password":"","sentinel_hosts":"","sentinel_port":26379,"master_group_name":"","master_hosts":"","master_port":6379,"slave_hosts":"","slave_port":6379,"hosts":"","port":6379},"opensearch":{"source_type":"external","hosts":"","port":9200,"username":"","password":"","distribution":"elasticsearch","version":"2.11.0"},"mq":{"source_type":"external","mq_type":"kafka","mq_hosts":"","mq_port":9092,"mq_lookupd_hosts":"","mq_lookupd_port":4161,"auth":{"username":"","password":"","mechanism":"PLAIN"}}}}}`
+
+	req := httptest.NewRequestWithContext(context.Background(), http.MethodPost, "/init", bytes.NewBufferString(requestBody))
+	req.Header.Set("Content-Type", "application/json")
+	recorder := httptest.NewRecorder()
+
+	handler.ServeHTTP(recorder, req)
+
+	response := recorder.Result()
+	defer response.Body.Close()
+
+	respBody, err := io.ReadAll(response.Body)
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, response.StatusCode, string(respBody))
+	require.Equal(t, "custom-ns", updatedNamespace)
+}

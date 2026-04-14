@@ -1,12 +1,16 @@
 apiVersion: v1
 
 deploy:
-  mode: cloud
-  devicespec: Managed-Cloud
   namespace: resource
 
 cs:
   provisioner: external
+  addons:
+    - ingress-nginx
+  addonsConfig:
+    ingress-nginx:
+      httpPort: 80
+      httpsPort: 443
 
 cr:
   external:

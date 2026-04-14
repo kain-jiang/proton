@@ -163,6 +163,20 @@ proton-cli apply -f cluster.yaml
 proton-cli apply -f cluster.yaml -n proton
 ```
 
+自定义 `ingress-nginx` addon 的 HTTP/HTTPS 端口：
+
+```yaml
+cs:
+  addons:
+    - ingress-nginx
+  addonsConfig:
+    ingress-nginx:
+      httpPort: 8080
+      httpsPort: 8443
+```
+
+这里会映射到 `ingress-nginx` chart 的 `controller.containerPort.http/https`。
+
 显式指定 service package 路径：
 
 ```bash
@@ -177,6 +191,7 @@ proton-cli apply \
 - `apply` 会从 `-f` 读取 YAML 文件
 - `apply` 会从 `service-package` 加载包内容
 - 如果传入 `-n`，会覆盖配置文件中的命名空间
+- 配置文件中的 `deploy` 目前仅兼容 `namespace` 和 `serviceaccount` 字段；旧的 `mode` 与 `devicespec` 字段已移除，若仍存在会被忽略
 - 如果最终选择了某个命名空间，`apply` 会更新本地文件 `~/.proton-cli.yaml`
 - `apply` 成功后，会把集群配置上传到 Kubernetes
 

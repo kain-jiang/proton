@@ -19,7 +19,7 @@ const (
 )
 
 func (m *Applier) applyMongoDB(cli componentmanageCli.Client, name string) error {
-	if m.NewCfg.Deploy.Namespace != "" {
+	if deployNamespace(m.NewCfg) != "" {
 		log.Info("custom namespace is enabled, skip apply mongodb")
 		return nil
 	}

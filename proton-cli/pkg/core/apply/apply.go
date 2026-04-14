@@ -276,6 +276,10 @@ func appendOptionalModules(
 	nodes []v1alpha1.Interface,
 ) []module {
 	var resourceNamespace = configuration.GetProtonResourceNSFromFile()
+	serviceAccount := ""
+	if clusterConf != nil && clusterConf.Deploy != nil {
+		serviceAccount = clusterConf.Deploy.ServiceAccount
+	}
 	charts := pkg.Charts()
 	images := pkg.Images()
 	isExistProtonETCD := false
@@ -288,7 +292,7 @@ func appendOptionalModules(
 	if clusterConf.CMS != nil {
 		modules = append(modules, module{
 			name:    "cms",
-			applier: cms.NewManager(helm3, clusterConf.CMS, registry.Address(), global.ServicePackage, charts, clusterConf.Deploy.ServiceAccount),
+			applier: cms.NewManager(helm3, clusterConf.CMS, registry.Address(), global.ServicePackage, charts, serviceAccount),
 		})
 	}
 	// TODO component-manager applier is required

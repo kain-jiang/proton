@@ -228,6 +228,45 @@ describe('validateWizardState', () => {
     expect(result.issues.some((issue) => issue.field === 'cr.external.chartmuseum.host')).toBe(true)
   })
 
+  it('rejects invalid ingress-nginx ports', () => {
+    const result = validateWizardState({
+      ...defaultWizardState,
+      cs: {
+        ...defaultWizardState.cs,
+        local: {
+          ...defaultWizardState.cs.local,
+          ingressNginx: {
+            httpPort: 0,
+            httpsPort: 70000,
+          },
+        },
+      },
+      nodes: [{ name: 'node1', ip4: '192.168.40.11', ip6: '' }],
+      resource_connect_info: {
+        rds: {
+          ...defaultWizardState.resource_connect_info.rds,
+          source_type: 'internal',
+        },
+        redis: {
+          ...defaultWizardState.resource_connect_info.redis,
+          source_type: 'internal',
+        },
+        opensearch: {
+          ...defaultWizardState.resource_connect_info.opensearch,
+          source_type: 'internal',
+        },
+        mq: {
+          ...defaultWizardState.resource_connect_info.mq,
+          source_type: 'internal',
+        },
+      },
+    })
+
+    expect(result.valid).toBe(false)
+    expect(result.issues.some((issue) => issue.field === 'cs.local.ingressNginx.httpPort')).toBe(true)
+    expect(result.issues.some((issue) => issue.field === 'cs.local.ingressNginx.httpsPort')).toBe(true)
+  })
+
   it('requires sentinel fields when redis external mode uses sentinel', () => {
     const result = validateWizardState({
       ...defaultWizardState,

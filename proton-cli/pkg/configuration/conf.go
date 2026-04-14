@@ -86,8 +86,6 @@ type ClusterConfig struct {
 }
 
 type Deploy struct {
-	Mode           string `json:"mode"`
-	Devicespec     string `json:"devicespec"`
 	Namespace      string `json:"namespace,omitempty"`
 	ServiceAccount string `json:"serviceaccount,omitempty"`
 }
@@ -151,7 +149,17 @@ type Cs struct {
 	Cs_controller_dir string       `json:"cs_controller_dir"`
 	// Proton CS 坯用的杒件列表, 因为需覝区分 `nil` 和 `[]` 所以丝能使用
 	// omitempty
-	Addons []CSAddonName `json:"addons"`
+	Addons       []CSAddonName   `json:"addons"`
+	AddonsConfig *CSAddonsConfig `json:"addonsConfig,omitempty"`
+}
+
+type CSAddonsConfig struct {
+	IngressNginx *CSAddonIngressNginxConfig `json:"ingress-nginx,omitempty"`
+}
+
+type CSAddonIngressNginxConfig struct {
+	HTTPPort  int `json:"httpPort,omitempty"`
+	HTTPSPort int `json:"httpsPort,omitempty"`
 }
 
 // Kubernetes 的容器运行时，有且只有一个运行时

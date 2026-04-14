@@ -108,6 +108,24 @@ function cleanOpenSearchManagedConfig(value: OpenSearchManagedValue) {
   }
 }
 
+function cleanCSConfig<T extends { addons: string[]; ingressNginx: { httpPort: number; httpsPort: number } }>(value: T) {
+  const csConfig: Record<string, unknown> = {
+    ...value,
+  }
+
+  if (value.addons.includes('ingress-nginx')) {
+    csConfig.addonsConfig = {
+      'ingress-nginx': {
+        httpPort: value.ingressNginx.httpPort,
+        httpsPort: value.ingressNginx.httpsPort,
+      },
+    }
+  }
+
+  delete csConfig.ingressNginx
+  return csConfig
+}
+
 export function toSubmitConfig(state: WizardState): SubmitConfig {
   const isLocal = state.deploymentKind === 'local'
   const useInternalRds = state.resource_connect_info.rds.source_type === 'internal'
@@ -140,11 +158,11 @@ export function toSubmitConfig(state: WizardState): SubmitConfig {
     cs: isLocal
       ? {
           provisioner: 'local',
-          ...state.cs.local,
+          ...cleanCSConfig(state.cs.local),
         }
       : {
           provisioner: 'external',
-          ...state.cs.managed,
+          ...cleanCSConfig(state.cs.managed),
         },
     cr: isLocal
       ? {
