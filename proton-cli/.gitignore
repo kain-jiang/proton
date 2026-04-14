@@ -37,3 +37,4 @@ cluster.yaml
 
 # devolop test service-package
 /service-package/*
+/proton-cli/cmd/proton-cli/cmd/server/*

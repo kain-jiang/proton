@@ -3,9 +3,14 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "packageManager": "npm@11.12.1",
+  "engines": {
+    "node": "^24.0.0"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "release": "tsc -b && vite build --outDir ../proton-cli/cmd/proton-cli/cmd/server/web --emptyOutDir",
     "test": "vitest",
     "lint": "eslint .",
     "preview": "vite preview"

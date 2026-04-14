@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -23,6 +24,21 @@ jobs:
         with:
           go-version-file: proton-cli/go.mod
           cache-dependency-path: proton-cli/go.sum
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: proton-cli-web/package.json
+          cache: npm
+          cache-dependency-path: proton-cli-web/package-lock.json
+
+      - name: Install proton-cli-web dependencies
+        working-directory: proton-cli-web
+        run: npm ci
+
+      - name: Build proton-cli-web
+        working-directory: proton-cli-web
+        run: npm run release
 
       - name: Build proton-cli release artifacts
         working-directory: proton-cli
