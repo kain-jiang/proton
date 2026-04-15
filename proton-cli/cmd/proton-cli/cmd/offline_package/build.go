@@ -30,6 +30,8 @@ import (
 	"oras.land/oras-go/v2/registry/remote"
 	"oras.land/oras-go/v2/registry/remote/auth"
 	"sigs.k8s.io/yaml"
+
+	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/cache"
 )
 
 type artifactKind string
@@ -42,17 +44,27 @@ const (
 )
 
 type buildOptions struct {
-	manifest string
+	manifest   string
+	cacheDir   string
+	noCache    bool
+	cacheList  bool
+	cacheClean bool
 }
 
 func defaultBuildOptions() *buildOptions {
 	return &buildOptions{
 		manifest: "manifest.yaml",
+		cacheDir: "",
+		noCache:  false,
 	}
 }
 
 func (opts *buildOptions) AddFlag(s *pflag.FlagSet) {
 	s.StringVar(&opts.manifest, "manifest", opts.manifest, "Path to the manifest file")
+	s.StringVar(&opts.cacheDir, "cache-dir", opts.cacheDir, "Image cache directory (XDG_CACHE_HOME/proton-cli/image-cache by default)")
+	s.BoolVar(&opts.noCache, "no-cache", opts.noCache, "Disable image cache")
+	s.BoolVar(&opts.cacheList, "cache-list", opts.cacheList, "List cached images and exit")
+	s.BoolVar(&opts.cacheClean, "cache-clean", opts.cacheClean, "Clean image cache and exit")
 }
 
 func newBuildCommand() *cobra.Command {
@@ -63,6 +75,33 @@ func newBuildCommand() *cobra.Command {
 		Short: "Build a proton offline package",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
+			if opts.cacheList {
+				return listCache(opts.cacheDir)
+			}
+			if opts.cacheClean {
+				return cleanCache(opts.cacheDir)
+			}
+
+			cacheEnabled := !opts.noCache
+			cacheOpts := []cache.ImageCacheOption{
+				cache.WithCacheEnabled(cacheEnabled),
+			}
+			if opts.cacheDir != "" {
+				cacheOpts = append(cacheOpts, cache.WithCacheDir(opts.cacheDir))
+			}
+
+			imgCache, err := cache.NewImageCache(cacheOpts...)
+			if err != nil {
+				return fmt.Errorf("failed to initialize image cache: %w", err)
+			}
+			defer imgCache.Close()
+
+			if cacheEnabled {
+				log.Printf("Image cache enabled: %s", imgCache.CacheDir())
+			} else {
+				log.Println("Image cache disabled")
+			}
+
 			y, err := os.ReadFile(opts.manifest)
 			if err != nil {
 				return err
@@ -73,7 +112,7 @@ func newBuildCommand() *cobra.Command {
 				return err
 			}
 
-			return build(cmd.Context(), &m)
+			return build(cmd.Context(), &m, imgCache)
 		},
 	}
 
@@ -82,7 +121,78 @@ func newBuildCommand() *cobra.Command {
 	return cmd
 }
 
-func build(ctx context.Context, m *Manifest) error {
+func listCache(cacheDir string) error {
+	opts := []cache.ImageCacheOption{}
+	if cacheDir != "" {
+		opts = append(opts, cache.WithCacheDir(cacheDir))
+	}
+
+	imgCache, err := cache.NewImageCache(opts...)
+	if err != nil {
+		return fmt.Errorf("failed to initialize image cache: %w", err)
+	}
+	defer imgCache.Close()
+
+	stats := imgCache.Stats()
+	fmt.Printf("Cache Directory: %s\n", stats.CacheDir)
+	fmt.Printf("Total Images: %d\n", stats.TotalImages)
+	fmt.Printf("Total Size: %s\n", formatSize(stats.TotalSize))
+	fmt.Printf("Host Architecture Images: %d\n", stats.HostArchImages)
+	fmt.Printf("Enabled: %v\n", stats.Enabled)
+	fmt.Println()
+
+	if len(stats.CacheDir) > 0 {
+		entries := imgCache.List()
+		if len(entries) > 0 {
+			fmt.Println("Cached Images:")
+			fmt.Printf("%-60s %-10s %-20s %s\n", "REFERENCE", "ARCH", "DIGEST", "SIZE")
+			for _, e := range entries {
+				fmt.Printf("%-60s %-10s %-20s %s\n", e.Reference, e.Architecture, e.Digest[:20], formatSize(e.Size))
+			}
+		}
+	}
+
+	return nil
+}
+
+func cleanCache(cacheDir string) error {
+	opts := []cache.ImageCacheOption{}
+	if cacheDir != "" {
+		opts = append(opts, cache.WithCacheDir(cacheDir))
+	}
+
+	imgCache, err := cache.NewImageCache(opts...)
+	if err != nil {
+		return fmt.Errorf("failed to initialize image cache: %w", err)
+	}
+	defer imgCache.Close()
+
+	stats := imgCache.Stats()
+	fmt.Printf("Cleaning cache directory: %s\n", stats.CacheDir)
+	fmt.Printf("Removing %d cached images (%s)...\n", stats.TotalImages, formatSize(stats.TotalSize))
+
+	if err := imgCache.Clear(); err != nil {
+		return fmt.Errorf("failed to clean cache: %w", err)
+	}
+
+	fmt.Println("Cache cleaned successfully")
+	return nil
+}
+
+func formatSize(size int64) string {
+	const unit = 1024
+	if size < unit {
+		return fmt.Sprintf("%d B", size)
+	}
+	div, exp := int64(unit), 0
+	for n := size / unit; n >= unit; n /= unit {
+		div *= unit
+		exp++
+	}
+	return fmt.Sprintf("%.1f %cB", float64(size)/float64(div), "KMGTPE"[exp])
+}
+
+func build(ctx context.Context, m *Manifest, imgCache *cache.ImageCache) error {
 	// create temporary directory as workspace
 	w, err := os.MkdirTemp("", "proton-offline-package-*")
 	if err != nil {
@@ -120,28 +230,28 @@ func build(ctx context.Context, m *Manifest) error {
 
 	// pull binaries (including proton-cli if defined in manifest)
 	for _, a := range m.Spec.Binaries {
-		if err := pullForAch(ctx, artifactKindBinary, &a, binDir, m.Spec.Architecture); err != nil {
+		if err := pullForAch(ctx, artifactKindBinary, &a, binDir, m.Spec.Architecture, imgCache); err != nil {
 			return err
 		}
 	}
 
 	// pull charts
 	for _, a := range m.Spec.Charts {
-		if err := pull(ctx, artifactKindChart, &a, chartDir); err != nil {
+		if err := pull(ctx, artifactKindChart, &a, chartDir, imgCache); err != nil {
 			return err
 		}
 	}
 
 	// pull images
 	for _, a := range m.Spec.Images {
-		if err := pullForAch(ctx, artifactKindImage, &a, imageDir, m.Spec.Architecture); err != nil {
+		if err := pullForAch(ctx, artifactKindImage, &a, imageDir, m.Spec.Architecture, imgCache); err != nil {
 			return err
 		}
 	}
 
 	// pull rpms
 	for _, a := range m.Spec.RPMs {
-		if err := pull(ctx, artifactKindRPM, &a, repoPackagesDir); err != nil {
+		if err := pull(ctx, artifactKindRPM, &a, repoPackagesDir, imgCache); err != nil {
 			return err
 		}
 	}
@@ -181,11 +291,11 @@ func createManifestFile(p string, m *Manifest) error {
 	return os.WriteFile(p, y, 0o644)
 }
 
-func pull(ctx context.Context, kind artifactKind, a *Artifact, output string) error {
-	return pullForAch(ctx, kind, a, output, runtime.GOARCH)
+func pull(ctx context.Context, kind artifactKind, a *Artifact, output string, imgCache *cache.ImageCache) error {
+	return pullForAch(ctx, kind, a, output, runtime.GOARCH, imgCache)
 }
 
-func pullForAch(ctx context.Context, kind artifactKind, a *Artifact, output string, arch string) (err error) {
+func pullForAch(ctx context.Context, kind artifactKind, a *Artifact, output string, arch string, imgCache *cache.ImageCache) (err error) {
 	switch {
 	case a.HTTP != nil:
 		err = pullHTTP(ctx, filepath.Join(output, a.Name), a.HTTP)
@@ -193,7 +303,7 @@ func pullForAch(ctx context.Context, kind artifactKind, a *Artifact, output stri
 		if kind == artifactKindChart {
 			err = pullChartOCI(ctx, filepath.Join(output, a.Name), a.OCI)
 		} else {
-			err = pullOCIForArch(ctx, output, a.Name, a.OCI, arch)
+			err = pullOCIForArch(ctx, output, a.Name, a.OCI, arch, imgCache)
 		}
 		if kind == artifactKindRPM {
 			return pullRPMOCI(ctx, filepath.Join(output, a.Name), a.OCI)
@@ -330,22 +440,56 @@ func getCredential(hostPort string) (auth.Credential, error) {
 	return cache, nil
 }
 
-func pullOCIForArch(ctx context.Context, output, ref string, s *OCISource, arch string) error {
+func pullOCIForArch(ctx context.Context, output, ref string, s *OCISource, arch string, imgCache *cache.ImageCache) error {
 	log.Println("pull oci", s.Reference)
-	// get oci artifact reference
 	ar, err := registry.ParseReference(s.Reference)
 	if err != nil {
 		return err
 	}
 	srcRef := ar.Reference
 
+	if imgCache != nil && imgCache.IsEnabled() {
+		log.Printf("checking cache for: %s (%s)", s.Reference, arch)
+		cachedStore, err := imgCache.Get(ctx, s.Reference, arch, nil)
+		if err == nil && cachedStore != nil {
+			log.Printf("cache hit: %s (%s)", s.Reference, arch)
+			dst, err := oci.New(output)
+			if err != nil {
+				return err
+			}
+			// Use the tag reference for cache copy
+			tagRef := ar.Reference
+			if tagRef == "" {
+				tagRef = "latest"
+			}
+
+			if desc, err := oras.Copy(ctx, cachedStore, tagRef, dst, ref, oras.DefaultCopyOptions); err == nil {
+				log.Printf("copied from cache: %s (size: %d)", s.Reference, desc.Size)
+				return nil
+			} else {
+				log.Printf("cache copy failed, falling back to remote: %v", err)
+			}
+		} else if err != nil {
+			log.Printf("cache miss: %v", err)
+		} else {
+			log.Printf("cache miss: not found")
+		}
+	}
+
 	dst, err := oci.New(output)
 	if err != nil {
 		return err
 	}
 
-	// First try without credentials (for public registries)
-	r := &remote.Repository{
+	var r *remote.Repository
+	var desc ocispec.Descriptor
+	var rc io.ReadCloser
+
+	tryFetch := func(repo *remote.Repository) (ocispec.Descriptor, io.ReadCloser, error) {
+		return repo.FetchReference(ctx, ar.Reference)
+	}
+
+	r = &remote.Repository{
 		Client: &auth.Client{
 			Credential: auth.StaticCredential(ar.Host(), auth.EmptyCredential),
 			Cache:      auth.NewCache(),
@@ -353,21 +497,18 @@ func pullOCIForArch(ctx context.Context, output, ref string, s *OCISource, arch 
 		Reference: ar,
 	}
 
-	desc, rc, err := r.FetchReference(ctx, ar.Reference)
+	desc, rc, err = tryFetch(r)
 	if err != nil {
-		// If authentication is required, retry with credentials
 		if shouldRetryWithCredential(err) {
 			r = &remote.Repository{
 				Client: &auth.Client{
-					Credential: func(ctx context.Context, hostPort string) (auth.Credential, error) {
-						return getCredential(hostPort)
-					},
-					Cache: auth.NewCache(),
+					Credential: auth.StaticCredential(ar.Host(), auth.EmptyCredential),
+					Cache:      auth.NewCache(),
 				},
 				Reference: ar,
 			}
 
-			desc, rc, err = r.FetchReference(ctx, ar.Reference)
+			desc, rc, err = tryFetch(r)
 			if err != nil {
 				return err
 			}
@@ -385,6 +526,20 @@ func pullOCIForArch(ctx context.Context, output, ref string, s *OCISource, arch 
 
 	if _, err := oras.Copy(ctx, r, srcRef, dst, ref, oras.DefaultCopyOptions); err != nil {
 		return err
+	}
+
+	if imgCache != nil && imgCache.IsEnabled() {
+		log.Printf("caching: %s (%s)", s.Reference, arch)
+		srcForCache := &remote.Repository{
+			Client: &auth.Client{
+				Credential: auth.StaticCredential(ar.Host(), auth.EmptyCredential),
+				Cache:      auth.NewCache(),
+			},
+			Reference: ar,
+		}
+		if err := imgCache.Set(ctx, s.Reference, arch, srcForCache, srcRef); err != nil {
+			log.Printf("warning: failed to cache image: %v", err)
+		}
 	}
 
 	return nil
@@ -458,14 +613,9 @@ func pullRPMOCI(ctx context.Context, path string, s *OCISource) error {
 	_, rc, err := r.FetchReference(ctx, ar.Reference)
 	if err != nil {
 		if shouldRetryWithCredential(err) {
-			credential, err := getCredential(ar.Registry)
-			if err != nil {
-				return err
-			}
-
 			r = &remote.Repository{
 				Client: &auth.Client{
-					Credential: auth.StaticCredential(ar.Host(), credential),
+					Credential: auth.StaticCredential(ar.Host(), auth.EmptyCredential),
 					Cache:      auth.NewCache(),
 				},
 				Reference: ar,
