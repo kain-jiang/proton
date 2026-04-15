@@ -4,7 +4,10 @@ Copyright © 2022 Jimmy.li@aishu.cn
 package cmd
 
 import (
+	"context"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/spf13/cobra"
 
@@ -66,7 +69,10 @@ func Execute() {
 	rootCmd.AddCommand(oras.NewOrasCommand())
 	rootCmd.AddCommand(images.NewImagesCommand())
 
-	err := rootCmd.Execute()
+	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer cancel()
+
+	err := rootCmd.ExecuteContext(ctx)
 	if err != nil {
 		os.Exit(1)
 	}
