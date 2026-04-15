@@ -21,7 +21,7 @@ const (
 
 	// 内置opensearch默认用户名和密码
 	OpensearchDefaultUsername = "admin"
-	OpensearchDefaultPassword = "fake_pass"
+	OpensearchDefaultPassword = "eisoo.com123"
 	// Opensearch 默认连接协议
 	OpensearchDefaultProtocol = "http"
 	// Opensearch 内置版本
