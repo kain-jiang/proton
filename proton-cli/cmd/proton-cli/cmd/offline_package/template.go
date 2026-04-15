@@ -104,7 +104,7 @@ func defaultManifest(info architectureInfo, protonCLIPath string, protonCLIVersi
 			Architecture: info.goArch,
 			Binaries:     binaries,
 			Charts: []Artifact{
-				httpArtifact("component-manage-0.0.2.tgz", "https://github.com/kweaver-ai/proton/releases/download/component-manage-0.0.2/component-manage-0.0.2.tgz", "", ""),
+				httpArtifact("component-manage-0.0.3.tgz", "https://github.com/kweaver-ai/proton/releases/download/component-manage-0.0.3/component-manage-0.0.3.tgz", "", ""),
 				httpArtifact("ingress-nginx-4.15.0.tgz", "https://github.com/kweaver-ai/proton/releases/download/ingress-nginx-4.15.0/ingress-nginx-4.15.0.tgz", "", ""),
 				httpArtifact("nvidia-device-plugin-1.0.0-0.14.5.tgz", "https://github.com/kweaver-ai/proton/releases/download/nvidia-device-plugin-1.0.0-0.14.5/nvidia-device-plugin-1.0.0-0.14.5.tgz", "", ""),
 				httpArtifact("proton-grafana-1.0.6.tgz", "https://github.com/kweaver-ai/proton/releases/download/proton-grafana-1.0.6/proton-grafana-1.0.6.tgz", "", ""),
@@ -120,7 +120,7 @@ func defaultManifest(info architectureInfo, protonCLIPath string, protonCLIVersi
 				ociArtifact("calico-cni:v3.25.2", "swr.cn-east-3.myhuaweicloud.com/kweaver-ai/mirror/quay.io/calico/cni:v3.25.2"),
 				ociArtifact("calico-kube-controllers:v3.25.2", "swr.cn-east-3.myhuaweicloud.com/kweaver-ai/mirror/quay.io/calico/kube-controllers:v3.25.2"),
 				ociArtifact("calico-node:v3.25.2", "swr.cn-east-3.myhuaweicloud.com/kweaver-ai/mirror/quay.io/calico/node:v3.25.2"),
-				ociArtifact("kweaver-ai/proton/component-manage:0.0.2", "swr.cn-east-3.myhuaweicloud.com/kweaver-ai/mirror/ghcr.io/kweaver-ai/proton/component-manage:0.0.2"),
+				ociArtifact("kweaver-ai/proton/component-manage:0.0.3", "swr.cn-east-3.myhuaweicloud.com/kweaver-ai/mirror/ghcr.io/kweaver-ai/proton/component-manage:0.0.3"),
 				ociArtifact("coredns:v1.12.1", "swr.cn-east-3.myhuaweicloud.com/kweaver-ai/mirror/registry.k8s.io/coredns/coredns:v1.12.1"),
 				ociArtifact("etcd:3.6.5-0", "swr.cn-east-3.myhuaweicloud.com/kweaver-ai/mirror/registry.k8s.io/etcd:3.6.5-0"),
 				ociArtifact("etcd:v3.3.19", "swr.cn-east-3.myhuaweicloud.com/kweaver-ai/mirror/ghcr.io/kweaver-ai/proton/etcd:v3.3.19"),

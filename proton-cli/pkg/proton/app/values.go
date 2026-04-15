@@ -119,10 +119,10 @@ func BuildHelmValues(cfg *configuration.ClusterConfig, namespace string) map[str
 		}
 	}
 
-	// class-443 默认使用 nginx ingressClass
+	// class-443 默认使用 class-443 ingressClass
 	if _, ok := dep["class-443"]; !ok {
 		dep["class-443"] = map[string]interface{}{
-			"ingressClass": "nginx",
+			"ingressClass": "class-443",
 		}
 	}
 
