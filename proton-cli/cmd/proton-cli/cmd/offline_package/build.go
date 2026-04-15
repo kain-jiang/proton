@@ -332,35 +332,28 @@ func pullForAch(ctx context.Context, kind artifactKind, a *Artifact, output stri
 }
 
 func pullHTTP(ctx context.Context, path string, s *HTTPSource) error {
-	log.Println("pull http", s.URL)
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, s.URL, http.NoBody)
+	log.Println("Pull HTTP", s.URL)
+
+	// cache
+	c, err := cache.NewHTTPCache()
 	if err != nil {
 		return err
 	}
 
-	resp, err := http.DefaultClient.Do(req)
+	rc, err := pullHTTPSourceWithCache(ctx, s, c)
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return fmt.Errorf("pull http fail, status: %v, err: %w", resp.Status, err)
-		}
-
-		return fmt.Errorf("pull http fail, status: %v, body: %s", resp.Status, body)
-	}
+	defer rc.Close()
 
 	var r io.Reader
 	var mode os.FileMode
 	switch s.Format {
 	case "":
-		r = resp.Body
-		mode = 0o755
+		r = rc
+		mode = 0o666
 	case "tar+gzip":
-		gr, err := gzip.NewReader(resp.Body)
+		gr, err := gzip.NewReader(rc)
 		if err != nil {
 			return err
 		}
@@ -392,11 +385,11 @@ func pullHTTP(ctx context.Context, path string, s *HTTPSource) error {
 	}
 	defer f.Close()
 
-	if _, err := io.Copy(f, r); err != nil {
+	if err := f.Chmod(mode); err != nil {
 		return err
 	}
 
-	if err := os.Chmod(path, mode); err != nil {
+	if _, err := io.Copy(f, r); err != nil {
 		return err
 	}
 
@@ -904,4 +897,41 @@ func isBinArch(path, arch string) (ok bool, err error) {
 	}
 
 	return
+}
+
+func pullHTTPSourceWithCache(ctx context.Context, s *HTTPSource, cache *cache.HTTPCache) (io.ReadCloser, error) {
+	// digest from HTTPSource.URL
+	var d = digest.FromString(s.URL)
+
+	if got, err := cache.Get(d); err == nil {
+		log.Println("Cache Hit:", s.URL)
+		return got, nil
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, s.URL, http.NoBody)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, err := io.ReadAll(io.LimitReader(resp.Body, 1<<10))
+		if err != nil {
+			return nil, fmt.Errorf("pull http fail, status: %v, err: %w", resp.Status, err)
+		}
+
+		return nil, fmt.Errorf("pull http fail, status: %v, body: %s", resp.Status, body)
+	}
+
+	log.Println("Caching:", s.URL)
+	if err := cache.Set(d, resp.Body); err != nil {
+		return nil, err
+	}
+
+	return cache.Get(d)
 }

@@ -4,6 +4,7 @@ go 1.26
 
 require (
 	github.com/Masterminds/semver/v3 v3.4.0
+	github.com/adrg/xdg v0.5.3
 	github.com/agiledragon/gomonkey v2.0.2+incompatible
 	github.com/agiledragon/gomonkey/v2 v2.9.0
 	github.com/beevik/ntp v1.3.1
