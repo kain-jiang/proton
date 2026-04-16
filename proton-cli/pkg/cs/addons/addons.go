@@ -153,13 +153,15 @@ type ValuesIngressNginx struct {
 			HTTP  *int `json:"http,omitzero"`
 			HTTPS *int `json:"https,omitzero"`
 		} `json:"containerPort,omitzero"`
-		Kind        string `json:"kind,omitzero"`
-		HostNetwork *bool  `json:"hostNetwork,omitzero"`
-		Service     struct {
+		Kind         string `json:"kind,omitzero"`
+		HostNetwork  *bool  `json:"hostNetwork,omitzero"`
+		IngressClass string `json:"ingressClass,omitzero"`
+		Service      struct {
 			Enabled *bool `json:"enabled,omitzero"`
 		} `json:"service,omitzero"`
 		IngressClassResource struct {
-			Default *bool `json:"default,omitzero"`
+			Name    string `json:"name,omitzero"`
+			Default *bool  `json:"default,omitzero"`
 		} `json:"ingressClassResource,omitzero"`
 		AdmissionWebhooks struct {
 			Port  *int `json:"port,omitzero"`
@@ -198,7 +200,9 @@ func helmValuesForAddon(name configuration.CSAddonName, registry string, addonsC
 		v.Controller.ContainerPort.HTTPS = ptr.To(httpsPort)
 		v.Controller.Kind = "DaemonSet"
 		v.Controller.HostNetwork = ptr.To(true)
+		v.Controller.IngressClass = "class-443"
 		v.Controller.Service.Enabled = ptr.To(false)
+		v.Controller.IngressClassResource.Name = "class-443"
 		v.Controller.IngressClassResource.Default = ptr.To(true)
 		v.Controller.AdmissionWebhooks.Port = ptr.To(9443)
 		v.Controller.AdmissionWebhooks.Patch.Image.Image = "ingress-nginx-kube-webhook-certgen"
