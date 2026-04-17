@@ -4,13 +4,26 @@ Copyright © 2022 Jimmy.li@aishu.cn
 package cmd
 
 import (
+	"context"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/spf13/cobra"
 
+	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/cmd/proton-cli/cmd/alpha"
+	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/cmd/proton-cli/cmd/app"
 	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/cmd/proton-cli/cmd/backup"
+	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/cmd/proton-cli/cmd/cluster"
+	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/cmd/proton-cli/cmd/config"
+	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/cmd/proton-cli/cmd/edit"
 	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/cmd/proton-cli/cmd/images"
+	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/cmd/proton-cli/cmd/k8s"
+	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/cmd/proton-cli/cmd/misc"
+	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/cmd/proton-cli/cmd/offline_package"
+	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/cmd/proton-cli/cmd/oras"
 	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/cmd/proton-cli/cmd/recover"
+	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/cmd/proton-cli/cmd/server"
 	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/core/global"
 )
 
@@ -34,13 +47,32 @@ var rootCmd = &cobra.Command{
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
-	rootCmd.AddCommand(backup.BackupCmd)
-	rootCmd.AddCommand(recover.RecoverCmd)
-	rootCmd.AddCommand(images.SetImageCmd())
-	rootCmd.AddCommand(K8SCmd())
-	rootCmd.AddCommand(newAlphaCmd())
+	rootCmd.AddCommand(misc.NewVersionCommand())
+	rootCmd.AddCommand(misc.NewCompletionCommand())
+	rootCmd.AddCommand(cluster.NewApplyCommand())
+	rootCmd.AddCommand(cluster.NewResetCommand())
+	rootCmd.AddCommand(cluster.NewCheckCommand())
+	rootCmd.AddCommand(cluster.NewPrecheckCommand())
+	rootCmd.AddCommand(config.NewGetCommand())
+	rootCmd.AddCommand(edit.NewEditCommand())
+	rootCmd.AddCommand(app.NewAppCommand())
+	rootCmd.AddCommand(misc.NewPushImagesCommand())
+	rootCmd.AddCommand(misc.NewPushChartsCommand())
+	rootCmd.AddCommand(misc.NewDeleteImagesCommand())
+	rootCmd.AddCommand(misc.NewComponentCommand())
+	rootCmd.AddCommand(k8s.K8sCommand())
+	rootCmd.AddCommand(server.NewServerCommand())
+	rootCmd.AddCommand(backup.NewBackupCommand())
+	rootCmd.AddCommand(recover.NewRecoverCommand())
+	rootCmd.AddCommand(alpha.NewAlphaCommand())
+	rootCmd.AddCommand(offline_package.NewCommand())
+	rootCmd.AddCommand(oras.NewOrasCommand())
+	rootCmd.AddCommand(images.NewImagesCommand())
 
-	err := rootCmd.Execute()
+	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer cancel()
+
+	err := rootCmd.ExecuteContext(ctx)
 	if err != nil {
 		os.Exit(1)
 	}

@@ -108,14 +108,6 @@ func (c *Cr) Apply() error {
 	if err := c.PushImages(filepath.Join(global.ServicePackage, "images")); err != nil {
 		return fmt.Errorf("push docker images fail: %w", err)
 	}
-	if c.ClusterConf.ECeph != nil && len(c.ClusterConf.ECeph.Hosts) > 0 && !c.ClusterConf.ECeph.SkipECephUpdate {
-		if err := c.PushImages(filepath.Join(global.ServicePackageECeph, "images")); err != nil {
-			return fmt.Errorf("push ECeph related images fail: %w", err)
-		}
-		if err := c.PushCharts(filepath.Join(global.ServicePackageECeph, "charts")); err != nil {
-			return fmt.Errorf("push ECeph related helm charts fail: %w", err)
-		}
-	}
 
 	if err := c.PushCharts(filepath.Join(global.ServicePackage, "charts")); err != nil {
 		return fmt.Errorf("push helm charts fail: %w", err)
@@ -170,7 +162,7 @@ func (c *Cr) PushImages(ociPkgPath string) error {
 			for _, imageTag := range imageTags {
 				c.Logger.Infof("push image[%s] to %s", imageTag, registry)
 				src := fmt.Sprintf("oci:%s:%s", ociPkgPath, imageTag)
-				dest := fmt.Sprintf("docker://%s", filepath.Join(registry, strings.SplitN(imageTag, "/", 2)[1]))
+				dest := fmt.Sprintf("docker://%s", filepath.Join(registry, imageTag))
 				if err := RunSkopeoCopy(c.exec, src, dest, SkopeoCopyOptions{
 					InsecurePolicy:              true,
 					DisableDestinationTLSVerify: true,
@@ -424,13 +416,13 @@ func (c *Cr) getNodeIPbyNodeName(name string) string {
 // 首先尝试从全局路径执行 helm3，如果失败则尝试从当前路径执行
 func RunHelm3Command(execer utilsexec.Interface, args ...string) ([]byte, error) {
 	// 首先尝试从系统路径执行 helm3
-	out, err := execer.Command("helm3", args...).Output()
+	out, err := execer.Command("helm", args...).Output()
 	if err == nil {
 		return out, nil
 	}
 
 	// 如果系统路径上的 helm3 执行失败，尝试从当前路径执行
-	out, err = execer.Command("./helm3", args...).Output()
+	out, err = execer.Command("./helm", args...).Output()
 	if err != nil {
 		return nil, fmt.Errorf("cannot execute helm3 command: %v, tried both system path and current directory", err)
 	}
@@ -456,17 +448,14 @@ func (c *Cr) setCr(sshConf client.RemoteClientConf, crConf configuration.CrConf)
 	if err := f.Create(ctx, global.CrConfPath, false, out); err != nil {
 		return err
 	}
-	c.Logger.Infof("restart proton-cr begin on node: %s", sshConf.Host)
-	if err := executor.Command("systemctl", "enable", "proton-cr").Run(); err != nil {
+
+	c.Logger.WithField("node", sshConf.Host).Info("try restart proton-cr")
+	if err := executor.Command("systemctl", "try-restart", "proton-cr").Run(); err != nil {
 		return err
 	}
-	if err := executor.Command("systemctl", "restart", "proton-cr").Run(); err != nil {
-		return err
-	}
-	if err := executor.Command("systemctl", "enable", "docker").Run(); err != nil {
-		return err
-	}
-	if err := executor.Command("systemctl", "start", "docker").Run(); err != nil {
+
+	c.Logger.Infof("enable and start proton-cr begin on node: %s", sshConf.Host)
+	if err := executor.Command("systemctl", "enable", "--now", "proton-cr").Run(); err != nil {
 		return err
 	}
 
@@ -474,7 +463,7 @@ func (c *Cr) setCr(sshConf client.RemoteClientConf, crConf configuration.CrConf)
 
 	if c.ClusterConf.Cr.UseChartmuseum() {
 		repositoryUrl, repositoryUsername, repositoryPassword := global.Chartmuseum(c.ClusterConf.Cr)
-		if err := executor.Command("helm3", "repo", "add", global.HelmRepo, repositoryUrl, "--username", repositoryUsername, "--password", repositoryPassword).Run(); err != nil {
+		if err := executor.Command("helm", "repo", "add", global.HelmRepo, repositoryUrl, "--username", repositoryUsername, "--password", repositoryPassword).Run(); err != nil {
 			return err
 		}
 	}

@@ -2,6 +2,7 @@ package componentmanage
 
 import (
 	"fmt"
+	"time"
 
 	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/configuration"
 	componentmanageCli "devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/core/componentmanage"
@@ -9,28 +10,27 @@ import (
 
 const (
 	mariadbOperatorChartName = "rds-mariadb-operator"
-	mariadbOperatorNamespace = "default"
 
 	mariadbAdminAccountSecretName = "proton-mariadb-proton-rds"
 
 	mariadbManagementServiceName = "mariadb-mgmt-cluster"
 	mariadbManagementServicePort = 8888
 
-	mariadbEtcdImageRepository = "proton/etcd"
-	mariadbEtcdImageTag        = "v3.3.19"
+	mariadbEtcdImageRepository = "kweaver-ai/proton/rds-etcd"
+	mariadbEtcdImageTag        = "0.0.2"
 
-	mariadbExporterImageRepository = "proton/rds-exporter"
-	mariadbExporterImageTag        = "2.1.0"
+	mariadbExporterImageRepository = "kweaver-ai/proton/rds-exporter"
+	mariadbExporterImageTag        = "0.0.1"
 
-	mariadbMgmtImageRepository = "proton/rds-mgmt"
-	mariadbMgmtImageTag        = "2.3.0"
+	mariadbMgmtImageRepository = "kweaver-ai/proton/rds-mgmt"
+	mariadbMgmtImageTag        = "0.0.1"
 
-	mariadbMariaDBImageRepository = "proton/rds-mariadb"
-	mariadbMariaDBImageTag        = "2.0.6"
+	mariadbMariaDBImageRepository = "kweaver-ai/proton/rds-mariadb"
+	mariadbMariaDBImageTag        = "0.0.1"
 )
 
 func (m *Applier) applyMariaDB(cli componentmanageCli.Client, name string) error {
-	if m.NewCfg.Deploy.Namespace != "" {
+	if deployNamespace(m.NewCfg) != "" {
 		log.Info("custom namespace is enabled, skip apply mariadb")
 		return nil
 	}
@@ -55,7 +55,7 @@ func (m *Applier) applyMariaDB(cli componentmanageCli.Client, name string) error
 	err = cli.EnableMariaDB(componentmanageCli.MariaDBPluginInfo{
 		ChartName:    c.Metadata.Name,
 		ChartVersion: c.Metadata.Version,
-		Namespace:    mariadbOperatorNamespace,
+		Namespace:    configuration.GetProtonResourceNSFromFile(),
 		Images: componentmanageCli.MariaDBPluginImagesInfo{
 			MariaDB:  m.SearchImage(originRegistry, mariadbMariaDBImageRepository, mariadbMariaDBImageTag),
 			ETCD:     m.SearchImage(originRegistry, mariadbEtcdImageRepository, mariadbEtcdImageTag),
@@ -75,6 +75,9 @@ func (m *Applier) applyMariaDB(cli componentmanageCli.Client, name string) error
 	if err != nil {
 		return fmt.Errorf("get mariadb error: %s", err)
 	}
+
+	// 等待一段时间，让 operater 就绪
+	time.Sleep(time.Second * 5)
 
 	params := mustToMap(m.NewCfg.Proton_mariadb)
 	//额外参数，使用内置数据库时连接信息必须包含业务账户用户名密码

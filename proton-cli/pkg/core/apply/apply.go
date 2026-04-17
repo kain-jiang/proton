@@ -12,11 +12,8 @@ import (
 	controller_runtime_client "sigs.k8s.io/controller-runtime/pkg/client"
 
 	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/client"
-	exec "devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/client/exec/v1alpha1"
-	v2 "devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/client/helm/v2"
 	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/client/helm3"
 	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/client/node/v1alpha1"
-	rds_mgmt "devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/client/rds/mgmt/v1alpha1"
 	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/client/registry"
 	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/configuration"
 	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/configuration/completion"
@@ -30,7 +27,6 @@ import (
 	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/node"
 	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/proton/cms"
 	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/proton/componentmanage"
-	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/proton/eceph"
 	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/proton/grafana"
 	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/proton/monitor"
 	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/proton/mq"
@@ -80,24 +76,6 @@ func Apply(clusterConf *configuration.ClusterConfig) error {
 		log.Errorf("unable load service package: %v", err)
 		return err
 	}
-	pkgECeph := new(servicepackage.ServicePackage)
-	if clusterConf.ECeph != nil && clusterConf.ECeph.SkipECephUpdate {
-		if olClusterConf != nil && olClusterConf.ECeph != nil && len(olClusterConf.ECeph.Hosts) > 0 {
-			clusterConf.ECeph = olClusterConf.ECeph
-			clusterConf.ECeph.SkipECephUpdate = true
-			log.Infoln("skip_eceph_update is true, skipping ECeph update discarding all changes in currently applying config for this time")
-		} else {
-			return fmt.Errorf("skip_eceph_update is true but ECeph seems not installed")
-		}
-	} else {
-		if err := pkgECeph.Load(global.ServicePackageECeph); err != nil {
-			log.Infof("unable to load ECeph service package: %v", err)
-			if clusterConf.ECeph != nil && len(clusterConf.ECeph.Hosts) > 0 {
-				log.Errorln("Cannot continue with ECeph installation if proton-cli is unable to load ECeph service package")
-				return err
-			}
-		}
-	}
 
 	global.ChartInfoList = []configuration.ChartInfo{}
 	fmt.Printf("\033[1;37;42m%s\033[0m\n", "start apply cluster conf")
@@ -130,12 +108,6 @@ func Apply(clusterConf *configuration.ClusterConfig) error {
 			return fmt.Errorf("create node/v1alpha1 %v fail: %w", node.Name, err)
 		}
 		nodes = append(nodes, n)
-	}
-
-	var helm2client *v2.Client
-	// Helm2客户端基于命令执行，且可以在集群的任意节点上执行
-	if clusterConf.Cs.Provisioner == configuration.KubernetesProvisionerLocal {
-		helm2client = v2.New(exec.NewLocalShellExecutor())
 	}
 
 	// do checks and completion that requires clients created after initial checks here
@@ -174,15 +146,9 @@ func Apply(clusterConf *configuration.ClusterConfig) error {
 	}
 
 	// 可选模块
-	var mECeph *module
-	for _, m := range appendOptionalModules(nil, kube, helm3client, helm2client, controllerClient, clusterConf, olClusterConf, registry, pkg, pkgECeph, nodes) {
-		if m.name == "eceph" {
-			mECeph = &m
-			log.Infof("ECeph apply process will be executed last after all other operations are done")
-		} else {
-			if err := m.applier.Apply(); err != nil {
-				return fmt.Errorf("apply module %s fail: %w", m.name, err)
-			}
+	for _, m := range appendOptionalModules(nil, kube, helm3client, controllerClient, clusterConf, olClusterConf, registry, pkg, nodes) {
+		if err := m.applier.Apply(); err != nil {
+			return fmt.Errorf("apply module %s fail: %w", m.name, err)
 		}
 	}
 
@@ -197,31 +163,8 @@ func Apply(clusterConf *configuration.ClusterConfig) error {
 	if err := nodeManager.RemoveConf(); err != nil {
 		return fmt.Errorf("remove conf fail: %w", err)
 	}
-	if mECeph == nil {
-		if err := configuration.UploadToKubernetes(context.Background(), clusterConf, kube); err != nil {
-			return fmt.Errorf("unable to upload cluster config to kubernetes: %w", err)
-		}
-	} else {
-		clusterConfWithoutECeph := *clusterConf
-		if olClusterConf != nil && olClusterConf.ECeph != nil {
-			clusterConfWithoutECeph.ECeph = olClusterConf.ECeph
-		} else {
-			clusterConfWithoutECeph.ECeph = nil
-		}
-		var ns string
-		if clusterConf.Deploy != nil {
-			ns = clusterConf.Deploy.Namespace
-		}
-		if err := configuration.UploadToKubernetes(context.Background(), &clusterConfWithoutECeph, kube, ns); err != nil {
-			return fmt.Errorf("unable to upload cluster config without ECeph to kubernetes: %w", err)
-		}
-		log.Info("Apply conf except ECeph success, now applying ECeph")
-		if err := mECeph.applier.Apply(); err != nil {
-			return fmt.Errorf("apply module %s fail: %w", mECeph.name, err)
-		}
-		if err := configuration.UploadToKubernetes(context.Background(), clusterConf, kube); err != nil {
-			return fmt.Errorf("unable to upload cluster config to kubernetes: %w", err)
-		}
+	if err := configuration.UploadToKubernetes(context.Background(), clusterConf, kube); err != nil {
+		return fmt.Errorf("unable to upload cluster config to kubernetes: %w", err)
 	}
 
 	if err := csutil.SyncEtcdDataDir(log, clusterConf, nodes, kube); err != nil {
@@ -313,19 +256,21 @@ func appendRequiredModules(modules []module, clusterConf, olClusterConf *configu
 //  15. grafana
 //  16. nebula(moved to component-manage)
 //  17. package store
-//  18. ECeph(执行ECeph之前先提交一次除ECeph的proton-cli-config配置)
 func appendOptionalModules(
 	modules []module,
 	kube kubernetes.Interface,
 	helm3 helm3.Client,
-	helm2 *v2.Client,
 	controllerClient controller_runtime_client.Client,
 	clusterConf, olClusterConf *configuration.ClusterConfig,
 	registry registry.Interface,
-	pkg, pkgECeph *servicepackage.ServicePackage,
+	pkg *servicepackage.ServicePackage,
 	nodes []v1alpha1.Interface,
 ) []module {
 	var resourceNamespace = configuration.GetProtonResourceNSFromFile()
+	serviceAccount := ""
+	if clusterConf != nil && clusterConf.Deploy != nil {
+		serviceAccount = clusterConf.Deploy.ServiceAccount
+	}
 	charts := pkg.Charts()
 	images := pkg.Images()
 	isExistProtonETCD := false
@@ -338,7 +283,7 @@ func appendOptionalModules(
 	if clusterConf.CMS != nil {
 		modules = append(modules, module{
 			name:    "cms",
-			applier: cms.NewManager(helm3, clusterConf.CMS, registry.Address(), global.ServicePackage, charts, clusterConf.Deploy.ServiceAccount),
+			applier: cms.NewManager(helm3, clusterConf.CMS, registry.Address(), global.ServicePackage, charts, serviceAccount),
 		})
 	}
 	// TODO component-manager applier is required
@@ -452,36 +397,6 @@ func appendOptionalModules(
 			Namespace:      resourceNamespace,
 		}
 		modules = append(modules, module{name: "package-store", applier: manager})
-	}
-	if spec := clusterConf.ECeph; spec != nil {
-		var selected []v1alpha1.Interface
-		for _, n := range nodes {
-			for _, h := range spec.Hosts {
-				if h == n.Name() {
-					selected = append(selected, n)
-				}
-			}
-		}
-		var oldSpec *configuration.ECeph
-		if olClusterConf != nil {
-			oldSpec = olClusterConf.ECeph
-		}
-		manager := &eceph.Manager{
-			Registry: registry.Address(),
-			Spec:     spec,
-			OldSpec:  oldSpec,
-			RDS:      clusterConf.ResourceConnectInfo.Rds,
-			RDS_MGMTClientCreateFunc: func() (rds_mgmt.Interface, error) {
-				return componentManageApplier.RDS_MGMTClient(controllerClient)
-			},
-			InitDatabase: clusterConf.Proton_mariadb != nil,
-			Nodes:        selected,
-			Helm:         helm2,
-			Kube:         controllerClient,
-			Logger:       logger.NewLogger().WithField("module", "eceph"),
-			PkgECeph:     pkgECeph,
-		}
-		modules = append(modules, module{name: "eceph", applier: manager})
 	}
 	return modules
 }

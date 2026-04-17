@@ -83,10 +83,10 @@ spec:
         effect: NoSchedule
       nodeSelector:
         kubernetes.io/os: linux
-        node-role.kubernetes.io/master: ""
+        node-role.kubernetes.io/control-plane: ""
       containers:
       - name: coredns
-        image: {{ .ImageRepository }}/coredns:v1.8.6
+        image: {{ .ImageRepository }}/coredns:v1.12.1
         imagePullPolicy: IfNotPresent
         resources:
           limits:

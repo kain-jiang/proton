@@ -39,9 +39,30 @@ func ValidateCS(c *configuration.Cs, nodes []configuration.Node, fldPath *field.
 		}
 	}
 	allErrs = append(allErrs, ValidateCSAddons(c.Addons, fldPath.Child("addons"))...)
+	allErrs = append(allErrs, ValidateCSAddonsConfig(c.AddonsConfig, fldPath.Child("addonsConfig"))...)
 	allErrs = append(allErrs, ValidateCS_DualStack(c.IPFamilies, c.EnableDualStack, fldPath.Child("ipFamilies"))...)
 
 	// TODO: validate container runtime docker
+	return
+}
+
+func ValidateCSAddonsConfig(config *configuration.CSAddonsConfig, fldPath *field.Path) (allErrs field.ErrorList) {
+	if config == nil || config.IngressNginx == nil {
+		return nil
+	}
+
+	allErrs = append(allErrs, validateTCPPort(config.IngressNginx.HTTPPort, fldPath.Child("ingress-nginx").Child("httpPort"))...)
+	allErrs = append(allErrs, validateTCPPort(config.IngressNginx.HTTPSPort, fldPath.Child("ingress-nginx").Child("httpsPort"))...)
+	return
+}
+
+func validateTCPPort(port int, fldPath *field.Path) (allErrs field.ErrorList) {
+	if port == 0 {
+		return nil
+	}
+	if port < 1 || port > 65535 {
+		allErrs = append(allErrs, field.Invalid(fldPath, port, "must be between 1 and 65535"))
+	}
 	return
 }
 
@@ -49,6 +70,7 @@ func ValidateCSAddons(addons []configuration.CSAddonName, fldPath *field.Path) (
 	supportedAddons := sets.NewString(
 		string(configuration.CSAddonNameNodeExporter),
 		string(configuration.CSAddonNameStateMetrics),
+		string(configuration.CSAddonNameIngressNginx),
 	)
 	allAddons := sets.NewString()
 	for i, a := range addons {

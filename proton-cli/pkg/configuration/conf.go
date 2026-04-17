@@ -12,6 +12,25 @@ func GetConf(valueTag bool) string {
 	return string(b)
 }
 
+// AccessAddress 描述集群的对外访问地址
+type AccessAddress struct {
+	Host   string `json:"host,omitempty"`
+	Port   int    `json:"port,omitempty"`
+	Scheme string `json:"scheme,omitempty"`
+	Path   string `json:"path,omitempty"`
+}
+
+// StorageConfig 描述集群存储配置
+type StorageConfig struct {
+	StorageClassName string `json:"storageClassName,omitempty"`
+}
+
+// EnvConfig 描述运行环境配置
+type EnvConfig struct {
+	Language string `json:"language,omitempty"`
+	Timezone string `json:"timezone,omitempty"`
+}
+
 // cluster conf
 type ClusterConfig struct {
 	ApiVersion           string          `json:"apiVersion"`
@@ -49,19 +68,21 @@ type ClusterConfig struct {
 	// Nebula Graph 的部署酝置，如果为 nil 则丝会安装 Nebula Graph
 	Nebula *Nebula `json:"nebula,omitempty"`
 
+	// 集群对外访问地址（用于 helm values 生成）
+	AccessAddress *AccessAddress `json:"access_address,omitempty"`
+	// 存储配置（用于 helm values 生成）
+	Storage *StorageConfig `json:"storage,omitempty"`
+	// 运行环境配置（language/timezone）
+	Env *EnvConfig `json:"env,omitempty"`
+
 	//  基础组件连接信息都在此保存，替代cms的保存
 	ResourceConnectInfo *ResourceConnectInfo `json:"resource_connect_info,omitempty" mapstructure:"resourceConnectInfo"`
 
 	// Proton 包管睆朝务
 	PackageStore *PackageStore `json:"package-store,omitempty"`
-
-	// Proton ECeph
-	ECeph *ECeph `json:"eceph,omitempty"`
 }
 
 type Deploy struct {
-	Mode           string `json:"mode"`
-	Devicespec     string `json:"devicespec"`
 	Namespace      string `json:"namespace,omitempty"`
 	ServiceAccount string `json:"serviceaccount,omitempty"`
 }
@@ -125,7 +146,17 @@ type Cs struct {
 	Cs_controller_dir string       `json:"cs_controller_dir"`
 	// Proton CS 坯用的杒件列表, 因为需覝区分 `nil` 和 `[]` 所以丝能使用
 	// omitempty
-	Addons []CSAddonName `json:"addons"`
+	Addons       []CSAddonName   `json:"addons"`
+	AddonsConfig *CSAddonsConfig `json:"addonsConfig,omitempty"`
+}
+
+type CSAddonsConfig struct {
+	IngressNginx *CSAddonIngressNginxConfig `json:"ingress-nginx,omitempty"`
+}
+
+type CSAddonIngressNginxConfig struct {
+	HTTPPort  int `json:"httpPort,omitempty"`
+	HTTPSPort int `json:"httpsPort,omitempty"`
 }
 
 // Kubernetes 的容器运行时，有且只有一个运行时
@@ -146,12 +177,6 @@ type ContainerdContainerRuntimeSource struct {
 }
 
 type RegistryHostConfig struct {
-	// Host. Examples:
-	//  - docker.io
-	//  - registry.k8s.io
-	//  - registry.aishu.cn:15000
-	Host string `json:"host,omitzero"`
-
 	// Server specifies the default server. When `host` is
 	// also specified, those hosts are tried first.
 	Server string `toml:"server" json:"server,omitzero"`

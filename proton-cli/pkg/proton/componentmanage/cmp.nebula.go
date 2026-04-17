@@ -19,7 +19,7 @@ const (
 )
 
 func (m *Applier) applyNebula(cli componentmanageCli.Client, name string) error {
-	if m.NewCfg.Deploy.Namespace != "" {
+	if deployNamespace(m.NewCfg) != "" {
 		log.Info("custom namespace is enabled, skip apply nebula")
 		return nil
 	}

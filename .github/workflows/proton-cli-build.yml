@@ -2,8 +2,11 @@ name: proton-cli-build
 
 on:
   push:
+    branches:
+      - "**"
     paths:
       - "proton-cli/**"
+      - "proton-cli-web/**"
   workflow_dispatch:
 
 permissions:
@@ -23,6 +26,22 @@ jobs:
         uses: actions/setup-go@v6
         with:
           go-version-file: proton-cli/go.mod
+          cache-dependency-path: proton-cli/go.sum
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: proton-cli-web/package.json
+          cache: npm
+          cache-dependency-path: proton-cli-web/package-lock.json
+
+      - name: Install proton-cli-web dependencies
+        working-directory: proton-cli-web
+        run: npm ci
+
+      - name: Build proton-cli-web
+        working-directory: proton-cli-web
+        run: npm run release
 
       - name: Build proton-cli binaries
         working-directory: proton-cli
@@ -35,5 +54,4 @@ jobs:
         with:
           name: proton-cli-bins
           path: proton-cli/_output/local/bin
-          compression-level: 0
           if-no-files-found: error

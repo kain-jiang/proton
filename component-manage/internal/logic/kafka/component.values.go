@@ -33,8 +33,8 @@ func kafkaValues(param *types.KafkaComponentParams, zk *components.ComponentZook
 				"mechanism": "PLAIN",
 				"user": helm3.L{
 					helm3.M{
-						"username": "FIXME",
-						"password": "FIXME",
+						"username": "kweaver",
+						"password": "kweaver",
 					},
 				},
 			},
@@ -121,8 +121,8 @@ func generateInfo(name string, params *types.KafkaComponentParams) *components.K
 		MQType:     "kafka",
 		SourceType: "internal",
 		Auth: types.KafkaAuth{
-			Username:  "FIXME",
-			Password:  "FIXME",
+			Username:  "kweaver",
+			Password:  "kweaver",
 			Mechanism: "PLAIN",
 		},
 	}

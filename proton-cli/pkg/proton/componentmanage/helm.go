@@ -86,8 +86,23 @@ func mustFromMap[T canMust](mq map[string]interface{}) *T {
 	return &rel
 }
 
+func serviceAccountName(cfg *configuration.ClusterConfig) string {
+	if cfg != nil && cfg.Deploy != nil {
+		return cfg.Deploy.ServiceAccount
+	}
+	return ""
+}
+
+func deployNamespace(cfg *configuration.ClusterConfig) string {
+	if cfg != nil && cfg.Deploy != nil {
+		return cfg.Deploy.Namespace
+	}
+	return ""
+}
+
 func NewManager(helm3 helm3.Client, oldCfg, newCfg *configuration.ClusterConfig, registry string, servicePackage string, charts servicepackage.Charts, images []string, namespace string) *Applier {
 	myChart := charts.Get(ChartName, "")
+	serviceAccount := serviceAccountName(newCfg)
 	return &Applier{
 		ComponentManageParams: ComponentManageParams{
 			Release:   ReleaseName,
@@ -99,8 +114,8 @@ func NewManager(helm3 helm3.Client, oldCfg, newCfg *configuration.ClusterConfig,
 					"registry": registry,
 				},
 				"serviceAccount": map[string]interface{}{
-					"create": newCfg.Deploy.ServiceAccount == "",
-					"name":   newCfg.Deploy.ServiceAccount,
+					"create": serviceAccount == "",
+					"name":   serviceAccount,
 				},
 				"namespace": namespace,
 				"service": map[string]interface{}{

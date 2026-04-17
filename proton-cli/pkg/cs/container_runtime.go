@@ -37,11 +37,16 @@ const (
 	nodeContainerRuntimeDocker nodeContainerRuntime = "docker"
 )
 
-// 容器运行时的 rpm 包名
-const (
-	rpmPackageNameContainerd string = "containerd"
-	rpmPackageNameDockerCE   string = "docker-ce"
-)
+func runtimePackageNames(r nodeContainerRuntime) []string {
+	switch r {
+	case nodeContainerRuntimeContainerd:
+		return []string{"containerd", "containerd.io"}
+	case nodeContainerRuntimeDocker:
+		return []string{"docker-ce"}
+	default:
+		return nil
+	}
+}
 
 // detectNodeCommonContainerRuntime 探查所有节点共有的容器运行时。如果存在多个，按以下顺序返回：
 //  1. docker
@@ -71,27 +76,17 @@ func detectNodeCommonContainerRuntime(kc *k.KubernetesCluster) (nodeContainerRun
 }
 
 func detectNodeContainerRuntimes(n *k.Node) (runtimes []nodeContainerRuntime, err error) {
-	for _, item := range []struct {
-		// container runtime
-		r nodeContainerRuntime
-		// container runtime rpm package name
-		n string
-	}{
-		// containerd
-		{
-			r: nodeContainerRuntimeContainerd,
-			n: rpmPackageNameContainerd,
-		},
-		// docker
-		{
-			r: nodeContainerRuntimeDocker,
-			n: rpmPackageNameDockerCE,
-		},
+	for _, runtime := range []nodeContainerRuntime{
+		nodeContainerRuntimeContainerd,
+		nodeContainerRuntimeDocker,
 	} {
-		if _, err := n.Query(item.n); err != nil {
-			continue
+		for _, pkg := range runtimePackageNames(runtime) {
+			if _, err := n.Query(pkg); err != nil {
+				continue
+			}
+			runtimes = append(runtimes, runtime)
+			break
 		}
-		runtimes = append(runtimes, item.r)
 	}
 	return
 }
@@ -109,9 +104,9 @@ func generateContainerRuntimeSourceInto(r nodeContainerRuntime, target *configur
 
 func generateContainerdContainerRuntimeSource(localCR *configuration.LocalCR) *configuration.ContainerdContainerRuntimeSource {
 	s := &configuration.ContainerdContainerRuntimeSource{
-		Root: "/sysvol/proton_data/cs_containerd_data",
+		Root: "/var/lib/containerd",
 		// TODO: generate structurally
-		SandboxImage: fmt.Sprintf("%s/public/pause:3.6", net.JoinHostPort(global.RegistryDomain, strconv.Itoa(localCR.Ha_ports.Registry))),
+		SandboxImage: fmt.Sprintf("%s/pause:3.10.1", net.JoinHostPort(global.RegistryDomain, strconv.Itoa(localCR.Ha_ports.Registry))),
 	}
 
 	var hosts []string
@@ -134,7 +129,6 @@ func generateContainerdRegistryHostConfig(host string) configuration.RegistryHos
 		Host:   host,
 	}
 	return configuration.RegistryHostConfig{
-		Host:   host,
 		Server: s.String(),
 		HostConfigs: map[string]configuration.RegistryHostFileConfig{
 			host: {

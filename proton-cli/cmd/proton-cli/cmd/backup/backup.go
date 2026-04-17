@@ -23,3 +23,7 @@ func init() {
 	BackupCmd.AddCommand(backupDirectoryCmd)
 	BackupCmd.AddCommand(backupScheduleCmd)
 }
+
+func NewBackupCommand() *cobra.Command {
+	return BackupCmd
+}

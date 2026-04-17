@@ -3,12 +3,9 @@ package validation
 import (
 	"reflect"
 
-	"golang.org/x/exp/slices"
-
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/configuration"
-	eceph "devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/proton/eceph/validation"
 )
 
 const FieldNameStorageCapacity string = "StorageCapacity"
@@ -21,15 +18,6 @@ func ValidateClusterConfig(c *configuration.ClusterConfig) (allErrs field.ErrorL
 
 	// validate that replica_count should be set in external k8s cluster mode and should not be set in internal k8s mode
 	allErrs = append(allErrs, ValidateReplicaCount(c)...)
-
-	if c.Deploy == nil {
-		allErrs = append(allErrs, field.Required(field.NewPath("deploy"), "must set deploy mode and devicespec"))
-	} else {
-		validModes := []string{"standard", "cloud"}
-		if !slices.Contains(validModes, c.Deploy.Mode) {
-			allErrs = append(allErrs, field.NotSupported(field.NewPath("deploy", "mode"), c.Deploy.Mode, validModes))
-		}
-	}
 
 	if c.Cs == nil {
 		allErrs = append(allErrs, field.Required(field.NewPath("cs"), ""))
@@ -84,11 +72,6 @@ func ValidateClusterConfig(c *configuration.ClusterConfig) (allErrs field.ErrorL
 			allErrs = append(allErrs, field.Required(field.NewPath("resource_connect_info", "rds"), ""))
 		}
 		allErrs = append(allErrs, ValidatePackageStore(c.PackageStore, nodeNameSet, field.NewPath("package-store"))...)
-	}
-	if c.Cs.Provisioner == configuration.KubernetesProvisionerLocal && c.ECeph != nil {
-		allErrs = append(allErrs, eceph.Validate(c.ECeph, c.Nodes, c.ResourceConnectInfo, field.NewPath("eceph"))...)
-	} else if c.ECeph != nil {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("eceph"), "", "Cannot deploy ECeph on a non-local cluster."))
 	}
 
 	return
@@ -280,16 +263,10 @@ func ValidateClusterConfigUpdate(o, n *configuration.ClusterConfig) (allErrs fie
 		allErrs = append(allErrs, field.Invalid(field.NewPath("package-store"), n.PackageStore, "package store doesn't support uninstall"))
 	}
 
-	allErrs = append(allErrs, eceph.ValidateUpdate(o.ECeph, n.ECeph, field.NewPath("eceph"))...)
 	return
 }
 
 // Do checks that requires clients like node client here
 func ValidateClusterConfigPost(c *configuration.ClusterConfig) (allErrs field.ErrorList) {
-	if c.ECeph != nil && c.Cs.Provisioner == configuration.KubernetesProvisionerLocal {
-		allErrs = append(allErrs, eceph.ValidatePost(c.ECeph, c.Nodes, c.ResourceConnectInfo, field.NewPath("eceph"))...)
-	} else if c.ECeph != nil {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("eceph"), "", "Cannot deploy ECeph on a non-local cluster."))
-	}
 	return
 }

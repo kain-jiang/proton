@@ -2,12 +2,15 @@ package testing
 
 import (
 	"context"
+	"reflect"
+	stdtime "time"
+	"unsafe"
 
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage"
 	"helm.sh/helm/v3/pkg/storage/driver"
-	"helm.sh/helm/v3/pkg/time"
+	helmtime "helm.sh/helm/v3/pkg/time"
 
 	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/client/helm3"
 )
@@ -24,6 +27,21 @@ type FakeHelm3 struct {
 	ErrGetRelease       error
 	ErrUpgrade          error
 	ErrReconcileRelease error
+	UpgradeCalls        []UpgradeCall
+	UninstallCalls      []string
+	UninstallCallDetails []UninstallCall
+}
+
+type UpgradeCall struct {
+	Release string
+	Wait    bool
+	Timeout stdtime.Duration
+	Values  map[string]interface{}
+}
+
+type UninstallCall struct {
+	Release string
+	Timeout stdtime.Duration
 }
 
 // ReconcileRelease implements helm3.Client.
@@ -52,7 +70,7 @@ func New(namespace string, log func(string, ...interface{}), releases ...*releas
 }
 
 func (f *FakeHelm3) Install(name string, chartRef *helm3.ChartRef, opts ...helm3.InstallOption) error {
-	now := time.Now()
+	now := helmtime.Now()
 	return f.Storage.Create(&release.Release{
 		Name: name,
 		Info: &release.Info{
@@ -72,11 +90,62 @@ func (f *FakeHelm3) Install(name string, chartRef *helm3.ChartRef, opts ...helm3
 
 func (f *FakeHelm3) Upgrade(release string, chartRef *helm3.ChartRef, opts ...helm3.UpgradeOption) error {
 	f.CallUpgrade = true
+	call := UpgradeCall{Release: release}
+	for _, opt := range opts {
+		optValue := reflect.ValueOf(opt)
+		if optValue.Kind() != reflect.Func || optValue.Type().NumIn() != 1 {
+			continue
+		}
+		paramType := optValue.Type().In(0)
+		if paramType.Kind() != reflect.Pointer || paramType.Elem().Kind() != reflect.Struct {
+			continue
+		}
+
+		params := reflect.New(paramType.Elem())
+		optValue.Call([]reflect.Value{params})
+
+		paramValue := params.Elem()
+		waitField := paramValue.FieldByName("wait")
+		if waitField.IsValid() && waitField.Kind() == reflect.Bool {
+			call.Wait = waitField.Bool()
+		}
+		timeoutField := paramValue.FieldByName("timeout")
+		if timeoutField.IsValid() && timeoutField.Type() == reflect.TypeOf(stdtime.Duration(0)) {
+			call.Timeout = stdtime.Duration(timeoutField.Int())
+		}
+		valuesField := paramValue.FieldByName("values")
+		if valuesField.IsValid() && valuesField.Type() == reflect.TypeOf(map[string]interface{}{}) && !valuesField.IsNil() {
+			call.Values = reflect.NewAt(valuesField.Type(), unsafe.Pointer(valuesField.UnsafeAddr())).Elem().Interface().(map[string]interface{})
+		}
+	}
+	f.UpgradeCalls = append(f.UpgradeCalls, call)
 	return f.ErrUpgrade
 }
 
 func (f *FakeHelm3) Uninstall(release string, opts ...helm3.UninstallOption) error {
 	f.Log("FakeHelm3.Uninstall() release=%v", release)
+	call := UninstallCall{Release: release}
+	for _, opt := range opts {
+		optValue := reflect.ValueOf(opt)
+		if optValue.Kind() != reflect.Func || optValue.Type().NumIn() != 1 {
+			continue
+		}
+		paramType := optValue.Type().In(0)
+		if paramType.Kind() != reflect.Pointer || paramType.Elem().Kind() != reflect.Struct {
+			continue
+		}
+
+		params := reflect.New(paramType.Elem())
+		optValue.Call([]reflect.Value{params})
+
+		paramValue := params.Elem()
+		timeoutField := paramValue.FieldByName("timeout")
+		if timeoutField.IsValid() && timeoutField.Type() == reflect.TypeOf(stdtime.Duration(0)) {
+			call.Timeout = stdtime.Duration(timeoutField.Int())
+		}
+	}
+	f.UninstallCalls = append(f.UninstallCalls, release)
+	f.UninstallCallDetails = append(f.UninstallCallDetails, call)
 	return f.ErrUninstall
 }
 

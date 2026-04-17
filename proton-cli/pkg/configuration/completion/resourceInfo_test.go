@@ -777,13 +777,13 @@ func Test_getInfoFromSecret(t *testing.T) {
 			k8sRetrun: k8sRetrun{
 				secret: &v1.Secret{
 					Data: map[string][]byte{
-						"default.yaml": []byte("host: opensearch-master.resource\npassword: FAKE_PASSWORD\nport: 9200\nprotocol: http\nuser: admin\nversion: 7.10.0\n"),
+						"default.yaml": []byte("host: opensearch-master.resource\npassword: eisoo.com123\nport: 9200\nprotocol: http\nuser: admin\nversion: 7.10.0\n"),
 					},
 				},
 			},
 			wantData: map[string]interface{}{
 				"host":     "opensearch-master.resource",
-				"password": "FAKE_PASSWORD",
+				"password": "eisoo.com123",
 				"port":     9200.0,
 				"protocol": "http",
 				"user":     "FAKE_USERNAME",

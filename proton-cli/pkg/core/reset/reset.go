@@ -16,7 +16,6 @@ import (
 	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/cs"
 	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/node"
 	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/proton/componentmanage"
-	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/proton/eceph"
 	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/proton/mq"
 	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/proton/prometheus"
 	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/proton/store"
@@ -168,22 +167,6 @@ func appendOptionalModules(modules []module, clusterConf *configuration.ClusterC
 				Spec:   spec,
 				Nodes:  selected,
 				Logger: log.WithField("module", "package-store"),
-			},
-		})
-	}
-	if spec := clusterConf.ECeph; spec != nil {
-		var selected []v1alpha1.Interface
-		for _, n := range nodes {
-			if slices.Contains(spec.Hosts, n.Name()) {
-				selected = append(selected, n)
-			}
-		}
-		modules = append(modules, module{
-			name: "eceph",
-			resetter: &eceph.Manager{
-				Spec:   spec,
-				Nodes:  selected,
-				Logger: log.WithField("module", "eceph"),
 			},
 		})
 	}

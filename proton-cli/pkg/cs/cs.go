@@ -118,8 +118,10 @@ func (c *Cs) Apply() error {
 			return err
 		}
 
+		c.Logger.WithField("addons", c.ClusterConf.Cs.Addons).Info("Install CS Addons")
 		for _, addon := range c.ClusterConf.Cs.Addons {
-			if err := addons.Reconcile(context.Background(), c.Logger, helmClient, pkg, registry, addon); err != nil {
+			c.Logger.WithField("name", addon).Info("Install cs addon")
+			if err := addons.Reconcile(context.Background(), c.Logger, helmClient, pkg, registry, c.ClusterConf.Cs.AddonsConfig, addon); err != nil {
 				c.Logger.Errorf("reconcile proton cs addon %s fail: %v", addon, err)
 				return err
 			}
@@ -185,13 +187,6 @@ func (c *Cs) apply() error {
 		kube, err := NewKubernetesClient()
 		if err != nil {
 			return fmt.Errorf("unable to create kubernetes client: %w", err)
-		}
-
-		// 确保定时备份任务存在且配置正确
-		for _, name := range c.ClusterConf.Cs.Master {
-			if err := EnsureBackupCronJobForNode(context.Background(), kube.BatchV1().CronJobs(configuration.GetProtonCliConfigNSFromFile()), name, cr, c.Logger); err != nil {
-				return fmt.Errorf("ensure backup cronjob for control plane node %s fail: %w", name, err)
-			}
 		}
 
 		// 获取 Kubernetes 已存在的节点
@@ -305,7 +300,7 @@ func (c *Cs) apply() error {
 		}
 	}
 	sort.Strings(kc.InsecureRegistries)
-	kc.ImageRepository = fmt.Sprintf("%s/public", cr)
+	kc.ImageRepository = cr
 	if c.ClusterConf.Cs.Host_network.Ipv4_interface != "" {
 		kc.IPv4Interface = c.ClusterConf.Cs.Host_network.Ipv4_interface
 	}
@@ -350,13 +345,6 @@ func (c *Cs) initCs() error {
 		return err
 	} else {
 		c.Logger.Debug(fmt.Sprintf("create namespace %s success", namespace.Name))
-	}
-
-	var registry, _, _ = global.ImageRepository(c.ClusterConf.Cr)
-	for _, name := range c.ClusterConf.Cs.Master {
-		if err := EnsureBackupCronJobForNode(ctx, clientSet.BatchV1().CronJobs(configuration.GetProtonCliConfigNSFromFile()), name, registry, c.Logger); err != nil {
-			return fmt.Errorf("ensure backup cronjob for control plane node %s fail: %w", name, err)
-		}
 	}
 
 	// get admin.conf from control plane nodes to run kubectl and proton-cli on worker nodes
@@ -465,11 +453,7 @@ func (c *Cs) updateDockerDaemonConfig(conf client.RemoteClientConf, crHosts []st
 }
 
 func (c *Cs) setKubeletConfigMap(kube kubernetes.Interface) error {
-	version, err := kube.Discovery().ServerVersion()
-	if err != nil {
-		return fmt.Errorf("cannot get kubernetes version:%w", err)
-	}
-	kubeletCMName := fmt.Sprintf("kubelet-config-%s.%s", version.Major, version.Minor)
+	const kubeletCMName = "kubelet-config"
 
 	kubeCm, err := kube.CoreV1().ConfigMaps("kube-system").Get(context.Background(), kubeletCMName, metav1.GetOptions{})
 	if err != nil {
@@ -1034,12 +1018,6 @@ func (c *Cs) addNodes(list *corev1.NodeList, chartRepo *k.ChartmuseumInfo) error
 			if err := n.EnableKubeletService(); err != nil {
 				return fmt.Errorf("%s: enable kubelet service failed: %v", n.HostName, err)
 			}
-			if err := n.InitHelm2Client(); err != nil {
-				return fmt.Errorf("%s: init helm2 client failed: %v", n.HostName, err)
-			}
-			if err := n.SetHelm2Repo(chartRepo); err != nil {
-				return fmt.Errorf("%s: set helm2 repo %s failed: %v", n.HostName, chartRepo, err)
-			}
 		}
 		// 移除新增 control plane 节点的 taint
 		master.RemoveTaint(joinMasters)
@@ -1073,12 +1051,6 @@ func (c *Cs) addNodes(list *corev1.NodeList, chartRepo *k.ChartmuseumInfo) error
 			}
 			if err := n.EnableKubeletService(); err != nil {
 				return fmt.Errorf("%s: enable kubelet service: %w", n.Ipaddress, err)
-			}
-			if err := n.InitHelm2Client(); err != nil {
-				return fmt.Errorf("%s: init helm2 client: %w", n.HostName, err)
-			}
-			if err := n.SetHelm2Repo(chartRepo); err != nil {
-				return fmt.Errorf("%s: set helm2 repo: %w", n.HostName, err)
 			}
 		}
 	}

@@ -6,6 +6,7 @@ type CSAddonName string
 const (
 	CSAddonNameNodeExporter CSAddonName = "node-exporter"
 	CSAddonNameStateMetrics CSAddonName = "kube-state-metrics"
+	CSAddonNameIngressNginx CSAddonName = "ingress-nginx"
 )
 
 // AllCSAddons 是 Proton CS 所有的插件的名称列表
@@ -15,4 +16,6 @@ var AllCSAddons = []CSAddonName{
 }
 
 // DefaultCSAddons 是 Proton CS 默认启用的插件的名称列表
-var DefaultCSAddons = AllCSAddons
+var DefaultCSAddons = []CSAddonName{
+	CSAddonNameIngressNginx,
+}

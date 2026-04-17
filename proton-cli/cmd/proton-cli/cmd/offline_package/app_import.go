@@ -1,0 +1,280 @@
+package offline_package
+
+import (
+	"archive/tar"
+	"context"
+	"errors"
+	"fmt"
+	"io"
+	"log"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
+
+	"github.com/chartmuseum/helm-push/pkg/chartmuseum"
+	"github.com/distribution/reference"
+	"github.com/spf13/cobra"
+	"oras.land/oras-go/v2"
+	"oras.land/oras-go/v2/content/oci"
+)
+
+type appImportOptions struct {
+	input               string
+	auto                bool
+	registry            string
+	registries          []string
+	registryUsername    string
+	registryPassword    string
+	registryPlainHTTP   bool
+	force               bool
+	chartmuseumURL      string
+	chartmuseumURLs     []string
+	chartmuseumUsername string
+	chartmuseumPassword string
+}
+
+func newAppImportCommand() *cobra.Command {
+	opts := &appImportOptions{
+		registryPlainHTTP: true, // 默认允许 HTTP 仓库，不影响 HTTPS 推送
+	}
+
+	cmd := &cobra.Command{
+		Use:   "import",
+		Short: "Import an application offline package",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			return runAppImport(cmd.Context(), opts)
+		},
+	}
+
+	cmd.Flags().StringVarP(&opts.input, "input", "i", "", "Input offline package tar file")
+	cmd.Flags().BoolVar(&opts.auto, "auto", false, "Auto-detect registry and ChartMuseum from current proton cluster config")
+	cmd.Flags().StringVar(&opts.registry, "registry", "", "Target registry host")
+	cmd.Flags().StringVar(&opts.registryUsername, "registry-username", "", "Target registry username")
+	cmd.Flags().StringVar(&opts.registryPassword, "registry-password", "", "Target registry password")
+	cmd.Flags().BoolVar(&opts.registryPlainHTTP, "registry-plain-http", true, "Allow plain HTTP registry pushes (default true)")
+	cmd.Flags().BoolVar(&opts.force, "force", false, "Overwrite existing charts in ChartMuseum")
+	cmd.Flags().StringVar(&opts.chartmuseumURL, "chartmuseum-url", "", "Target ChartMuseum URL")
+	cmd.Flags().StringVar(&opts.chartmuseumUsername, "chartmuseum-username", "", "Target ChartMuseum username")
+	cmd.Flags().StringVar(&opts.chartmuseumPassword, "chartmuseum-password", "", "Target ChartMuseum password")
+	_ = cmd.MarkFlagRequired("input")
+
+	return cmd
+}
+
+func runAppImport(ctx context.Context, opts *appImportOptions) error {
+	if fi, err := os.Stat(opts.input); err != nil {
+		return fmt.Errorf("stat input package: %w", err)
+	} else if fi.IsDir() {
+		return fmt.Errorf("input package must be a tar file")
+	}
+	if err := hydrateAppImportOptions(ctx, opts); err != nil {
+		return err
+	}
+
+	workdir, err := os.MkdirTemp("", "proton-cli-offline-app-import-*")
+	if err != nil {
+		return err
+	}
+	defer os.RemoveAll(workdir)
+
+	log.Printf("extracting package %q", opts.input)
+	if err := extractAppPackage(opts.input, workdir); err != nil {
+		return err
+	}
+
+	manifestPath, chartsDir, imagesDir, err := validateAppPackageLayout(workdir)
+	if err != nil {
+		return err
+	}
+	_ = manifestPath
+
+	registries := opts.registries
+	if len(registries) == 0 && opts.registry != "" {
+		registries = []string{opts.registry}
+	}
+
+	log.Printf("pushing images to %d registry node(s)", len(registries))
+	imageCount, err := importAppImages(ctx, imagesDir, registries, opts.registryUsername, opts.registryPassword, opts.registryPlainHTTP)
+	if err != nil {
+		return err
+	}
+
+	chartmuseumURLs := opts.chartmuseumURLs
+	if len(chartmuseumURLs) == 0 && opts.chartmuseumURL != "" {
+		chartmuseumURLs = []string{opts.chartmuseumURL}
+	}
+
+	log.Printf("uploading charts to %d chartmuseum node(s)", len(chartmuseumURLs))
+	chartCount, err := importAppCharts(chartsDir, chartmuseumURLs, opts.chartmuseumUsername, opts.chartmuseumPassword, opts.force)
+	if err != nil {
+		return err
+	}
+
+	// 更新 Helm 仓库索引，确保后续 app install 能找到新推送的 charts
+	log.Printf("updating helm repository index")
+	if err := updateHelmRepo(); err != nil {
+		log.Printf("warning: failed to update helm repo: %v", err)
+		// 不返回错误，因为 charts 已经上传成功
+	}
+
+	fmt.Printf("import completed\n- registries: %v\n- chartmuseums: %v\n- charts imported: %d\n- images imported: %d\n", registries, chartmuseumURLs, chartCount, imageCount)
+	return nil
+}
+
+func extractAppPackage(tarPath, dst string) error {
+	f, err := os.Open(tarPath)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	tr := tar.NewReader(f)
+	for {
+		h, err := tr.Next()
+		if errors.Is(err, io.EOF) {
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+		if h.FileInfo().IsDir() {
+			if err := os.MkdirAll(filepath.Join(dst, h.Name), h.FileInfo().Mode()); err != nil {
+				return err
+			}
+			continue
+		}
+		if err := extractFileFromTar(tr, h, dst); err != nil {
+			return err
+		}
+	}
+}
+
+func validateAppPackageLayout(root string) (string, string, string, error) {
+	manifestPath := filepath.Join(root, "manifest.yaml")
+	chartsDir := filepath.Join(root, "charts")
+	imagesDir := filepath.Join(root, "images")
+
+	for _, required := range []string{manifestPath, chartsDir, imagesDir} {
+		if _, err := os.Stat(required); err != nil {
+			return "", "", "", fmt.Errorf("invalid app package, missing %s: %w", filepath.Base(required), err)
+		}
+	}
+
+	return manifestPath, chartsDir, imagesDir, nil
+}
+
+func importAppImages(ctx context.Context, imagesDir string, registryHosts []string, username, password string, plainHTTP bool) (int, error) {
+	tags, err := loadOCIImageTags(imagesDir)
+	if err != nil {
+		return 0, fmt.Errorf("read image tags from package: %w", err)
+	}
+
+	src, err := oci.New(imagesDir)
+	if err != nil {
+		return 0, fmt.Errorf("open oci layout: %w", err)
+	}
+
+	for _, tag := range tags {
+		repositoryName, tagName, err := splitAppLocalRef(tag)
+		if err != nil {
+			return 0, fmt.Errorf("parse image tag %s: %w", tag, err)
+		}
+
+		for _, registryHost := range registryHosts {
+			destination := fmt.Sprintf("%s/%s:%s", strings.TrimSuffix(registryHost, "/"), repositoryName, tagName)
+			log.Printf("push image %s", destination)
+
+			dstRepo, _, err := newRemoteRepositoryForReference(destination, username, password, plainHTTP)
+			if err != nil {
+				return 0, fmt.Errorf("prepare registry repository for %s: %w", destination, err)
+			}
+
+			if _, err := oras.Copy(ctx, src, tag, dstRepo, tagName, oras.DefaultCopyOptions); err != nil {
+				return 0, fmt.Errorf("push image %s: %w", destination, err)
+			}
+		}
+	}
+
+	return len(tags), nil
+}
+
+func importAppCharts(chartsDir string, hosts []string, username, password string, force bool) (int, error) {
+	entries, err := os.ReadDir(chartsDir)
+	if err != nil {
+		return 0, err
+	}
+
+	var count int
+	for _, entry := range entries {
+		if entry.IsDir() || filepath.Ext(entry.Name()) != ".tgz" {
+			continue
+		}
+
+		chartPath := filepath.Join(chartsDir, entry.Name())
+		uploaded := false
+		for _, host := range hosts {
+			client, err := chartmuseum.NewClient(
+				chartmuseum.URL(host),
+				chartmuseum.Username(username),
+				chartmuseum.Password(password),
+			)
+			if err != nil {
+				return 0, fmt.Errorf("create chartmuseum client: %w", err)
+			}
+
+			log.Printf("upload chart %s to %s", entry.Name(), host)
+			resp, err := client.UploadChartPackage(chartPath, force)
+			if err != nil {
+				return 0, fmt.Errorf("upload chart %s: %w", entry.Name(), err)
+			}
+
+			body, _ := io.ReadAll(resp.Body)
+			_ = resp.Body.Close()
+
+			// 409 表示 chart 已存在，跳过而不是报错
+			if resp.StatusCode == 409 {
+				log.Printf("chart %s already exists on %s, skipping", entry.Name(), host)
+				continue
+			}
+
+			if resp.StatusCode != 201 && resp.StatusCode != 202 {
+				return 0, fmt.Errorf("upload chart %s failed: http %d: %s", entry.Name(), resp.StatusCode, strings.TrimSpace(string(body)))
+			}
+
+			log.Printf("chart %s uploaded successfully to %s", entry.Name(), host)
+			uploaded = true
+		}
+
+		if uploaded {
+			count++
+		}
+	}
+
+	return count, nil
+}
+
+// updateHelmRepo 执行 helm repo update 更新本地仓库索引
+func updateHelmRepo() error {
+	cmd := exec.Command("helm", "repo", "update")
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("helm repo update failed: %w (output: %s)", err, string(output))
+	}
+	return nil
+}
+
+func splitAppLocalRef(localRef string) (string, string, error) {
+	named, err := reference.ParseNormalizedNamed("example.invalid/" + localRef)
+	if err != nil {
+		return "", "", err
+	}
+
+	tagged, ok := reference.TagNameOnly(named).(reference.NamedTagged)
+	if !ok {
+		return "", "", fmt.Errorf("missing tag in %q", localRef)
+	}
+
+	return strings.TrimPrefix(reference.Path(tagged), "example.invalid/"), tagged.Tag(), nil
+}

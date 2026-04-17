@@ -21,9 +21,127 @@ func TestValidateClusterConfig(t *testing.T) {
 			name: "valid",
 			args: args{
 				c: &configuration.ClusterConfig{
-					Deploy: &configuration.Deploy{
-						Mode: "standard",
+					Firewall: configuration.Firewall{
+						Mode: configuration.FirewallFirewalld,
 					},
+					Nodes: []configuration.Node{
+						{
+							Name: "node-0",
+							IP4:  "192.168.0.1",
+						},
+						{
+							Name: "node-1",
+							IP4:  "192.168.0.2",
+						},
+						{
+							Name: "node-2",
+							IP4:  "192.168.0.3",
+						},
+					},
+					Cs: &configuration.Cs{
+						Provisioner: "local",
+						IPFamilies: []v1.IPFamily{
+							v1.IPv4Protocol,
+						},
+					},
+					Cr: &configuration.Cr{
+						Local: &configuration.LocalCR{},
+					},
+					Proton_mariadb: &configuration.ProtonMariaDB{
+						Hosts: []string{
+							"node-0",
+							"node-1",
+							"node-2",
+						},
+						Config: &configuration.ProtonMariaDBConfigs{
+							Resource_requests_memory: "8G",
+							Resource_limits_memory:   "9G",
+						},
+						Data_path: "/var/lib/mariadb",
+					},
+					Proton_mongodb: &configuration.ProtonDB{
+						Hosts: []string{
+							"node-0",
+							"node-1",
+							"node-2",
+						},
+						Data_path: "/var/lib/mongodb",
+					},
+					Proton_redis: &configuration.ProtonDB{
+						Hosts: []string{
+							"node-0",
+							"node-1",
+							"node-2",
+						},
+						Data_path: "/var/lib/redis",
+					},
+					Proton_mq_nsq: &configuration.ProtonDataConf{
+						Hosts: []string{
+							"node-0",
+							"node-1",
+							"node-2",
+						},
+						Data_path: "/var/lib/nsq",
+					},
+					Proton_policy_engine: &configuration.ProtonDataConf{
+						Hosts: []string{
+							"node-0",
+							"node-1",
+							"node-2",
+						},
+						Data_path: "/var/lib/policy-engine",
+					},
+					Proton_etcd: &configuration.ProtonDataConf{
+						Hosts: []string{
+							"node-0",
+							"node-1",
+							"node-2",
+						},
+						Data_path: "/var/lib/etcd",
+					},
+					OpenSearch: &configuration.OpenSearch{
+						Mode: configuration.OpenSearchModeMaster,
+						Hosts: []string{
+							"node-0",
+							"node-1",
+							"node-2",
+						},
+						Data_path: "/var/lib/opensearch",
+						Settings: map[string]interface{}{
+							"action.auto_create_index": "something",
+							"bootstrap.memory_lock":    "something",
+						},
+					},
+					Kafka: &configuration.Kafka{
+						Hosts: []string{
+							"node-0",
+							"node-1",
+							"node-2",
+						},
+						Data_path: "/data/path",
+					},
+					ZooKeeper: &configuration.ZooKeeper{
+						Hosts: []string{
+							"node-0",
+							"node-1",
+							"node-2",
+						},
+						Data_path: "/data/path",
+					},
+					Nebula: &configuration.Nebula{
+						Hosts: []string{
+							"node-0",
+						},
+						DataPath: "/var/lib/nebula",
+						Password: "FAKE_PASSWORD",
+					},
+				},
+			},
+		},
+		{
+			name: "valid-without-deploy",
+			args: args{
+				c: &configuration.ClusterConfig{
 					Firewall: configuration.Firewall{
 						Mode: configuration.FirewallFirewalld,
 					},

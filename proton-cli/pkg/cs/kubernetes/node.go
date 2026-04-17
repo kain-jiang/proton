@@ -9,8 +9,10 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"net/url"
 	"os"
 	os_exec "os/exec"
+	"os/user"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -18,12 +20,10 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
-	"gopkg.in/yaml.v2"
 
 	ecms "devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/client/ecms/v1alpha1"
 	exec "devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/client/exec/v1alpha1"
 	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/configuration"
-	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/core/global"
 )
 
 type Node struct {
@@ -306,7 +306,12 @@ func (n *Node) InitContainerd(s *configuration.ContainerdContainerRuntimeSource)
 
 	// create registry host configs
 	for _, r := range s.Registries {
-		dir := filepath.Join("/etc/containerd/certs.d", r.Host)
+		u, err := url.Parse(r.Server)
+		if err != nil {
+			return err
+		}
+
+		dir := filepath.Join("/etc/containerd/certs.d", u.Host)
 
 		n.Logger.WithField("host", r).Debug("create registry host directory")
 		if err := n.ECMS.Files().Create(ctx, dir, true, nil); err != nil {
@@ -430,7 +435,43 @@ func (n *Node) InitKubeadm(kubeadmConfig []byte) error {
 		return fmt.Errorf("%s: failed to bootstrap-token: %v", n.Ipaddress, err)
 	}
 
-	n.Logger.Printf("%s: initial kubernete with kubeadm end", n.Ipaddress)
+	// create root's kube config
+	if err := n.ECMS.Files().Create(ctx, "/root/.kube", true, nil); err != nil {
+		return err
+	}
+
+	// 创建 root 用户的 kubeconfig 因为已有的很多逻辑都依赖使用 root 用户执行 kubectl
+	if err := executor.Command("cp", "/etc/kubernetes/admin.conf", "/root/.kube/config").Run(); err != nil {
+		return fmt.Errorf("%s: failed to copy kubeconfig: %v", n.Ipaddress, err)
+	}
+
+	// 获取当前用户，认为所有 kubernetes control plane 节点都有这个用户
+	u, err := user.Current()
+	if err != nil {
+		return err
+	}
+
+	kubeDir := filepath.Join(u.HomeDir, ".kube")
+	// TODO: 假定所有节点的用户 u 的 home 目录都相同。应该通过系统命令、syscall查询，或通过配置指定。
+	if err := n.ECMS.Files().Create(ctx, kubeDir, true, nil); err != nil {
+		return err
+	}
+	// 修改 ~/.kube 的所有者为“当前用户”
+	if err := executor.Command("chown", u.Uid+":"+u.Gid, kubeDir).Run(); err != nil {
+		return err
+	}
+
+	kubeconfig := filepath.Join(kubeDir, "config")
+	if err := executor.Command("cp", "/etc/kubernetes/admin.conf", kubeconfig).Run(); err != nil {
+		return fmt.Errorf("%s: failed to copy kubeconfig: %v", n.Ipaddress, err)
+	}
+
+	if err := executor.Command("chown", u.Uid+":"+u.Gid, kubeconfig).Run(); err != nil {
+		return fmt.Errorf("%s: failed to change kubeconfig owner: %v", n.Ipaddress, err)
+	}
+
+	n.Logger.Printf("%s: initial kubernetes with kubeadm end", n.Ipaddress)
+
 	return nil
 }
 
@@ -491,54 +532,6 @@ func (n *Node) WaitTillerReady() error {
 			n.Logger.Printf("%s: tiller ready", n.Ipaddress)
 			return nil
 		}
-	}
-
-	return nil
-}
-
-func (n *Node) InitHelm2Client() error {
-	var executor = exec.NewECMSExecutorForHost(n.ECMS.Exec())
-	if err := executor.Command("helm", "init", "--client-only", "--service-account=tiller", "--skip-refresh").Run(); err != nil {
-		return fmt.Errorf("%s: failed to init helm2: %v", n.Ipaddress, err)
-	}
-	return nil
-}
-
-func (n *Node) SetHelm2Repo(repo *ChartmuseumInfo) error {
-	if repo == nil {
-		n.Logger.Infof("%s: skip set helm2 repo %s", n.Ipaddress, repo)
-		return nil
-	}
-	var executor = exec.NewECMSExecutorForHost(n.ECMS.Exec())
-	n.Logger.Printf("%s: set helm2 repo %s", n.Ipaddress, repo)
-	out, err := executor.Command("helm", "repo", "list", "--output=yaml").Output()
-	if err != nil {
-		return fmt.Errorf("%s: failed to list helm repo: %v", n.Ipaddress, err)
-	}
-	var actual []map[string]interface{}
-	if err := yaml.Unmarshal(out, &actual); err != nil {
-		return fmt.Errorf("%s: failed to unmarshal helm repo: %v", n.Ipaddress, err)
-	}
-	var repoRemove []string
-	for _, repo := range actual {
-		repoName, ok := repo["Name"].(string)
-		if !ok {
-			continue
-		}
-		repoRemove = append(repoRemove, repoName)
-	}
-
-	if len(repoRemove) > 0 {
-		for _, name := range repoRemove {
-			n.Logger.Printf("%s: remove helm repo: %s", n.Ipaddress, name)
-			if err := executor.Command("helm", "repo", "remove", name).Run(); err != nil {
-				return fmt.Errorf("%s: failed to remove helm repo: %v", n.Ipaddress, err)
-			}
-		}
-	}
-	n.Logger.Printf("%s: add helm repo: %v", n.Ipaddress, repo)
-	if err := executor.Command("helm", "repo", "add", global.HelmRepo, repo.Address, "--username", repo.Username, "--password", repo.Password).Run(); err != nil {
-		return fmt.Errorf("%s: failed to add helm repo: %v", n.Ipaddress, err)
 	}
 
 	return nil
@@ -653,7 +646,7 @@ func (n *Node) JoinKubernetesWithYaml(kubeadmConfig []byte) error {
 func (n *Node) RemoveTaint(nodes []Node) {
 	var executor = exec.NewECMSExecutorForHost(n.ECMS.Exec())
 	for _, node := range nodes {
-		_ = executor.Command("kubectl", "taint", "nodes", node.HostName, "node-role.kubernetes.io/master:NoSchedule-").Run()
+		_ = executor.Command("kubectl", "taint", "nodes", node.HostName, "node-role.kubernetes.io/control-plane:NoSchedule-").Run()
 	}
 }
 

@@ -3,7 +3,6 @@ package completion
 import (
 	node "devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/client/node/v1alpha1"
 	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/configuration"
-	eceph "devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/proton/eceph/completion"
 	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/servicepackage"
 )
 
@@ -30,7 +29,4 @@ func CompleteClusterConfig(c, oldc *configuration.ClusterConfig, pkg *servicepac
 
 // do completions that requires clients like node client here
 func CompleteClusterConfigPost(c *configuration.ClusterConfig, pkg *servicepackage.ServicePackage, n []node.Interface) {
-	if c.ECeph != nil {
-		eceph.CompletePost(c.ECeph, c.Nodes, n)
-	}
 }

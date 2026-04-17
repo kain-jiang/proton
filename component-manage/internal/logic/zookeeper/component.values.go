@@ -26,6 +26,14 @@ func zookeeperValues(param *types.ZookeeperComponentParams) helm3.M {
 	values := helm3.M{
 		"config": helm3.M{
 			"zookeeperENV": util.AnyMapToMapAny(param.Env),
+			"sasl": helm3.M{
+				"user": helm3.L{
+					helm3.M{
+						"username": "kweaver",
+						"password": "kweaver",
+					},
+				},
+			},
 		},
 		"image": helm3.M{
 			"registry": global.Config.Config.Registry,
@@ -80,8 +88,8 @@ func generateInfo(name string, _ *types.ZookeeperComponentParams) *components.Zo
 		Port: 2181,
 		Sasl: types.ZookeeperSASL{
 			Enabled:  true,
-			Username: "kafka",
-			Password: "FIXME",
+			Username: "kweaver",
+			Password: "kweaver",
 		},
 	}
 }

@@ -58,11 +58,11 @@ func (m *Applier) initComponent() error {
 		m.applyKafka(cli, kafkaName, zkName),
 		m.applyOpensearch(cli, opsearchName),
 		m.applyRedis(cli, redisName),
-		m.applyETCD(cli, etcdName),
-		m.applyPolicyEngine(cli, pName, etcdName),
+		// m.applyETCD(cli, etcdName),
+		// m.applyPolicyEngine(cli, pName, etcdName),
 		m.applyMariaDB(cli, mariadbName),
-		m.applyMongoDB(cli, mongodbName),
-		m.applyNebula(cli, nebulaName),
+		// m.applyMongoDB(cli, mongodbName),
+		// m.applyNebula(cli, nebulaName),
 	)
 	if err != nil {
 		return fmt.Errorf("apply component-manage error: %s", err)

@@ -117,3 +117,28 @@ func TestLoadFromFile(t *testing.T) {
 		})
 	}
 }
+
+func TestLoadFromBytesIgnoresLegacyDeployModeAndDevicespec(t *testing.T) {
+	data := []byte(`
+apiVersion: v1
+deploy:
+  mode: standard
+  devicespec: AS10000
+  namespace: resource
+  serviceaccount: proton-sa
+`)
+
+	got, err := LoadFromBytes(data)
+	if err != nil {
+		t.Fatalf("LoadFromBytes() error = %v", err)
+	}
+	if got.Deploy == nil {
+		t.Fatalf("expected deploy to be loaded")
+	}
+	if got.Deploy.Namespace != "resource" {
+		t.Fatalf("expected namespace resource, got %q", got.Deploy.Namespace)
+	}
+	if got.Deploy.ServiceAccount != "proton-sa" {
+		t.Fatalf("expected serviceaccount proton-sa, got %q", got.Deploy.ServiceAccount)
+	}
+}

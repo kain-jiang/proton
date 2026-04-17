@@ -11,6 +11,6 @@ var imageCmd = &cobra.Command{
 	Short: "manage images",
 }
 
-func SetImageCmd() *cobra.Command {
+func NewImagesCommand() *cobra.Command {
 	return imageCmd
 }

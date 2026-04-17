@@ -2,13 +2,13 @@ package v1alpha1
 
 import (
 	"bytes"
+	"fmt"
 	"net"
 
 	eceph_agent_config "devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/client/eceph/agent_config/v1alpha1"
 	ecms "devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/client/ecms/v1alpha1"
 	exec "devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/client/exec/v1alpha1"
 	firewalld "devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/client/firewalld/v1alpha1"
-	helm "devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/client/helm/v2"
 	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/client/rest"
 	slb_v1 "devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/client/slb/v1"
 	slb_v2 "devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/client/slb/v2"
@@ -35,7 +35,7 @@ type Client struct {
 
 // NewSSHClient 返回 SSHClient
 func New(node *configuration.Node) (*Client, error) {
-	restConfig := &rest.Config{Host: net.JoinHostPort(node.IP(), "9547")}
+	restConfig := &rest.Config{Host: net.JoinHostPort(node.IP(), fmt.Sprintf("%d", slb_v1.DefaultPort))}
 
 	ecms := ecms.NewForHost(node.IP())
 
@@ -124,11 +124,6 @@ func (c *Client) SLB_V1() slb_v1.SLB_V1Interface {
 // SLB_V2 implements Interface.
 func (c *Client) SLB_V2() slb_v2.SLB_V2Interface {
 	return c.slbV2
-}
-
-// Deprecated: use helm/v3 instead
-func (c *Client) Helm() helm.Interface {
-	return helm.New(c.executor)
 }
 
 var _ Interface = (*Client)(nil)
