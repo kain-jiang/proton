@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -178,6 +179,12 @@ func (m *Manager) installRelease(
 	// 合并 base values 和 per-release values
 	// per-release values 优先级更高，会覆盖 base values 中的同名字段
 	mergedValues := deepMergeValues(values, item.Values)
+
+	// ISF 不能使用统一的 depServices.rds.database，各 chart 自己指定具体库名。
+	// 等同于 deploy/scripts/services/isf.sh 中的 `sed '/database:/d'`。
+	if strings.EqualFold(item.Product, "isf") {
+		mergedValues = StripISFRdsDatabase(mergedValues)
+	}
 
 	chartRef := &helm3.ChartRef{
 		Name: repoChartName(item.HelmRepoName, item.ChartName),
