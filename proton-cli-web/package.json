@@ -1,7 +1,7 @@
 {
-  "name": "proton-cli-web-new",
+  "name": "proton-cli-web",
   "private": true,
-  "version": "0.0.0",
+  "version": "2.0.0",
   "type": "module",
   "packageManager": "npm@11.12.1",
   "engines": {
