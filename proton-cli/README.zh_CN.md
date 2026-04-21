@@ -6,20 +6,23 @@
 
 ## 快速开始
 
+### 操作系统兼容性
+OpenEuler 24 x86/arm、银河麒麟V10 SP3 x86/arm、 RHEL8.10 X86、OpenEuler 23 x86/arm
+
 ### 离线安装快速开始
 
 以下步骤适用于通过预构建二进制和离线依赖包快速安装 Proton。
 
 1. 下载 `proton-cli`
 
-请从 GitHub Releases 下载最新版本，并根据机器架构选择对应的压缩包。以下以 `v0.1.0-alpha.7` 为例：
+请从 GitHub Releases 下载最新版本，并根据机器架构选择对应的压缩包。以下以 `v0.1.0` 为例：
 
 ```bash
 # amd64
-wget https://github.com/kweaver-ai/proton/releases/download/v0.1.0-alpha.7/proton-cli-linux-amd64.tar.gz
+wget https://github.com/kweaver-ai/proton/releases/download/v0.1.0/proton-cli-linux-amd64.tar.gz
 
 # arm64
-wget https://github.com/kweaver-ai/proton/releases/download/v0.1.0-alpha.7/proton-cli-linux-arm64.tar.gz
+wget https://github.com/kweaver-ai/proton/releases/download/v0.1.0/proton-cli-linux-arm64.tar.gz
 
 tar xf proton-cli-linux-<arch>.tar.gz
 ```
@@ -30,10 +33,10 @@ tar xf proton-cli-linux-<arch>.tar.gz
 
 ```bash
 # amd64
-proton-cli oras pull swr.cn-east-3.myhuaweicloud.com/kweaver-ai/offline-pkg/proton-offline-package-amd64:24325651105
+proton-cli oras pull swr.cn-east-3.myhuaweicloud.com/kweaver-ai/offline-pkg/proton-offline-package:24653585065-amd64
 
 # arm64
-proton-cli oras pull swr.cn-east-3.myhuaweicloud.com/kweaver-ai/offline-pkg/proton-offline-package-arm64:24325651105
+proton-cli oras pull swr.cn-east-3.myhuaweicloud.com/kweaver-ai/offline-pkg/proton-offline-package:24653585065-arm64
 ```
 
 3. 安装离线包
@@ -45,8 +48,10 @@ bash install.sh
 
 4. 启动初始化服务
 
+关闭防火墙
+
 ```bash
-proton-cli server -ldebug
+proton-cli server -ldebug -s proton-offline/service-package
 ```
 
 然后通过浏览器访问 `http://<ip>:8888` 进入初始化页面。
@@ -73,7 +78,7 @@ proton-cli app export \
 ```bash
 proton-cli app import \
   -i kweaver-dip-x.y.z-offline-package.tar \
-  --auto
+  --auto --force
 ```
 
 8. 安装指定产品版本
