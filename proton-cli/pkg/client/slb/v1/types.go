@@ -3,11 +3,11 @@ package v1
 type NginxHTTP struct {
 	Name string `json:"name,omitempty"`
 
-	Conf NginxHTTPConf `json:"conf,omitempty"`
+	Conf NginxHTTPConf `json:"conf"`
 }
 
 type NginxHTTPConf struct {
-	Server NginxServer `json:"server,omitempty"`
+	Server NginxServer `json:"server"`
 
 	Upstream map[string]NginxUpstream `json:"upstream,omitempty"`
 }
@@ -17,7 +17,7 @@ type NginxServer struct {
 
 	ClientMaxBodySize string `json:"client_max_body_size,omitempty"`
 
-	Locations []map[string]map[string]interface{} `json:"location,omitempty"`
+	Locations []map[string]map[string]any `json:"location,omitempty"`
 
 	ProxyRequestBuffering string `json:"proxy_request_buffering,omitempty"`
 
@@ -29,7 +29,7 @@ type NginxServer struct {
 
 	AddHeaders []string `json:"add_header,omitempty"`
 
-	IF interface{} `json:"if,omitempty"`
+	IF any `json:"if,omitempty"`
 }
 
 type NginxUpstream struct {
@@ -37,7 +37,7 @@ type NginxUpstream struct {
 
 	Check string `json:"check,omitempty"`
 
-	Servers interface{} `json:"server,omitempty"`
+	Servers any `json:"server,omitempty"`
 
 	Keepalive string `json:"keepalive,omitempty"`
 }

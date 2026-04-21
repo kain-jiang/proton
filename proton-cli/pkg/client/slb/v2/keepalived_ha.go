@@ -18,7 +18,7 @@ type KeepalivedHAInterface interface {
 	Update(ctx context.Context, name string, kha *KeepalivedHA) error
 	Delete(ctx context.Context, name string) error
 	Get(ctx context.Context, name string) (*KeepalivedHA, error)
-	GetRaw(ctx context.Context, name string) (map[string]interface{}, error)
+	GetRaw(ctx context.Context, name string) (map[string]any, error)
 	List(ctx context.Context) ([]string, error)
 }
 
@@ -37,7 +37,7 @@ func (c *keepalivedHAs) Create(ctx context.Context, name string, kha *Keepalived
 	var r struct {
 		Conf struct {
 			VRRPInstance map[string]KeepalivedHA `json:"vrrp_instance,omitempty"`
-		} `json:"conf,omitempty"`
+		} `json:"conf"`
 	}
 
 	r.Conf.VRRPInstance = map[string]KeepalivedHA{name: *kha}
@@ -71,9 +71,9 @@ func (c *keepalivedHAs) Get(ctx context.Context, name string) (*KeepalivedHA, er
 	return &kha, err
 }
 
-func (c *keepalivedHAs) GetRaw(ctx context.Context, name string) (map[string]interface{}, error) {
+func (c *keepalivedHAs) GetRaw(ctx context.Context, name string) (map[string]any, error) {
 	var r struct {
-		VRRPInstance map[string]map[string]interface{} `json:"vrrp_instance,omitempty"`
+		VRRPInstance map[string]map[string]any `json:"vrrp_instance,omitempty"`
 	}
 	err := c.client.Get().
 		Resource("keepalived/ha").
@@ -119,11 +119,11 @@ func (c *keepalivedHAs) Update(ctx context.Context, name string, kha *Keepalived
 
 	var r struct {
 		Conf struct {
-			VRRPInstance map[string]map[string]interface{} `json:"vrrp_instance,omitempty"`
-		} `json:"conf,omitempty"`
+			VRRPInstance map[string]map[string]any `json:"vrrp_instance,omitempty"`
+		} `json:"conf"`
 	}
 
-	r.Conf.VRRPInstance = map[string]map[string]interface{}{name: actual}
+	r.Conf.VRRPInstance = map[string]map[string]any{name: actual}
 
 	return c.client.Put().
 		Resource("keepalived/ha").

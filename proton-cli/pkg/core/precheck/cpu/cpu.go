@@ -9,7 +9,7 @@ import (
 
 func cpuIntensiveWorkload() {
 	var result int64
-	for i := 0; i < 10000000; i++ {
+	for range 10000000 {
 		result += rand.Int63()
 	}
 	_ = result
@@ -23,7 +23,7 @@ func CPUPerf() [][]string {
 
 	start := time.Now()
 
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		cpuIntensiveWorkload()
 	}
 

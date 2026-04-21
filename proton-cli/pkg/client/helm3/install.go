@@ -8,7 +8,7 @@ import (
 )
 
 type installParams struct {
-	values   map[string]interface{}
+	values   map[string]any
 	force    bool
 	wait     bool
 	dryRun   bool
@@ -17,7 +17,7 @@ type installParams struct {
 
 type InstallOption func(installParam *installParams)
 
-func WithInstallValues(valuesMap map[string]interface{}) InstallOption {
+func WithInstallValues(valuesMap map[string]any) InstallOption {
 	return func(installParam *installParams) {
 		installParam.values = valuesMap
 	}

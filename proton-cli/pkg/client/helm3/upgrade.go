@@ -10,7 +10,7 @@ import (
 )
 
 type upgradeParams struct {
-	values          map[string]interface{}
+	values          map[string]any
 	force           bool
 	wait            bool
 	timeout         time.Duration
@@ -25,18 +25,18 @@ type upgradeParams struct {
 
 type UpgradeOption func(upgradeParams *upgradeParams)
 
-func WithUpgradeValues(valuesMap map[string]interface{}) UpgradeOption {
+func WithUpgradeValues(valuesMap map[string]any) UpgradeOption {
 	return func(upgradeParams *upgradeParams) {
 		upgradeParams.values = valuesMap
 	}
 }
 
-func WithUpgradeValuesAny(object interface{}) UpgradeOption {
+func WithUpgradeValuesAny(object any) UpgradeOption {
 	bytes, err := json.Marshal(object)
 	if err != nil {
 		panic(err)
 	}
-	values := make(map[string]interface{})
+	values := make(map[string]any)
 	err = json.Unmarshal(bytes, &values)
 	if err != nil {
 		panic(err)

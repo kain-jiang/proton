@@ -8,7 +8,6 @@ import (
 	"github.com/go-test/deep"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
-	"k8s.io/utils/ptr"
 	"sigs.k8s.io/yaml"
 
 	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/configuration"
@@ -31,7 +30,7 @@ func TestValuesFor(t *testing.T) {
 			args: args{
 				spec: &configuration.PackageStore{
 					Hosts:    []string{"node-0", "node-1"},
-					Replicas: ptr.To(2),
+					Replicas: new(2),
 					Storage: configuration.PackageStoreStorage{
 						Capacity: resource.NewQuantity(16<<20, resource.BinarySI),
 						Path:     "/var/lib/proton-package-store",
@@ -92,7 +91,7 @@ func TestValuesFor(t *testing.T) {
 			name: "host",
 			args: args{
 				spec: &configuration.PackageStore{
-					Replicas: ptr.To(3),
+					Replicas: new(3),
 					Storage: configuration.PackageStoreStorage{
 						StorageClassName: "csi-disk",
 						Capacity:         resource.NewQuantity(8<<30, resource.BinarySI),
@@ -151,7 +150,7 @@ func TestValuesFor(t *testing.T) {
 	}
 }
 
-func loadMapFromFile(t *testing.T, name string) map[string]interface{} {
+func loadMapFromFile(t *testing.T, name string) map[string]any {
 	b, err := os.ReadFile(name)
 	if err != nil {
 		t.Fatal(err)

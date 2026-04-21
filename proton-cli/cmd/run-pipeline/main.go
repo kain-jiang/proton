@@ -14,7 +14,6 @@ import (
 	"github.com/microsoft/azure-devops-go-api/azuredevops/v7/pipelines"
 	"github.com/spf13/pflag"
 	"k8s.io/klog/v2/textlogger"
-	"k8s.io/utils/ptr"
 )
 
 const (
@@ -131,7 +130,7 @@ func RunPipeline(ctx context.Context, c pipelines.Client, project, name, ref str
 	resources := &pipelines.RunResourcesParameters{
 		Repositories: &map[string]pipelines.RepositoryResourceParameters{
 			"self": {
-				RefName: ptr.To(ref),
+				RefName: new(ref),
 			},
 		},
 	}

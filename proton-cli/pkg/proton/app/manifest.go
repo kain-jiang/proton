@@ -41,7 +41,7 @@ func BuildInstallPlan(manifestPath string) (*InstallPlan, error) {
 
 // BuildInstallPlanWithValues 根据 manifest 文件路径递归展开 dependencies，
 // 并结合 install-time values 判断 optional dependency 是否启用。
-func BuildInstallPlanWithValues(manifestPath string, values map[string]interface{}) (*InstallPlan, error) {
+func BuildInstallPlanWithValues(manifestPath string, values map[string]any) (*InstallPlan, error) {
 	seen := make(map[string]bool)
 	var allSteps [][]InstallItem
 
@@ -53,7 +53,7 @@ func BuildInstallPlanWithValues(manifestPath string, values map[string]interface
 }
 
 // buildPlanRecursive 递归处理一个 manifest，将生成的步骤追加到 allSteps。
-func buildPlanRecursive(manifestPath string, values map[string]interface{}, seen map[string]bool, allSteps *[][]InstallItem) error {
+func buildPlanRecursive(manifestPath string, values map[string]any, seen map[string]bool, allSteps *[][]InstallItem) error {
 	absPath, err := filepath.Abs(manifestPath)
 	if err != nil {
 		return fmt.Errorf("resolve path %q: %w", manifestPath, err)
@@ -131,7 +131,7 @@ func buildPlanRecursive(manifestPath string, values map[string]interface{}, seen
 	return nil
 }
 
-func dependencyEnabled(dep VersionSetDependency, values map[string]interface{}) (bool, error) {
+func dependencyEnabled(dep VersionSetDependency, values map[string]any) (bool, error) {
 	if dep.EnabledIf != "" {
 		resolved, found, err := lookupBooleanValue(values, dep.EnabledIf)
 		if err != nil {
@@ -148,14 +148,14 @@ func dependencyEnabled(dep VersionSetDependency, values map[string]interface{}) 
 	return true, nil
 }
 
-func lookupBooleanValue(values map[string]interface{}, path string) (bool, bool, error) {
+func lookupBooleanValue(values map[string]any, path string) (bool, bool, error) {
 	if len(values) == 0 {
 		return false, false, nil
 	}
 
-	var current interface{} = values
-	for _, part := range strings.Split(path, ".") {
-		node, ok := current.(map[string]interface{})
+	var current any = values
+	for part := range strings.SplitSeq(path, ".") {
+		node, ok := current.(map[string]any)
 		if !ok {
 			return false, false, fmt.Errorf("path %q traverses non-map value", path)
 		}

@@ -14,13 +14,13 @@ func TestMustToMap(t *testing.T) {
 	tests := []struct {
 		name string
 		args args
-		want map[string]interface{}
+		want map[string]any
 	}{
 		// Test cases
 		{
 			name: "Test with mqInfo",
 			args: args{val: configuration.MqInfo{SourceType: configuration.External}},
-			want: map[string]interface{}{"source_type": "external"},
+			want: map[string]any{"source_type": "external"},
 		},
 	}
 	for _, tt := range tests {
@@ -44,7 +44,7 @@ func TestMustFromMap(t *testing.T) {
 		// Test cases
 		{
 			name: "Test with mqInfo",
-			args: args{val: map[string]interface{}{"source_type": "external"}},
+			args: args{val: map[string]any{"source_type": "external"}},
 			want: &configuration.MqInfo{SourceType: configuration.External},
 		},
 	}

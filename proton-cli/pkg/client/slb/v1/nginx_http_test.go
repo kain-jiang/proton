@@ -104,9 +104,9 @@ func TestUpdateNginxHTTP(t *testing.T) {
 		Conf: NginxHTTPConf{
 			Server: NginxServer{
 				Listen: "12450 default_server",
-				Locations: []map[string]map[string]interface{}{
+				Locations: []map[string]map[string]any{
 					{
-						"/": map[string]interface{}{
+						"/": map[string]any{
 							"proxy_pass": "http://test-eceph",
 						},
 					},

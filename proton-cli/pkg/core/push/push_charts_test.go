@@ -36,7 +36,7 @@ func TestPushCharts(t *testing.T) {
 			wantErr: true,
 		},
 	}
-	crPushChartsPatcher := gomonkey.ApplyMethod(reflect.TypeOf(&cr.Cr{}), "PushCharts", func(_ *cr.Cr, _ string) error {
+	crPushChartsPatcher := gomonkey.ApplyMethod(reflect.TypeFor[*cr.Cr](), "PushCharts", func(_ *cr.Cr, _ string) error {
 		log.Info("Patch method cr.PushCharts")
 		return nil
 	})

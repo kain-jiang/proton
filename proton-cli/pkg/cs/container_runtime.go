@@ -8,7 +8,6 @@ import (
 	"strconv"
 
 	"k8s.io/apimachinery/pkg/util/sets"
-	"k8s.io/utils/ptr"
 
 	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/configuration"
 	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/core/global"
@@ -132,7 +131,7 @@ func generateContainerdRegistryHostConfig(host string) configuration.RegistryHos
 		Server: s.String(),
 		HostConfigs: map[string]configuration.RegistryHostFileConfig{
 			host: {
-				SkipVerify: ptr.To(true),
+				SkipVerify: new(true),
 			},
 		},
 	}

@@ -103,9 +103,9 @@ func TestClient_request(t *testing.T) {
 	type args struct {
 		method           string
 		apiPath          string
-		input            interface{}
+		input            any
 		expectStatusCode int
-		output           interface{}
+		output           any
 	}
 	tests := []struct {
 		name              string
@@ -115,7 +115,7 @@ func TestClient_request(t *testing.T) {
 		wantRequestMethod string
 		wantRequestURL    *url.URL
 		wantRequestBody   io.Reader
-		wantOutput        interface{}
+		wantOutput        any
 	}{
 		{
 			name:              "get",
@@ -191,9 +191,9 @@ func TestClient_request_failure(t *testing.T) {
 	}
 	type args struct {
 		method           string
-		input            interface{}
+		input            any
 		expectStatusCode int
-		output           interface{}
+		output           any
 	}
 	tests := []struct {
 		name         string

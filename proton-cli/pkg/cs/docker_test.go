@@ -66,11 +66,11 @@ func Test_addDockerConfigInsecureHost(t *testing.T) {
 				t.Errorf("addDockerConfigInsecureHost() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			conf := make(map[string]interface{})
+			conf := make(map[string]any)
 			if err := json.Unmarshal(got, &conf); err != nil {
 				t.Errorf("failed to Unmarshal docker daemon.json: %v", err)
 			}
-			if !reflect.DeepEqual(conf["insecure-registries"], []interface{}{"node-45-73:5000", "registry.aishu.cn:15000", "node-45-71:5000", "node-45-72:5000"}) {
+			if !reflect.DeepEqual(conf["insecure-registries"], []any{"node-45-73:5000", "registry.aishu.cn:15000", "node-45-71:5000", "node-45-72:5000"}) {
 				t.Errorf("addDockerConfigInsecureHost() = %s, want %s", conf["insecure-registries"], []string{"node-45-73:5000", "registry.aishu.cn:15000", "node-45-71:5000", "node-45-72:5000"})
 			}
 		})

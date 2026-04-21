@@ -45,7 +45,7 @@ func TestPushImages(t *testing.T) {
 			wantErr: true,
 		},
 	}
-	crPushImagesPatcher := gomonkey.ApplyMethod(reflect.TypeOf(&cr.Cr{}), "PushImages", func(_ *cr.Cr, _ string) error {
+	crPushImagesPatcher := gomonkey.ApplyMethod(reflect.TypeFor[*cr.Cr](), "PushImages", func(_ *cr.Cr, _ string) error {
 		log.Info("Patch method cr.PushCharts")
 		return nil
 	}).ApplyFunc(client.NewK8sClient, func() (clientDynamic dynamic.Interface, clientSet *kubernetes.Clientset) {
@@ -123,7 +123,7 @@ func TestPushImages(t *testing.T) {
 			}},
 			wantErr: true,
 			preHook: func() {
-				crPushImagesPatcher.ApplyMethod(reflect.TypeOf(&cr.Cr{}), "PushImages", func(_ *cr.Cr, _ string) error {
+				crPushImagesPatcher.ApplyMethod(reflect.TypeFor[*cr.Cr](), "PushImages", func(_ *cr.Cr, _ string) error {
 					return cr.ErrSkopeoImagesFile
 				}).ApplyFunc(archiver.Unarchive, func(src, target string) error {
 					return nil
@@ -140,7 +140,7 @@ func TestPushImages(t *testing.T) {
 				crPushImagesPatcher.Reset()
 				crPushImagesPatcher.ApplyFunc(os.Stat, func(name string) (os.FileInfo, error) {
 					return fi.Stat()
-				}).ApplyMethod(reflect.TypeOf(&cr.Cr{}), "PushImages", func(_ *cr.Cr, _ string) error {
+				}).ApplyMethod(reflect.TypeFor[*cr.Cr](), "PushImages", func(_ *cr.Cr, _ string) error {
 					return errors.New("mock cr push images")
 				}).ApplyFunc(archiver.Unarchive, func(src, target string) error {
 					return nil

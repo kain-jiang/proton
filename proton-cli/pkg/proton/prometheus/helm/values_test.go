@@ -109,7 +109,7 @@ func TestValues_ToMsap(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var want map[string]interface{}
+			var want map[string]any
 			if b, err := os.ReadFile(filepath.Join("testdata", tt.want)); err != nil {
 				t.Fatal(err)
 			} else if err := yaml.Unmarshal(b, &want); err != nil {

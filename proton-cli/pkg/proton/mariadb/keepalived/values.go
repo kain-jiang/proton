@@ -14,8 +14,8 @@ type HelmValues struct {
 	VIP          *HelmValuesVIP    `json:"vip,omitempty"`
 }
 
-func (in *HelmValues) Map() map[string]interface{} {
-	rel := make(map[string]interface{})
+func (in *HelmValues) Map() map[string]any {
+	rel := make(map[string]any)
 	jsonBytes, err := json.Marshal(in)
 	if err != nil {
 		panic(err)

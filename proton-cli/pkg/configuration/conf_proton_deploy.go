@@ -10,7 +10,7 @@ func GetProtonDeployConf() string {
 }
 
 // proton-deploy cluster conf
-type ProtonDeployClusterConfig map[string]interface{}
+type ProtonDeployClusterConfig map[string]any
 
 const (
 	// max host count allowed in proton-deploy conf file

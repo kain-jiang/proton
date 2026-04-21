@@ -24,7 +24,7 @@ type client struct {
 	errors map[string]error
 }
 
-func NewClient(objects ...interface{}) *client {
+func NewClient(objects ...any) *client {
 	var (
 		databases = make(map[string]v1alpha1.Database)
 		users     = make(map[string]v1alpha1.User)

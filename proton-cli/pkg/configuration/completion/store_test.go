@@ -23,7 +23,7 @@ func TestCompletePackageStore(t *testing.T) {
 			},
 			want: &configuration.PackageStore{
 				Hosts:    []string{"node-0", "node-1"},
-				Replicas: ptr.To(2),
+				Replicas: new(2),
 				Storage: configuration.PackageStoreStorage{
 					Capacity: resource.NewQuantity(store.DefaultStorageCapacity, resource.BinarySI),
 					Path:     store.DefaultStoragePath,
@@ -72,7 +72,7 @@ func TestCompleteBaredPackageStore(t *testing.T) {
 			},
 			want: &configuration.PackageStore{
 				Hosts:    []string{"node-0", "node-1"},
-				Replicas: ptr.To(2),
+				Replicas: new(2),
 				Storage: configuration.PackageStoreStorage{
 					Capacity: resource.NewQuantity(1024, resource.BinarySI),
 					Path:     "/var/lib/proton-package-store",
@@ -83,14 +83,14 @@ func TestCompleteBaredPackageStore(t *testing.T) {
 			name: "storage.capacity",
 			cfg: &configuration.PackageStore{
 				Hosts:    []string{"node-0", "node-1"},
-				Replicas: ptr.To(2),
+				Replicas: new(2),
 				Storage: configuration.PackageStoreStorage{
 					Path: "/var/lib/proton-package-store",
 				},
 			},
 			want: &configuration.PackageStore{
 				Hosts:    []string{"node-0", "node-1"},
-				Replicas: ptr.To(2),
+				Replicas: new(2),
 				Storage: configuration.PackageStoreStorage{
 					Capacity: resource.NewQuantity(store.DefaultStorageCapacity, resource.BinarySI),
 					Path:     "/var/lib/proton-package-store",
@@ -101,14 +101,14 @@ func TestCompleteBaredPackageStore(t *testing.T) {
 			name: "storage.path",
 			cfg: &configuration.PackageStore{
 				Hosts:    []string{"node-0", "node-1"},
-				Replicas: ptr.To(2),
+				Replicas: new(2),
 				Storage: configuration.PackageStoreStorage{
 					Capacity: resource.NewQuantity(1024, resource.BinarySI),
 				},
 			},
 			want: &configuration.PackageStore{
 				Hosts:    []string{"node-0", "node-1"},
-				Replicas: ptr.To(2),
+				Replicas: new(2),
 				Storage: configuration.PackageStoreStorage{
 					Capacity: resource.NewQuantity(1024, resource.BinarySI),
 					Path:     store.DefaultStoragePath,
@@ -150,13 +150,13 @@ func TestCompleteHostedPackageStore(t *testing.T) {
 		{
 			name: "storage.capacity",
 			cfg: &configuration.PackageStore{
-				Replicas: ptr.To(12450),
+				Replicas: new(12450),
 				Storage: configuration.PackageStoreStorage{
 					StorageClassName: "csi-disk",
 				},
 			},
 			want: &configuration.PackageStore{
-				Replicas: ptr.To(12450),
+				Replicas: new(12450),
 				Storage: configuration.PackageStoreStorage{
 					StorageClassName: "csi-disk",
 					Capacity:         resource.NewQuantity(store.DefaultStorageCapacity, resource.BinarySI),

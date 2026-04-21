@@ -154,8 +154,8 @@ func (c *Config) renderTemplate(t string) error {
 
 func decodeYAML(t string) ([]runtime.Object, error) {
 	var objects []runtime.Object
-	yamlParts := strings.Split(t, "---")
-	for _, part := range yamlParts {
+	yamlParts := strings.SplitSeq(t, "---")
+	for part := range yamlParts {
 		if strings.TrimSpace(part) == "" {
 			continue
 		}

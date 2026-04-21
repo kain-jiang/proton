@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -586,13 +587,7 @@ func TestTarAppPackageIncludesExternalImagesDir(t *testing.T) {
 	}
 
 	for _, required := range []string{"manifest.yaml", "charts/demo.tgz", "images/index.json", "images/oci-layout"} {
-		found := false
-		for _, entry := range entries {
-			if entry == required {
-				found = true
-				break
-			}
-		}
+		found := slices.Contains(entries, required)
 		if !found {
 			t.Fatalf("missing tar entry %q in %#v", required, entries)
 		}

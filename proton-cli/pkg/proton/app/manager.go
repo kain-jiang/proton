@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"fmt"
+	"maps"
 	"strings"
 	"time"
 
@@ -94,7 +95,7 @@ func (m *Manager) Install(ctx context.Context, manifestPath string, cfg *configu
 }
 
 // InstallWithValues 按 manifest 文件路径构建安装计划，使用已构建好的 values map 执行安装。
-func (m *Manager) InstallWithValues(ctx context.Context, manifestPath string, values map[string]interface{}, opts InstallOptions) error {
+func (m *Manager) InstallWithValues(ctx context.Context, manifestPath string, values map[string]any, opts InstallOptions) error {
 	plan, err := BuildInstallPlanWithValues(manifestPath, values)
 	if err != nil {
 		return fmt.Errorf("build install plan: %w", err)
@@ -161,7 +162,7 @@ func (m *Manager) InstallWithValues(ctx context.Context, manifestPath string, va
 func (m *Manager) installRelease(
 	_ context.Context,
 	item InstallItem,
-	values map[string]interface{},
+	values map[string]any,
 	namespace string,
 	timeout time.Duration,
 	createNamespace bool,
@@ -215,19 +216,17 @@ func (m *Manager) installRelease(
 
 // deepMergeValues 深度合并两个 values map，override 中的值优先级更高。
 // 用于合并 base values（从 ClusterConfig 生成）和 per-release values（从 manifest 定义）。
-func deepMergeValues(base, override map[string]interface{}) map[string]interface{} {
+func deepMergeValues(base, override map[string]any) map[string]any {
 	if base == nil {
-		base = make(map[string]interface{})
+		base = make(map[string]any)
 	}
 	if override == nil {
 		return base
 	}
 
-	result := make(map[string]interface{})
+	result := make(map[string]any)
 	// 先复制 base 的所有字段
-	for k, v := range base {
-		result[k] = v
-	}
+	maps.Copy(result, base)
 
 	// 递归合并 override 的字段
 	for k, overrideVal := range override {
@@ -239,8 +238,8 @@ func deepMergeValues(base, override map[string]interface{}) map[string]interface
 		}
 
 		// 如果两者都是 map，递归合并
-		baseMap, baseIsMap := baseVal.(map[string]interface{})
-		overrideMap, overrideIsMap := overrideVal.(map[string]interface{})
+		baseMap, baseIsMap := baseVal.(map[string]any)
+		overrideMap, overrideIsMap := overrideVal.(map[string]any)
 		if baseIsMap && overrideIsMap {
 			result[k] = deepMergeValues(baseMap, overrideMap)
 		} else {
@@ -254,7 +253,7 @@ func deepMergeValues(base, override map[string]interface{}) map[string]interface
 
 // DeepMergeValues exposes the existing install-time merge behavior for callers
 // that need to combine generated values with CLI overrides before install.
-func DeepMergeValues(base, override map[string]interface{}) map[string]interface{} {
+func DeepMergeValues(base, override map[string]any) map[string]any {
 	return deepMergeValues(base, override)
 }
 

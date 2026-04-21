@@ -114,7 +114,7 @@ func runAppInstall(ctx context.Context, f *appInstallFlags) error {
 	log.SetFormatter(&logrus.TextFormatter{FullTimestamp: true, TimestampFormat: "15:04:05"})
 
 	// Build helm values: try K8s secret first, then config file fallback
-	var values map[string]interface{}
+	var values map[string]any
 
 	cfg, k8sErr := loadClusterConfig(f.namespace)
 	if k8sErr == nil && cfg.ResourceConnectInfo != nil {
@@ -130,22 +130,22 @@ func runAppInstall(ctx context.Context, f *appInstallFlags) error {
 	} else {
 		log.Warn("No depServices available: K8s secret not found and no --config specified")
 		log.Warn("Charts may fail if they require depServices values")
-		values = make(map[string]interface{})
+		values = make(map[string]any)
 	}
 
 	// Apply image registry override or default
 	if f.imageRegistry != "" {
-		values["image"] = map[string]interface{}{"registry": f.imageRegistry}
+		values["image"] = map[string]any{"registry": f.imageRegistry}
 	} else if _, ok := values["image"]; !ok {
 		// Default registry for community edition
-		values["image"] = map[string]interface{}{"registry": "swr.cn-east-3.myhuaweicloud.com/kweaver-ai"}
+		values["image"] = map[string]any{"registry": "swr.cn-east-3.myhuaweicloud.com/kweaver-ai"}
 	}
 
 	// Apply accessAddress override or auto-detect
 	if f.accessPortSet || f.accessSchemeSet || f.accessHost != "" || f.accessAddress != "" {
 		log.Info("Applying CLI accessAddress override")
 	}
-	existingAddr, _ := values["accessAddress"].(map[string]interface{})
+	existingAddr, _ := values["accessAddress"].(map[string]any)
 	accessAddr, err := resolveAccessAddress(existingAddr, f, detectAccessHost)
 	if err != nil {
 		return fmt.Errorf("resolve access address: %w", err)
@@ -297,7 +297,7 @@ func detectAccessHost() string {
 	return ""
 }
 
-func parseAccessAddressURL(raw string) (map[string]interface{}, error) {
+func parseAccessAddressURL(raw string) (map[string]any, error) {
 	u, err := url.Parse(raw)
 	if err != nil {
 		return nil, fmt.Errorf("parse access address url %q: %w", raw, err)
@@ -335,7 +335,7 @@ func parseAccessAddressURL(raw string) (map[string]interface{}, error) {
 		path = "/"
 	}
 
-	return map[string]interface{}{
+	return map[string]any{
 		"host":   u.Hostname(),
 		"port":   port,
 		"scheme": u.Scheme,
@@ -343,7 +343,7 @@ func parseAccessAddressURL(raw string) (map[string]interface{}, error) {
 	}, nil
 }
 
-func resolveAccessAddress(existing map[string]interface{}, f *appInstallFlags, detectHost func() string) (map[string]interface{}, error) {
+func resolveAccessAddress(existing map[string]any, f *appInstallFlags, detectHost func() string) (map[string]any, error) {
 	if f != nil && f.accessAddress != "" {
 		return parseAccessAddressURL(f.accessAddress)
 	}
@@ -389,8 +389,8 @@ func resolveAccessAddress(existing map[string]interface{}, f *appInstallFlags, d
 	return resolved, nil
 }
 
-func normalizeAccessAddress(existing map[string]interface{}) map[string]interface{} {
-	resolved := map[string]interface{}{}
+func normalizeAccessAddress(existing map[string]any) map[string]any {
+	resolved := map[string]any{}
 	if existing == nil {
 		return resolved
 	}
@@ -409,8 +409,8 @@ func normalizeAccessAddress(existing map[string]interface{}) map[string]interfac
 	return resolved
 }
 
-func parseAppInstallSet(entries []string) (map[string]interface{}, error) {
-	result := make(map[string]interface{})
+func parseAppInstallSet(entries []string) (map[string]any, error) {
+	result := make(map[string]any)
 	for _, entry := range entries {
 		key, rawValue, ok := splitKeyValue(entry)
 		if !ok {
@@ -426,12 +426,12 @@ func parseAppInstallSet(entries []string) (map[string]interface{}, error) {
 		for _, part := range parts[:len(parts)-1] {
 			existing, ok := cursor[part]
 			if !ok {
-				next := make(map[string]interface{})
+				next := make(map[string]any)
 				cursor[part] = next
 				cursor = next
 				continue
 			}
-			next, ok := existing.(map[string]interface{})
+			next, ok := existing.(map[string]any)
 			if !ok {
 				return nil, fmt.Errorf("invalid --set entry %q: key %q conflicts with scalar value", entry, part)
 			}
@@ -472,7 +472,7 @@ func parseDottedKey(key string) ([]string, error) {
 	return parts, nil
 }
 
-func parseSetScalar(raw string) interface{} {
+func parseSetScalar(raw string) any {
 	switch raw {
 	case "true":
 		return true
@@ -485,12 +485,12 @@ func parseSetScalar(raw string) interface{} {
 	return raw
 }
 
-func stringValue(v interface{}) string {
+func stringValue(v any) string {
 	s, _ := v.(string)
 	return s
 }
 
-func intValue(v interface{}) int {
+func intValue(v any) int {
 	switch value := v.(type) {
 	case int:
 		return value
@@ -507,17 +507,17 @@ func intValue(v interface{}) int {
 
 // loadConfigFileAsValues 将 deploy 格式的 config.yaml 直接加载为 map[string]interface{}，
 // 可直接作为 helm values 使用（与 deploy.sh 中 -f config.yaml 效果一致）。
-func loadConfigFileAsValues(path string) (map[string]interface{}, error) {
+func loadConfigFileAsValues(path string) (map[string]any, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("read config file %s: %w", path, err)
 	}
-	var values map[string]interface{}
+	var values map[string]any
 	if err := yaml.Unmarshal(data, &values); err != nil {
 		return nil, fmt.Errorf("parse config file %s: %w", path, err)
 	}
 	if values == nil {
-		values = make(map[string]interface{})
+		values = make(map[string]any)
 	}
 	return values, nil
 }

@@ -33,8 +33,8 @@ func (m *Applier) SearchTag(registry, repository, defaultTag string) string {
 	prefix := fmt.Sprintf("%s/%s:", registry, repository)
 	if len(m.extraImages) > 0 {
 		for _, image := range m.extraImages {
-			if strings.HasPrefix(image, prefix) {
-				searchResult = append(searchResult, strings.TrimPrefix(image, prefix))
+			if after, ok := strings.CutPrefix(image, prefix); ok {
+				searchResult = append(searchResult, after)
 			}
 		}
 	}

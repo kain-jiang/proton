@@ -57,8 +57,8 @@ func (n *Node) UpdateProtonSysctlFile(e exec.Executor, f files.Interface) error 
 // 将key=value格式的字符串转换成字典
 func convertStrToMap(str string) map[string]string {
 	m := map[string]string{}
-	strField := strings.Split(str, "\n")
-	for _, line := range strField {
+	strField := strings.SplitSeq(str, "\n")
+	for line := range strField {
 		keyValue := strings.Split(line, "=")
 		if len(keyValue) != 2 {
 			continue

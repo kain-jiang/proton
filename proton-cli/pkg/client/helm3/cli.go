@@ -23,8 +23,8 @@ type Client interface {
 }
 
 type (
-	L = []interface{}
-	M = map[string]interface{}
+	L = []any
+	M = map[string]any
 )
 
 type helmv3 struct {

@@ -671,7 +671,7 @@ func pullRPMOCI(ctx context.Context, path string, s *OCISource) error {
 			Size        int64  `json:"size"`
 			Annotations struct {
 				Title string `json:"org.opencontainers.image.title"`
-			} `json:"annotations,omitempty"`
+			} `json:"annotations"`
 		} `json:"layers"`
 		Blobs []struct {
 			MediaType   string `json:"mediaType"`
@@ -679,7 +679,7 @@ func pullRPMOCI(ctx context.Context, path string, s *OCISource) error {
 			Size        int64  `json:"size"`
 			Annotations struct {
 				Title string `json:"org.opencontainers.image.title"`
-			} `json:"annotations,omitempty"`
+			} `json:"annotations"`
 		} `json:"blobs"`
 		Config struct {
 			Digest string `json:"digest"`

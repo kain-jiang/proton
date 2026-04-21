@@ -38,7 +38,7 @@ func NewClient(baseURL *url.URL, client *http.Client) (*Client, error) {
 
 // API request connects to the server and decode result into specific output
 // when a server response is received. It handles retry behavior.
-func (c *Client) request(ctx context.Context, method string, apiPath string, input interface{}, expectStatusCode int, output interface{}) error {
+func (c *Client) request(ctx context.Context, method string, apiPath string, input any, expectStatusCode int, output any) error {
 	var u url.URL = *c.Base
 	u.Path = path.Join(u.Path, apiPath)
 

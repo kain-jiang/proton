@@ -159,7 +159,7 @@ func TestPushImagesAndAppDir(t *testing.T) {
 			preHook: func() {
 				patchesMap["DeployInstallerUploadError"] = gomonkey.NewPatches().ApplyFunc(push.NewDeployInstallerClient, func(context.Context, string) (*push.DeployInstaller, error) {
 					return &push.DeployInstaller{}, nil
-				}).ApplyMethod(reflect.TypeOf(&push.DeployInstaller{}), "Upload", func(*push.DeployInstaller, context.Context, *logrus.Logger, string) (string, error) {
+				}).ApplyMethod(reflect.TypeFor[*push.DeployInstaller](), "Upload", func(*push.DeployInstaller, context.Context, *logrus.Logger, string) (string, error) {
 					return "", errors.New("deploy installer upload ")
 				})
 			},
@@ -173,7 +173,7 @@ func TestPushImagesAndAppDir(t *testing.T) {
 			preHook: func() {
 				patchesMap["DeployInstallerUploadConflict"] = gomonkey.NewPatches().ApplyFunc(push.NewDeployInstallerClient, func(context.Context, string) (*push.DeployInstaller, error) {
 					return &push.DeployInstaller{}, nil
-				}).ApplyMethod(reflect.TypeOf(&push.DeployInstaller{}), "Upload", func(*push.DeployInstaller, context.Context, *logrus.Logger, string) (string, error) {
+				}).ApplyMethod(reflect.TypeFor[*push.DeployInstaller](), "Upload", func(*push.DeployInstaller, context.Context, *logrus.Logger, string) (string, error) {
 					return "", push.ErrAPPConflict
 				})
 			},
@@ -187,7 +187,7 @@ func TestPushImagesAndAppDir(t *testing.T) {
 			preHook: func() {
 				patchesMap["DeployInstallerUploadSucess"] = gomonkey.NewPatches().ApplyFunc(push.NewDeployInstallerClient, func(context.Context, string) (*push.DeployInstaller, error) {
 					return &push.DeployInstaller{}, nil
-				}).ApplyMethod(reflect.TypeOf(&push.DeployInstaller{}), "Upload", func(*push.DeployInstaller, context.Context, *logrus.Logger, string) (string, error) {
+				}).ApplyMethod(reflect.TypeFor[*push.DeployInstaller](), "Upload", func(*push.DeployInstaller, context.Context, *logrus.Logger, string) (string, error) {
 					return "test", nil
 				})
 			},
@@ -218,7 +218,7 @@ func TestPushImagesAndAppDir(t *testing.T) {
 			preHook: func() {
 				patchesMap["DeployInstallerCheckFileMock"] = gomonkey.NewPatches().ApplyFunc(push.NewDeployInstallerClient, func(context.Context, string) (*push.DeployInstaller, error) {
 					return nil, push.ErrDeployInstallerNotInstalled
-				}).ApplyMethod(reflect.TypeOf(&push.DeployInstaller{}), "CheckFile", func(*push.DeployInstaller, string) error {
+				}).ApplyMethod(reflect.TypeFor[*push.DeployInstaller](), "CheckFile", func(*push.DeployInstaller, string) error {
 					return nil
 				}).ApplyFunc(getUploadCache, func(fpath string) (*os.File, map[string]bool, error) {
 					res := map[string]bool{

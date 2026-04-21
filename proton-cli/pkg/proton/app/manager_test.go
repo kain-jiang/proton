@@ -267,8 +267,8 @@ releases:
 		t.Fatalf("write root manifest: %v", err)
 	}
 
-	plan, err := BuildInstallPlanWithValues(rootPath, map[string]interface{}{
-		"auth": map[string]interface{}{
+	plan, err := BuildInstallPlanWithValues(rootPath, map[string]any{
+		"auth": map[string]any{
 			"enabled": false,
 		},
 	})
@@ -283,8 +283,8 @@ releases:
 		t.Fatalf("plan.Steps = %#v, want only demo-release", plan.Steps)
 	}
 
-	plan, err = BuildInstallPlanWithValues(rootPath, map[string]interface{}{
-		"auth": map[string]interface{}{
+	plan, err = BuildInstallPlanWithValues(rootPath, map[string]any{
+		"auth": map[string]any{
 			"enabled": true,
 		},
 	})
@@ -340,8 +340,8 @@ releases:
 		t.Fatalf("write root manifest: %v", err)
 	}
 
-	_, err := BuildInstallPlanWithValues(rootPath, map[string]interface{}{
-		"auth": map[string]interface{}{
+	_, err := BuildInstallPlanWithValues(rootPath, map[string]any{
+		"auth": map[string]any{
 			"enabled": "disabled",
 		},
 	})
@@ -382,7 +382,7 @@ releases:
 		Logger:    logger,
 	}
 
-	err := manager.InstallWithValues(context.Background(), manifestPath, map[string]interface{}{}, InstallOptions{
+	err := manager.InstallWithValues(context.Background(), manifestPath, map[string]any{}, InstallOptions{
 		Namespace: "kweaver",
 		Timeout:   "2m",
 	})
@@ -452,7 +452,7 @@ releases:
 		Logger:    logger,
 	}
 
-	err := manager.InstallWithValues(context.Background(), manifestPath, map[string]interface{}{}, InstallOptions{
+	err := manager.InstallWithValues(context.Background(), manifestPath, map[string]any{}, InstallOptions{
 		Namespace: "kweaver",
 		Timeout:   "2m",
 	})
@@ -516,7 +516,7 @@ releases:
 		Logger:    logger,
 	}
 
-	err := manager.InstallWithValues(context.Background(), manifestPath, map[string]interface{}{}, InstallOptions{
+	err := manager.InstallWithValues(context.Background(), manifestPath, map[string]any{}, InstallOptions{
 		Namespace: "kweaver",
 		Timeout:   "2m",
 	})
@@ -569,8 +569,8 @@ releases:
 		Logger:    logger,
 	}
 
-	err := manager.InstallWithValues(context.Background(), manifestPath, map[string]interface{}{
-		"image": map[string]interface{}{"registry": "example.com/demo"},
+	err := manager.InstallWithValues(context.Background(), manifestPath, map[string]any{
+		"image": map[string]any{"registry": "example.com/demo"},
 	}, InstallOptions{
 		Namespace: "kweaver",
 		Timeout:   "2m",
@@ -602,7 +602,7 @@ releases:
 		t.Fatalf("call.Values[replicaCount] type = %T, want int or float64", got)
 	}
 
-	image, ok := call.Values["image"].(map[string]interface{})
+	image, ok := call.Values["image"].(map[string]any)
 	if !ok {
 		t.Fatalf("call.Values[image] = %#v, want map", call.Values["image"])
 	}
@@ -639,16 +639,16 @@ releases:
 		Logger:    logger,
 	}
 
-	err := manager.InstallWithValues(context.Background(), manifestPath, map[string]interface{}{
-		"auth": map[string]interface{}{
+	err := manager.InstallWithValues(context.Background(), manifestPath, map[string]any{
+		"auth": map[string]any{
 			"enabled": false,
 			"issuer":  "cli",
 		},
 	}, InstallOptions{
 		Namespace: "kweaver",
 		Timeout:   "2m",
-		SetValues: map[string]interface{}{
-			"auth": map[string]interface{}{
+		SetValues: map[string]any{
+			"auth": map[string]any{
 				"enabled": false,
 			},
 		},
@@ -662,7 +662,7 @@ releases:
 		t.Fatalf("len(UpgradeCalls) = %d, want 1", len(fakeHelm.UpgradeCalls))
 	}
 
-	auth, ok := fakeHelm.UpgradeCalls[0].Values["auth"].(map[string]interface{})
+	auth, ok := fakeHelm.UpgradeCalls[0].Values["auth"].(map[string]any)
 	if !ok {
 		t.Fatalf("auth values = %#v, want map", fakeHelm.UpgradeCalls[0].Values["auth"])
 	}
@@ -721,15 +721,15 @@ releases:
 		Logger:    logger,
 	}
 
-	err := manager.InstallWithValues(context.Background(), rootPath, map[string]interface{}{
-		"auth": map[string]interface{}{
+	err := manager.InstallWithValues(context.Background(), rootPath, map[string]any{
+		"auth": map[string]any{
 			"enabled": false,
 		},
 	}, InstallOptions{
 		Namespace: "kweaver",
 		Timeout:   "2m",
-		SetValues: map[string]interface{}{
-			"auth": map[string]interface{}{
+		SetValues: map[string]any{
+			"auth": map[string]any{
 				"enabled": false,
 			},
 		},

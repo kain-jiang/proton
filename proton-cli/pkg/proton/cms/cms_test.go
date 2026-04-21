@@ -51,7 +51,7 @@ func TestNewManager(t *testing.T) {
 					"image": helm3.M{
 						"registry": "test-registry",
 					},
-					"serviceAccount": map[string]interface{}{
+					"serviceAccount": map[string]any{
 						"create": false,
 						"name":   "serviceaccount",
 					},

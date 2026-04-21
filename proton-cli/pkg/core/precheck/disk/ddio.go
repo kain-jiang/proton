@@ -34,7 +34,7 @@ func DirectDD() [][]string {
 	done := make(chan bool)
 	startTime := time.Now()
 
-	for i := 0; i < concurrentNum; i++ {
+	for range concurrentNum {
 		go func() {
 			buffer := make([]byte, blockSize)
 			for j := 0; j < fileSize/blockSize/concurrentNum; j++ {
@@ -51,7 +51,7 @@ func DirectDD() [][]string {
 	}
 
 	// 等待所有任务完成
-	for i := 0; i < concurrentNum; i++ {
+	for range concurrentNum {
 		if !<-done {
 			ddInfo = append(ddInfo, []string{"Perf IO", "Write failed", "\033[31mNO PASS\033[0m", "try again"})
 			return ddInfo

@@ -14,8 +14,8 @@ func NewKeepalivedConf(c *SLB_V2Client) *keepalivedConf {
 	return &keepalivedConf{client: c.RESTClient()}
 }
 
-func (c *keepalivedConf) Get(ctx context.Context) (map[string]interface{}, error) {
-	var result map[string]interface{}
+func (c *keepalivedConf) Get(ctx context.Context) (map[string]any, error) {
+	var result map[string]any
 	err := c.client.Get().
 		Resource("keepalived/keepalived").
 		Do(ctx).
@@ -28,7 +28,7 @@ func (c *keepalivedConf) Get(ctx context.Context) (map[string]interface{}, error
 }
 
 // Update implements KeepalivedHAInterface.
-func (c *keepalivedConf) Update(ctx context.Context, conf map[string]interface{}) error {
+func (c *keepalivedConf) Update(ctx context.Context, conf map[string]any) error {
 	return c.client.Put().
 		Resource("keepalived/keepalived").
 		Body(&conf).

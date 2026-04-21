@@ -13,6 +13,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	slices0 "slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -277,7 +278,7 @@ func (c *Cs) apply() error {
 	}
 	c.Logger.WithField("container-runtime", c.ClusterConf.Cs.ContainerRuntime)
 
-	for _, cidr := range strings.Split(c.ClusterConf.Cs.Host_network.Pod_network_cidr, ",") {
+	for cidr := range strings.SplitSeq(c.ClusterConf.Cs.Host_network.Pod_network_cidr, ",") {
 		if strings.Contains(cidr, ":") {
 			kc.IPv6PodCIDR = cidr
 		} else {
@@ -285,7 +286,7 @@ func (c *Cs) apply() error {
 		}
 	}
 
-	for _, cidr := range strings.Split(c.ClusterConf.Cs.Host_network.Service_cidr, ",") {
+	for cidr := range strings.SplitSeq(c.ClusterConf.Cs.Host_network.Service_cidr, ",") {
 		if strings.Contains(cidr, ":") {
 			kc.IPv6ServiceCIDR = cidr
 		} else {
@@ -1145,12 +1146,7 @@ func IsControlPlaneChanged(new, old []string) bool {
 	}
 
 	var nodeExists = func(node string, nodes []string) bool {
-		for _, n := range nodes {
-			if n == node {
-				return true
-			}
-		}
-		return false
+		return slices0.Contains(nodes, node)
 	}
 
 	for _, n := range new {

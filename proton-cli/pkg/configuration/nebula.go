@@ -11,11 +11,11 @@ type Nebula struct {
 	// root 账户的密码
 	Password string `json:"password,omitempty"`
 	// 组件 graphd 的配置
-	Graphd NebulaComponent `json:"graphd,omitempty"`
+	Graphd NebulaComponent `json:"graphd"`
 	// 组件 metad 的配置
-	Metad NebulaComponent `json:"metad,omitempty"`
+	Metad NebulaComponent `json:"metad"`
 	// 组件 storaged 的配置
-	Storaged NebulaComponent `json:"storaged,omitempty"`
+	Storaged NebulaComponent `json:"storaged"`
 }
 
 // Nebula 组件的配置

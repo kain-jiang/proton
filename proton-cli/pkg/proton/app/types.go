@@ -7,7 +7,7 @@ type VersionSet struct {
 	Kind         string                  `json:"kind,omitempty" yaml:"kind,omitempty"`
 	Product      string                  `json:"product,omitempty" yaml:"product,omitempty"`
 	Version      string                  `json:"version,omitempty" yaml:"version,omitempty"`
-	Source       VersionSetSource        `json:"source,omitempty" yaml:"source,omitempty"`
+	Source       VersionSetSource        `json:"source" yaml:"source,omitempty"`
 	Dependencies []VersionSetDependency  `json:"dependencies,omitempty" yaml:"dependencies,omitempty"`
 	Releases     map[string]ReleaseEntry `json:"releases,omitempty" yaml:"releases,omitempty"`
 }
@@ -40,7 +40,7 @@ type ReleaseEntry struct {
 	DependsOn []string `json:"dependsOn,omitempty" yaml:"dependsOn,omitempty"`
 	// Values 是该 release 特定的额外 Helm values，会与基础 values 合并。
 	// 用于应用特定配置（如 dip-studio 的 studio.openclaw），避免与基础服务配置重复。
-	Values map[string]interface{} `json:"values,omitempty" yaml:"values,omitempty"`
+	Values map[string]any `json:"values,omitempty" yaml:"values,omitempty"`
 }
 
 // InstallPlan 是经过依赖展开和 stage 排序后的安装计划，每个 Step 为可并发执行的一批 release。
@@ -71,7 +71,7 @@ type InstallItem struct {
 	// WaitForReady 表示当前 release 必须等待 ready，通常因为它是 stage=pre 或被其他 release 依赖。
 	WaitForReady bool
 	// Values 是该 release 特定的额外 Helm values（从 manifest 中的 ReleaseEntry.Values 传递）
-	Values map[string]interface{}
+	Values map[string]any
 }
 
 // InstallOptions 控制 app install 行为
@@ -89,7 +89,7 @@ type InstallOptions struct {
 	// HelmRepoURL 覆盖 manifest 中的 helmRepoURL（用于离线部署时指向内置仓库）
 	HelmRepoURL string
 	// SetValues 保存来自 CLI --set 的 install-time values overrides。
-	SetValues map[string]interface{}
+	SetValues map[string]any
 }
 
 // UninstallOptions 控制 app uninstall 行为

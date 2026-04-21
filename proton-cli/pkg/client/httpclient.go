@@ -39,7 +39,7 @@ func NewHttpClient(timeout time.Duration) *HttpClient {
 }
 
 // Get http client get
-func (c *HttpClient) Get(url string, headers map[string]string) (respCode int, respParam interface{}, err error) {
+func (c *HttpClient) Get(url string, headers map[string]string) (respCode int, respParam any, err error) {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return
@@ -50,7 +50,7 @@ func (c *HttpClient) Get(url string, headers map[string]string) (respCode int, r
 }
 
 // Post http client post
-func (c *HttpClient) Post(url string, headers map[string]string, reqParam interface{}) (respCode int, respParam interface{}, err error) {
+func (c *HttpClient) Post(url string, headers map[string]string, reqParam any) (respCode int, respParam any, err error) {
 	sourceReq := c.prepareBody(headers, reqParam)
 	req, err := http.NewRequest("POST", url, sourceReq)
 	if err != nil {
@@ -61,7 +61,7 @@ func (c *HttpClient) Post(url string, headers map[string]string, reqParam interf
 }
 
 // Put http client put
-func (c *HttpClient) Put(url string, headers map[string]string, reqParam interface{}) (respCode int, respParam interface{}, err error) {
+func (c *HttpClient) Put(url string, headers map[string]string, reqParam any) (respCode int, respParam any, err error) {
 	reqBody, err := jsoniter.Marshal(reqParam)
 	if err != nil {
 		return
@@ -77,7 +77,7 @@ func (c *HttpClient) Put(url string, headers map[string]string, reqParam interfa
 }
 
 // Delete http client delete
-func (c *HttpClient) Delete(url string, headers map[string]string) (respParam interface{}, err error) {
+func (c *HttpClient) Delete(url string, headers map[string]string) (respParam any, err error) {
 	req, err := http.NewRequest("DELETE", url, nil)
 	if err != nil {
 		return
@@ -88,7 +88,7 @@ func (c *HttpClient) Delete(url string, headers map[string]string) (respParam in
 }
 
 // httpDo
-func (c *HttpClient) httpDo(req *http.Request, headers map[string]string) (respCode int, respParam interface{}, err error) {
+func (c *HttpClient) httpDo(req *http.Request, headers map[string]string) (respCode int, respParam any, err error) {
 	if c.client == nil {
 		return 0, nil, errors.New("http client is unavailable")
 	}
@@ -116,7 +116,7 @@ func (c *HttpClient) addHeaders(req *http.Request, headers map[string]string) {
 	}
 }
 
-func (c *HttpClient) prepareBody(headers map[string]string, reqParam interface{}) (body io.Reader) {
+func (c *HttpClient) prepareBody(headers map[string]string, reqParam any) (body io.Reader) {
 	var contentType string
 	if nil != headers {
 		if v, ok := headers["Content-Type"]; ok {
@@ -125,7 +125,7 @@ func (c *HttpClient) prepareBody(headers map[string]string, reqParam interface{}
 	}
 	switch contentType {
 	case "application/x-www-form-urlencoded":
-		req := reqParam.(map[string]interface{})
+		req := reqParam.(map[string]any)
 		if nil != req {
 			reader := make([]string, 0)
 			for k, v := range req {

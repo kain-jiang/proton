@@ -33,12 +33,12 @@ func ValuesFor(spec *configuration.PackageStore, registry string, rds *configura
 }
 
 // ToMap returns map[string]interface{} for helm installing or upgrading.
-func (v *Values) ToMap() map[string]interface{} {
+func (v *Values) ToMap() map[string]any {
 	b, err := json.Marshal(v)
 	if err != nil {
 		panic(err)
 	}
-	m := make(map[string]interface{})
+	m := make(map[string]any)
 	if err := json.Unmarshal(b, &m); err != nil {
 		panic(err)
 	}

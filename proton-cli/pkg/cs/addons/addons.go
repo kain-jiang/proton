@@ -13,7 +13,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"helm.sh/helm/v3/pkg/storage/driver"
 	"k8s.io/apimachinery/pkg/util/version"
-	"k8s.io/utils/ptr"
 	"sigs.k8s.io/yaml"
 
 	"devops.aishu.cn/AISHUDevOps/ICT/_git/proton-opensource.git/proton-cli/v3/pkg/client/helm3"
@@ -131,7 +130,7 @@ func Reconcile(ctx context.Context, lg logrus.FieldLogger, h helm3.Client, pkg *
 }
 
 type Values struct {
-	Image ValuesImage `json:"image,omitempty"`
+	Image ValuesImage `json:"image"`
 }
 
 type ValuesImage struct {
@@ -196,15 +195,15 @@ func helmValuesForAddon(name configuration.CSAddonName, registry string, addonsC
 		httpPort, httpsPort := ingressNginxPorts(addonsConfig)
 		v.Global.Image.Registry = registry
 		v.Controller.Image.Image = "ingress-nginx-controller"
-		v.Controller.ContainerPort.HTTP = ptr.To(httpPort)
-		v.Controller.ContainerPort.HTTPS = ptr.To(httpsPort)
+		v.Controller.ContainerPort.HTTP = new(httpPort)
+		v.Controller.ContainerPort.HTTPS = new(httpsPort)
 		v.Controller.Kind = "DaemonSet"
-		v.Controller.HostNetwork = ptr.To(true)
+		v.Controller.HostNetwork = new(true)
 		v.Controller.IngressClass = "class-443"
-		v.Controller.Service.Enabled = ptr.To(false)
+		v.Controller.Service.Enabled = new(false)
 		v.Controller.IngressClassResource.Name = "class-443"
-		v.Controller.IngressClassResource.Default = ptr.To(true)
-		v.Controller.AdmissionWebhooks.Port = ptr.To(9443)
+		v.Controller.IngressClassResource.Default = new(true)
+		v.Controller.AdmissionWebhooks.Port = new(9443)
 		v.Controller.AdmissionWebhooks.Patch.Image.Image = "ingress-nginx-kube-webhook-certgen"
 		values = v
 	default:

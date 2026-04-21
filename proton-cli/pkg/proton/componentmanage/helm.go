@@ -22,7 +22,7 @@ type ComponentManageParams struct {
 	ChartFile string
 	Namespace string
 	Helm3     helm3.Client
-	Values    map[string]interface{}
+	Values    map[string]any
 }
 
 type Applier struct {
@@ -56,8 +56,8 @@ type canMust interface {
 		configuration.Nebula | *configuration.Nebula
 }
 
-func mustToMap[T canMust](val T) map[string]interface{} {
-	rel := make(map[string]interface{})
+func mustToMap[T canMust](val T) map[string]any {
+	rel := make(map[string]any)
 	d, err := json.Marshal(val)
 	if err != nil {
 		// 不可达
@@ -71,7 +71,7 @@ func mustToMap[T canMust](val T) map[string]interface{} {
 	return rel
 }
 
-func mustFromMap[T canMust](mq map[string]interface{}) *T {
+func mustFromMap[T canMust](mq map[string]any) *T {
 	var rel T
 	d, err := json.Marshal(mq)
 	if err != nil {
@@ -109,16 +109,16 @@ func NewManager(helm3 helm3.Client, oldCfg, newCfg *configuration.ClusterConfig,
 			ChartFile: filepath.Join(servicePackage, myChart.Path),
 			Namespace: namespace,
 			Helm3:     helm3,
-			Values: map[string]interface{}{
-				"image": map[string]interface{}{
+			Values: map[string]any{
+				"image": map[string]any{
 					"registry": registry,
 				},
-				"serviceAccount": map[string]interface{}{
+				"serviceAccount": map[string]any{
 					"create": serviceAccount == "",
 					"name":   serviceAccount,
 				},
 				"namespace": namespace,
-				"service": map[string]interface{}{
+				"service": map[string]any{
 					"enableDualStack": global.EnableDualStack,
 					"config":          RepoForCr(newCfg.Cr),
 				},
@@ -142,11 +142,11 @@ func getNodeSelector(cfg *configuration.ClusterConfig) map[string]string {
 	return nil
 }
 
-func RepoForCr(cr *configuration.Cr) map[string]interface{} {
+func RepoForCr(cr *configuration.Cr) map[string]any {
 	if cr.Local != nil {
 		url, username, password := global.Chartmuseum(cr)
-		return map[string]interface{}{
-			"chartmuseum": map[string]interface{}{
+		return map[string]any{
+			"chartmuseum": map[string]any{
 				"url":      url,
 				"username": username,
 				"password": password,
@@ -158,8 +158,8 @@ func RepoForCr(cr *configuration.Cr) map[string]interface{} {
 	if cr.External != nil {
 		switch cr.External.ChartRepo {
 		case configuration.RepoChartmuseum:
-			return map[string]interface{}{
-				"chartmuseum": map[string]interface{}{
+			return map[string]any{
+				"chartmuseum": map[string]any{
 					"url":      cr.External.Chartmuseum.Host,
 					"username": cr.External.Chartmuseum.Username,
 					"password": cr.External.Chartmuseum.Password,
@@ -167,8 +167,8 @@ func RepoForCr(cr *configuration.Cr) map[string]interface{} {
 				},
 			}
 		case configuration.RepoOCI:
-			return map[string]interface{}{
-				"oci": map[string]interface{}{
+			return map[string]any{
+				"oci": map[string]any{
 					"enable":     true,
 					"plain_http": cr.External.OCI.PlainHTTP,
 					"registry":   cr.External.OCI.Registry,
@@ -177,8 +177,8 @@ func RepoForCr(cr *configuration.Cr) map[string]interface{} {
 				},
 			}
 		case configuration.RepoDefault:
-			return map[string]interface{}{
-				"chartmuseum": map[string]interface{}{
+			return map[string]any{
+				"chartmuseum": map[string]any{
 					"url":      cr.External.Chartmuseum.Host,
 					"username": cr.External.Chartmuseum.Username,
 					"password": cr.External.Chartmuseum.Password,

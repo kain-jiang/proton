@@ -11,7 +11,7 @@ type PackageStore struct {
 
 	Replicas *int `json:"replicas,omitempty"`
 
-	Storage PackageStoreStorage `json:"storage,omitempty"`
+	Storage PackageStoreStorage `json:"storage"`
 
 	Resources *corev1.ResourceRequirements `json:"resources,omitempty"`
 }

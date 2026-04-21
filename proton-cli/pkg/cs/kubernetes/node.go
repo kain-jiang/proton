@@ -93,8 +93,8 @@ func NewNode(logger *logrus.Logger, hostname, ipaddress, ipaddresses string) (*N
 	connectIP := ipaddress
 	if strings.Contains(ipaddress, ",") {
 		// If dual-stack, use the IPv4 address for connection
-		ips := strings.Split(ipaddress, ",")
-		for _, ip := range ips {
+		ips := strings.SplitSeq(ipaddress, ",")
+		for ip := range ips {
 			if !strings.Contains(ip, ":") {
 				connectIP = ip
 				break
@@ -524,7 +524,7 @@ func (n *Node) InitTiller(tillerCfg *Tiller) error {
 func (n *Node) WaitTillerReady() error {
 	var executor = exec.NewECMSExecutorForHost(n.ECMS.Exec())
 	n.Logger.Info("waiting for tiller pod ready with helm version in 300 seconds")
-	for i := 0; i < 60; i++ {
+	for range 60 {
 		if err := executor.Command("helm", "version").Run(); err != nil {
 			n.Logger.Printf("%s: tiller not ready, retry in 5 seconds", n.Ipaddress)
 			time.Sleep(5 * time.Second)

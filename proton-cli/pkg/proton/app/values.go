@@ -12,8 +12,8 @@ import (
 // 生成的 map 结构与 deploy/conf/config.yaml 保持一致，包含：
 //
 //	namespace, env, image, accessAddress, storage, depServices
-func BuildHelmValues(cfg *configuration.ClusterConfig, namespace string) map[string]interface{} {
-	v := make(map[string]interface{})
+func BuildHelmValues(cfg *configuration.ClusterConfig, namespace string) map[string]any {
+	v := make(map[string]any)
 
 	// namespace
 	ns := namespace
@@ -26,7 +26,7 @@ func BuildHelmValues(cfg *configuration.ClusterConfig, namespace string) map[str
 	v["namespace"] = ns
 
 	// env
-	envMap := map[string]interface{}{
+	envMap := map[string]any{
 		"language": "en_US.UTF-8",
 		"timezone": "Asia/Shanghai",
 	}
@@ -69,14 +69,14 @@ func BuildHelmValues(cfg *configuration.ClusterConfig, namespace string) map[str
 		}
 	}
 	if imageRegistry != "" {
-		v["image"] = map[string]interface{}{
+		v["image"] = map[string]any{
 			"registry": imageRegistry,
 		}
 	}
 
 	// accessAddress
 	if cfg.AccessAddress != nil {
-		aa := map[string]interface{}{}
+		aa := map[string]any{}
 		if cfg.AccessAddress.Host != "" {
 			aa["host"] = cfg.AccessAddress.Host
 		}
@@ -98,13 +98,13 @@ func BuildHelmValues(cfg *configuration.ClusterConfig, namespace string) map[str
 
 	// storage
 	if cfg.Storage != nil && cfg.Storage.StorageClassName != "" {
-		v["storage"] = map[string]interface{}{
+		v["storage"] = map[string]any{
 			"storageClassName": cfg.Storage.StorageClassName,
 		}
 	}
 
 	// depServices
-	dep := make(map[string]interface{})
+	dep := make(map[string]any)
 	if cfg.ResourceConnectInfo != nil {
 		dep = buildDepServices(cfg.ResourceConnectInfo)
 	}
@@ -113,7 +113,7 @@ func BuildHelmValues(cfg *configuration.ClusterConfig, namespace string) map[str
 	if cfg.ZooKeeper != nil && len(cfg.ZooKeeper.Hosts) > 0 {
 		zkHost := "zookeeper-headless.resource.svc.cluster.local"
 		zkPort := 2181
-		dep["zookeeper"] = map[string]interface{}{
+		dep["zookeeper"] = map[string]any{
 			"host": zkHost,
 			"port": zkPort,
 		}
@@ -121,7 +121,7 @@ func BuildHelmValues(cfg *configuration.ClusterConfig, namespace string) map[str
 
 	// class-443 默认使用 class-443 ingressClass
 	if _, ok := dep["class-443"]; !ok {
-		dep["class-443"] = map[string]interface{}{
+		dep["class-443"] = map[string]any{
 			"ingressClass": "class-443",
 		}
 	}
@@ -133,12 +133,12 @@ func BuildHelmValues(cfg *configuration.ClusterConfig, namespace string) map[str
 
 // buildDepServices 将 ResourceConnectInfo 转换为 depServices map，
 // 字段名称和层级与 deploy/conf/config.yaml 中 depServices 保持一致。
-func buildDepServices(r *configuration.ResourceConnectInfo) map[string]interface{} {
-	dep := make(map[string]interface{})
+func buildDepServices(r *configuration.ResourceConnectInfo) map[string]any {
+	dep := make(map[string]any)
 
 	// rds
 	if r.Rds != nil {
-		rds := map[string]interface{}{}
+		rds := map[string]any{}
 		if r.Rds.Hosts != "" {
 			rds["host"] = r.Rds.Hosts
 		}
@@ -175,14 +175,14 @@ func buildDepServices(r *configuration.ResourceConnectInfo) map[string]interface
 
 	// redis
 	if r.Redis != nil {
-		redis := map[string]interface{}{}
+		redis := map[string]any{}
 		if r.Redis.ConnectType != "" {
 			redis["connectType"] = string(r.Redis.ConnectType)
 		}
 		if r.Redis.SourceType != "" {
 			redis["sourceType"] = string(r.Redis.SourceType)
 		}
-		connectInfo := map[string]interface{}{}
+		connectInfo := map[string]any{}
 		if r.Redis.MasterGroupName != "" {
 			connectInfo["masterGroupName"] = r.Redis.MasterGroupName
 		}
@@ -224,7 +224,7 @@ func buildDepServices(r *configuration.ResourceConnectInfo) map[string]interface
 
 	// mq (kafka)
 	if r.Mq != nil {
-		mq := map[string]interface{}{}
+		mq := map[string]any{}
 		if r.Mq.MqType != "" {
 			mq["mqType"] = string(r.Mq.MqType)
 		}
@@ -248,7 +248,7 @@ func buildDepServices(r *configuration.ResourceConnectInfo) map[string]interface
 			mq["mqLookupdPort"] = 0
 		}
 		if r.Mq.Auth != nil {
-			auth := map[string]interface{}{}
+			auth := map[string]any{}
 			if r.Mq.Auth.Mechanism != "" {
 				auth["mechanism"] = string(r.Mq.Auth.Mechanism)
 			}
@@ -267,7 +267,7 @@ func buildDepServices(r *configuration.ResourceConnectInfo) map[string]interface
 
 	// opensearch
 	if r.OpenSearch != nil {
-		os_ := map[string]interface{}{}
+		os_ := map[string]any{}
 		if r.OpenSearch.Hosts != "" {
 			os_["host"] = r.OpenSearch.Hosts
 		}
@@ -297,7 +297,7 @@ func buildDepServices(r *configuration.ResourceConnectInfo) map[string]interface
 
 	// mongodb
 	if r.Mongodb != nil {
-		mongo := map[string]interface{}{}
+		mongo := map[string]any{}
 		if r.Mongodb.Hosts != "" {
 			mongo["host"] = r.Mongodb.Hosts
 		}
@@ -314,7 +314,7 @@ func buildDepServices(r *configuration.ResourceConnectInfo) map[string]interface
 			mongo["replicaSet"] = r.Mongodb.ReplicaSet
 		}
 		if r.Mongodb.AuthSource != "" {
-			mongo["options"] = map[string]interface{}{
+			mongo["options"] = map[string]any{
 				"authSource": r.Mongodb.AuthSource,
 			}
 		}

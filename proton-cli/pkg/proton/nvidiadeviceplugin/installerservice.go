@@ -24,8 +24,8 @@ func NewManager(helm3 helm3.Client, spec *configuration.NvidiaDevicePlugin, regi
 		ChartFile: filepath.Join(servicePackage, ndpChart.Path),
 		Namespace: namespace,
 		Helm3:     helm3,
-		Values: map[string]interface{}{
-			"image": map[string]interface{}{
+		Values: map[string]any{
+			"image": map[string]any{
 				"registry": registry,
 			},
 			"namespace": namespace,

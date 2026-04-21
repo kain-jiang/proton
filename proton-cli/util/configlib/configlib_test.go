@@ -22,7 +22,7 @@ func TestConvertMapToStr(t *testing.T) {
 
 	for _, c := range cases {
 		got := make(map[string]string)
-		for _, l := range strings.Fields(ConvertMapToStr(c.input)) {
+		for l := range strings.FieldsSeq(ConvertMapToStr(c.input)) {
 			kv := strings.FieldsFunc(l, func(r rune) bool { return r == '=' || unicode.IsSpace(r) })
 			if len(kv) != 2 {
 				t.Errorf("invalid line: %q", l)

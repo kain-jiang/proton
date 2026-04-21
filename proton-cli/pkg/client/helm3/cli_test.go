@@ -29,7 +29,7 @@ func actionConfigFixture(t *testing.T) *action.Configuration {
 		KubeClient:     &kubefake.FailingKubeClient{PrintingKubeClient: kubefake.PrintingKubeClient{Out: io.Discard}},
 		Capabilities:   chartutil.DefaultCapabilities,
 		RegistryClient: registryClient,
-		Log: func(format string, v ...interface{}) {
+		Log: func(format string, v ...any) {
 			t.Helper()
 			t.Logf(format, v...)
 		},

@@ -64,7 +64,7 @@ func filterControlPlaneNode(list *corev1.NodeList) *corev1.Node {
 
 // isKubernetesReady 返回 Kubernetes API 是否可用，重试 8 次，间隔 1 秒
 func IsKubernetesAPIReady(c discovery.DiscoveryInterface, clock utilsclock.Clock) bool {
-	for i := 0; i < 8; i++ {
+	for i := range 8 {
 		if i != 0 {
 			clock.Sleep(time.Second)
 		}

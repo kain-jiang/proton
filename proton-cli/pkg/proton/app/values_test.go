@@ -8,22 +8,22 @@ import (
 )
 
 func TestDeepMergeValuesCLIOverridesBase(t *testing.T) {
-	base := map[string]interface{}{
-		"auth": map[string]interface{}{
+	base := map[string]any{
+		"auth": map[string]any{
 			"enabled": true,
 			"issuer":  "base",
 		},
 		"name": "demo",
 	}
-	override := map[string]interface{}{
-		"auth": map[string]interface{}{
+	override := map[string]any{
+		"auth": map[string]any{
 			"enabled": false,
 		},
 	}
 
 	got := DeepMergeValues(base, override)
-	want := map[string]interface{}{
-		"auth": map[string]interface{}{
+	want := map[string]any{
+		"auth": map[string]any{
 			"enabled": false,
 			"issuer":  "base",
 		},
@@ -53,11 +53,11 @@ func TestBuildHelmValuesKeepsKafkaHeadlessAddress(t *testing.T) {
 	}
 
 	values := BuildHelmValues(cfg, "kweaver")
-	depServices, ok := values["depServices"].(map[string]interface{})
+	depServices, ok := values["depServices"].(map[string]any)
 	if !ok {
 		t.Fatalf("depServices has unexpected type %T", values["depServices"])
 	}
-	mq, ok := depServices["mq"].(map[string]interface{})
+	mq, ok := depServices["mq"].(map[string]any)
 	if !ok {
 		t.Fatalf("depServices.mq has unexpected type %T", depServices["mq"])
 	}

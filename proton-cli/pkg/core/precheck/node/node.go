@@ -65,7 +65,7 @@ func getOSVersion() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	for _, line := range strings.Split(string(osrelease), "\n") {
+	for line := range strings.SplitSeq(string(osrelease), "\n") {
 		parts := strings.SplitN(string(line), "=", 2)
 		key := strings.Trim(parts[0], " \t\"'")
 		if key == "PRETTY_NAME" {
@@ -90,8 +90,8 @@ func getMemoryCapacity() (uint64, error) {
 	}
 
 	var capacity uint64
-	lines := strings.Split(string(meminfo), "\n")
-	for _, line := range lines {
+	lines := strings.SplitSeq(string(meminfo), "\n")
+	for line := range lines {
 		fields := strings.Fields(line)
 		if len(fields) >= 3 && fields[0] == "MemTotal:" {
 			capacity, _ = strconv.ParseUint(fields[1], 10, 64)
@@ -203,10 +203,10 @@ func getSELinuxStatus() (map[string]string, error) {
 			return nil, err
 		}
 	} else {
-		lines := strings.Split(string(content), "\n")
-		for _, line := range lines {
-			if strings.HasPrefix(line, "SELINUX=") {
-				value := strings.TrimPrefix(line, "SELINUX=")
+		lines := strings.SplitSeq(string(content), "\n")
+		for line := range lines {
+			if after, ok := strings.CutPrefix(line, "SELINUX="); ok {
+				value := after
 				result["config"] = value
 			}
 		}

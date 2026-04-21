@@ -10,22 +10,22 @@ import (
 type Values struct {
 	Namespace string `json:"namespace,omitempty"`
 
-	Image ValuesImage `json:"image,omitempty"`
+	Image ValuesImage `json:"image"`
 
 	ReplicaCount int `json:"replicaCount,omitempty"`
 
-	Service ValuesService `json:"service,omitempty"`
+	Service ValuesService `json:"service"`
 
-	Config ValuesConfig `json:"config,omitempty"`
+	Config ValuesConfig `json:"config"`
 
-	Storage ValuesStorage `json:"storage,omitempty"`
+	Storage ValuesStorage `json:"storage"`
 
 	Resources *corev1.ResourceRequirements `json:"resources,omitempty"`
 }
 
 // ToMap returns map[string]interface{} used for helm release's config
-func (v *Values) ToMap() map[string]interface{} {
-	m := make(map[string]interface{})
+func (v *Values) ToMap() map[string]any {
+	m := make(map[string]any)
 	b, _ := json.Marshal(&v)
 	_ = json.Unmarshal(b, &m)
 	return m
@@ -40,7 +40,7 @@ type ValuesImage struct {
 type ValuesService struct {
 	EnableDualStack bool `json:"enableDualStack,omitempty"`
 
-	Grafana ValuesGrafanaService `json:"grafana,omitempty"`
+	Grafana ValuesGrafanaService `json:"grafana"`
 }
 
 type ValuesGrafanaService struct {
@@ -50,11 +50,11 @@ type ValuesGrafanaService struct {
 }
 
 type ValuesConfig struct {
-	DataSource ValuesDataSource `json:"datasource,omitempty"`
+	DataSource ValuesDataSource `json:"datasource"`
 }
 
 type ValuesDataSource struct {
-	Prometheus ValuesPrometheus `json:"prometheus,omitempty"`
+	Prometheus ValuesPrometheus `json:"prometheus"`
 }
 
 type ValuesPrometheus struct {

@@ -139,17 +139,17 @@ func deployInstallerUpload(ctx context.Context, log *logrus.Logger, cli *http.Cl
 	} else if resp.StatusCode == 400 {
 		respStr, err0 := io.ReadAll(resp.Body)
 		if err0 != nil {
-			log.Errorf("upload application file error, http statusCode: %q, read response error: %q", resp.StatusCode, err0)
+			log.Errorf("upload application file error, http statusCode: %d, read response error: %q", resp.StatusCode, err0)
 			return err0
 		}
-		return fmt.Errorf("upload application file error, http statusCode: %q, response %q mean client tool and deploy-installer server are incompatible. Please don't use this tool to upload %q. Please try with deploy-installer pod's command client", resp.StatusCode, string(respStr), fpath)
+		return fmt.Errorf("upload application file error, http statusCode: %d, response %q mean client tool and deploy-installer server are incompatible. Please don't use this tool to upload %q. Please try with deploy-installer pod's command client", resp.StatusCode, string(respStr), fpath)
 	} else if resp.StatusCode != 200 {
 		respStr, err0 := io.ReadAll(resp.Body)
 		if err0 != nil {
-			log.Errorf("upload application file error, http statusCode: %q, read response error: %q", resp.StatusCode, err0)
+			log.Errorf("upload application file error, http statusCode: %d, read response error: %q", resp.StatusCode, err0)
 			return err0
 		}
-		return fmt.Errorf("upload application file error, http statusCode: %q, read response : %q", resp.StatusCode, string(respStr))
+		return fmt.Errorf("upload application file error, http statusCode: %d, read response : %q", resp.StatusCode, string(respStr))
 	}
 
 	return nil

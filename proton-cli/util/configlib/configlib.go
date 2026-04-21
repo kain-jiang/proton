@@ -9,8 +9,8 @@ import (
 // convert key=value file to map
 func ConvertStrToMap(str string) map[string]string {
 	m := map[string]string{}
-	strField := strings.Split(str, "\n")
-	for _, line := range strField {
+	strField := strings.SplitSeq(str, "\n")
+	for line := range strField {
 		keyValue := strings.Split(line, "=")
 		if len(keyValue) != 2 {
 			continue

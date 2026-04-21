@@ -47,19 +47,19 @@ func TestNewManager(t *testing.T) {
 
 	// Assertions
 	expectedChartFile := filepath.Join(servicePackageMock, chartsMock.Get(ChartName, "").Path)
-	expectedValues := map[string]interface{}{
-		"image": map[string]interface{}{
+	expectedValues := map[string]any{
+		"image": map[string]any{
 			"registry": registryMock,
 		},
-		"serviceAccount": map[string]interface{}{
+		"serviceAccount": map[string]any{
 			"create": false,
 			"name":   "serviceaccount",
 		},
 		"namespace": "resource",
-		"service": map[string]interface{}{
+		"service": map[string]any{
 			"enableDualStack": false,
-			"config": map[string]interface{}{
-				"chartmuseum": map[string]interface{}{
+			"config": map[string]any{
+				"chartmuseum": map[string]any{
 					"url":      "https://chartmuseum.example.com",
 					"username": "",
 					"password": "",
@@ -105,19 +105,19 @@ func TestNewManagerWithoutDeploy(t *testing.T) {
 
 	manager := NewManager(helm3Mock, oldCfgMock, newCfgMock, registryMock, servicePackageMock, chartsMock, imagesMock, "resource")
 
-	expectedValues := map[string]interface{}{
-		"image": map[string]interface{}{
+	expectedValues := map[string]any{
+		"image": map[string]any{
 			"registry": registryMock,
 		},
-		"serviceAccount": map[string]interface{}{
+		"serviceAccount": map[string]any{
 			"create": true,
 			"name":   "",
 		},
 		"namespace": "resource",
-		"service": map[string]interface{}{
+		"service": map[string]any{
 			"enableDualStack": false,
-			"config": map[string]interface{}{
-				"chartmuseum": map[string]interface{}{
+			"config": map[string]any{
+				"chartmuseum": map[string]any{
 					"url":      "https://chartmuseum.example.com",
 					"username": "",
 					"password": "",

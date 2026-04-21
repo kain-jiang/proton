@@ -2,6 +2,7 @@ package netlib
 
 import (
 	"net"
+	"slices"
 	"strconv"
 
 	"k8s.io/utils/exec"
@@ -12,12 +13,7 @@ import (
 var execer exec.Interface = exec.New()
 
 func Contains(s []string, str string) bool {
-	for _, v := range s {
-		if v == str {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(s, str)
 }
 
 func IsIPv4(ip string) bool {

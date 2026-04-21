@@ -42,7 +42,7 @@ const (
 func CompleteOldClusterConfFromSecret(c *configuration.ClusterConfig, kube *kubernetes.Clientset) error {
 	var resourceNamespace = configuration.GetProtonResourceNSFromFile()
 	// infoMap 为转成configuration.ResourceConnectInfo 准备的map
-	infoMap := map[string]interface{}{}
+	infoMap := map[string]any{}
 
 	for _, server := range serviceNameList {
 
@@ -68,7 +68,7 @@ func CompleteOldClusterConfFromSecret(c *configuration.ClusterConfig, kube *kube
 		}
 	}
 
-	outMap := map[string]interface{}{}
+	outMap := map[string]any{}
 	outMap[ResourceConnectInfoKey] = infoMap
 
 	if err := mapstructure.Decode(outMap, c); err != nil {
@@ -223,13 +223,13 @@ func CompleteInternalInfo(c *configuration.ClusterConfig) {
 }
 
 // getInfoFromSecret 从 secret 中取组件连接信息；组件 secret 必须存在，未找到抛错；解析失败抛错
-func getInfoFromSecret(ctx context.Context, name string, k *kubernetes.Clientset) (data map[string]interface{}, err error) {
+func getInfoFromSecret(ctx context.Context, name string, k *kubernetes.Clientset) (data map[string]any, err error) {
 
 	log := logger.NewLogger()
 
 	name = fmt.Sprintf("%s-%s", SecretPrefix, name)
 
-	data = map[string]interface{}{}
+	data = map[string]any{}
 
 	// 通过 k8s api 获取到secret
 	secret, err := k.CoreV1().Secrets(SecretNamespace).Get(ctx, name, metav1.GetOptions{})
@@ -257,14 +257,14 @@ func getInfoFromSecret(ctx context.Context, name string, k *kubernetes.Clientset
 func getMongodbHosts(nodes int) (hosts string) {
 
 	var list []string
-	for i := 0; i < nodes; i++ {
+	for i := range nodes {
 		list = append(list, fmt.Sprintf("%s-%d.%s.%s", mongodb.ClusterStatefulSetName, i, mongodb.ClusterServiceName, mongodb.ClusterNamespace))
 	}
 	return strings.Join(list, ",")
 }
 
 // secret 中存放的redis结构和RedisInfo设计不一致，在这里转换
-func transformRedis(data map[string]interface{}) (infoMap interface{}) {
+func transformRedis(data map[string]any) (infoMap any) {
 	/*
 		secret 接口响应的redis连接信息结构
 		"default": {
@@ -281,7 +281,7 @@ func transformRedis(data map[string]interface{}) (infoMap interface{}) {
 		}
 	*/
 
-	if info, ok := data[RedisInfoKey].(map[string]interface{}); ok {
+	if info, ok := data[RedisInfoKey].(map[string]any); ok {
 		if connType, ok := data[RedisTypeKey].(string); ok {
 			info[RedisTypeKey] = connType
 
@@ -292,7 +292,7 @@ func transformRedis(data map[string]interface{}) (infoMap interface{}) {
 }
 
 // secret 中存放的proton-policy-engine、proton-etcd结构和PolicyEngineInfo、EtcdInfo设计不一致，在这里转换
-func transformProtonPolicyEngine(service string, data map[string]interface{}) (infoMap interface{}) {
+func transformProtonPolicyEngine(service string, data map[string]any) (infoMap any) {
 
 	/*
 		secret 接口响应的 proton-policy-engine 连接信息结构
@@ -311,7 +311,7 @@ func transformProtonPolicyEngine(service string, data map[string]interface{}) (i
 			}
 		}
 	*/
-	if info, ok := data[service].(map[string]interface{}); ok {
+	if info, ok := data[service].(map[string]any); ok {
 		infoMap = info
 	}
 	return

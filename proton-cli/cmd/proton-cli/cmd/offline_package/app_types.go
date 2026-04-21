@@ -7,7 +7,7 @@ type appManifest struct {
 	Kind           string                        `json:"kind,omitempty"`
 	Product        string                        `json:"product,omitempty"`
 	Version        string                        `json:"version,omitempty"`
-	Source         appManifestSource             `json:"source,omitempty"`
+	Source         appManifestSource             `json:"source"`
 	Dependencies   []appManifestDependency       `json:"dependencies,omitempty"`
 	Releases       map[string]appManifestRelease `json:"releases,omitempty"`
 	Platform       string                        `json:"platform,omitempty"`
@@ -36,7 +36,7 @@ type appPackageMetadata struct {
 	Platform         string            `json:"platform,omitempty"`
 	Platforms        []string          `json:"platforms,omitempty"`
 	OverrideRegistry string            `json:"overrideRegistry,omitempty"`
-	ExportedAt       time.Time         `json:"exportedAt,omitempty"`
+	ExportedAt       time.Time         `json:"exportedAt"`
 	Images           []appPackageImage `json:"images,omitempty"`
 	ImageErrors      []string          `json:"imageErrors,omitempty"`
 }

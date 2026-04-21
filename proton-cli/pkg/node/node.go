@@ -34,9 +34,9 @@ type Node struct {
 }
 
 type (
-	I   = []interface{}
-	MSI = map[string]interface{}
-	MII = map[interface{}]interface{}
+	I   = []any
+	MSI = map[string]any
+	MII = map[any]any
 )
 
 type authStruct struct {
@@ -68,7 +68,7 @@ func (n *Node) resetNodes() {
 	hosts := n.ClusterConf.Nodes
 
 	var wg sync.WaitGroup
-	for i := 0; i < len(hosts); i++ {
+	for i := range hosts {
 		var host string
 		if hosts[i].IP4 != "" {
 			host = hosts[i].IP4
@@ -110,7 +110,7 @@ func (n *Node) setNodes() error {
 		number:     0,
 	}
 	var errList []error
-	for i := 0; i < len(hosts); i++ {
+	for i := range hosts {
 		var host string
 		if hosts[i].IP4 != "" {
 			host = hosts[i].IP4
@@ -742,7 +742,7 @@ func (n *Node) setNode(conf client.RemoteClientConf) error {
 
 func (n *Node) FindHostsDomainName(hosts []string, dstDomainName, dstIP string) bool {
 
-	for i := 0; i < len(hosts); i++ {
+	for i := range hosts {
 		h := strings.Split(hosts[i], " ")
 		if len(h) < 2 {
 			continue

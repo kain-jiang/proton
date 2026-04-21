@@ -410,7 +410,7 @@ type Ports struct {
 // HelmComponent 包坫 helm 组件的通用酝置
 type HelmComponent struct {
 	// ExtraValues 是传递给 Proton OpenSearch 的额外的 Helm Values
-	ExtraValues map[string]interface{} `json:"extraValues,omitempty"`
+	ExtraValues map[string]any `json:"extraValues,omitempty"`
 }
 
 type ProtonMariaDB struct {
@@ -501,7 +501,7 @@ type OpenSearch struct {
 
 	// OpenSearch 的原生坂数
 	// 	Detail: "https://opensearch.org/docs/latest/security/configuration/yaml/#opensearchyml"
-	Settings map[string]interface{} `json:"settings,omitempty"`
+	Settings map[string]any `json:"settings,omitempty"`
 	// OpenSearch 需求的资溝
 	Resources         *v1.ResourceRequirements `json:"resources,omitempty"`
 	ExporterResources *v1.ResourceRequirements `json:"exporter_resources,omitempty"`
@@ -764,8 +764,8 @@ const HaDefaultConf = `{
 //cr conf
 
 type CrConf struct {
-	ConfigFile ConfigFile `json:"configfile,omitempty"`
-	Port       Port       `json:"port,omitempty"`
+	ConfigFile ConfigFile `json:"configfile"`
+	Port       Port       `json:"port"`
 	Storage    string     `json:"storage,omitempty"`
 }
 
@@ -1173,7 +1173,7 @@ type BootstrapTokens struct {
 }
 type NodeRegistrationInit struct {
 	CriSocket        string           `json:"criSocket"`
-	Taints           []interface{}    `json:"taints"`
+	Taints           []any            `json:"taints"`
 	KubeletExtraArgs KubeletExtraArgs `json:"kubeletExtraArgs"`
 }
 type KubeletExtraArgs struct {
@@ -1208,7 +1208,7 @@ type Discovery struct {
 }
 
 type NodeRegistrationJoin struct {
-	Taints []interface{} `json:"taints"`
+	Taints []any `json:"taints"`
 }
 
 // KubeletConfiguration
@@ -1232,7 +1232,7 @@ type KubeConfig struct {
 	Contexts        []ContextInfo `json:"contexts"`
 	Current_context string        `json:"current-context"`
 	Kind            string        `json:"kind"`
-	Preferences     interface{}   `json:"preferences"`
+	Preferences     any           `json:"preferences"`
 	Users           []UserInfo    `json:"users"`
 }
 
@@ -1323,14 +1323,14 @@ type RdsInfo struct {
 type MongodbInfo struct {
 	SourceType SourceType `json:"source_type,omitempty" mapstructure:"sourceType"`
 
-	Hosts      string      `json:"hosts,omitempty" mapstructure:"host"`
-	Port       int         `json:"port,omitempty" mapstructure:"port"`
-	ReplicaSet string      `json:"replica_set,omitempty" mapstructure:"replicaSet"`
-	Username   string      `json:"username,omitempty" mapstructure:"user"`
-	Password   string      `json:"password,omitempty" mapstructure:"password"`
-	SSL        bool        `json:"ssl,omitempty" mapstructure:"ssl"`
-	AuthSource string      `json:"auth_source,omitempty" mapstructure:"authSource"`
-	Options    interface{} `json:"options,omitempty" mapstructure:"options"`
+	Hosts      string `json:"hosts,omitempty" mapstructure:"host"`
+	Port       int    `json:"port,omitempty" mapstructure:"port"`
+	ReplicaSet string `json:"replica_set,omitempty" mapstructure:"replicaSet"`
+	Username   string `json:"username,omitempty" mapstructure:"user"`
+	Password   string `json:"password,omitempty" mapstructure:"password"`
+	SSL        bool   `json:"ssl,omitempty" mapstructure:"ssl"`
+	AuthSource string `json:"auth_source,omitempty" mapstructure:"authSource"`
+	Options    any    `json:"options,omitempty" mapstructure:"options"`
 
 	// MgmtInfo
 	MgmtHost string `json:"mgmt_host,omitempty" mapstructure:"mgmt_host"`

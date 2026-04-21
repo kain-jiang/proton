@@ -216,7 +216,7 @@ type Result struct {
 	statusCode  int
 }
 
-func (r Result) Into(obj interface{}) error {
+func (r Result) Into(obj any) error {
 	if r.err != nil {
 		return r.Error()
 	}

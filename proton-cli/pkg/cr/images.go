@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"slices"
 	"sort"
 	"strings"
 	"sync"
@@ -213,13 +214,7 @@ func (i *Image) ReleaseDockerSpace(clusterConf *configuration.ClusterConfig, ret
 
 		var unusedImages []LocalImageInfo
 		for _, localImage := range localImages {
-			found := false
-			for _, runningImage := range runningContainers {
-				if localImage.Image == runningImage {
-					found = true
-					break
-				}
-			}
+			found := slices.Contains(runningContainers, localImage.Image)
 			if !found {
 				unusedImages = append(unusedImages, localImage)
 			}
@@ -358,13 +353,7 @@ func (i *Image) ReleaseSpace(clusterConf *configuration.ClusterConfig) error {
 
 		var unusedImages []LocalImageInfo
 		for _, localImage := range localImages {
-			found := false
-			for _, runningImage := range runningContainers {
-				if localImage.Image == runningImage {
-					found = true
-					break
-				}
-			}
+			found := slices.Contains(runningContainers, localImage.Image)
 			if !found {
 				unusedImages = append(unusedImages, localImage)
 			}
@@ -479,13 +468,7 @@ func (i *Image) cleanUnusedRegisterImages(registry string, runningContainers []s
 
 	for _, registerImage := range registerInfoList {
 		for _, tag := range registerImage.Tags {
-			used := false
-			for _, container := range runningContainers {
-				if container == fmt.Sprintf("%s/%s:%s", prefix, registerImage.Name, tag) {
-					used = true
-					break
-				}
-			}
+			used := slices.Contains(runningContainers, fmt.Sprintf("%s/%s:%s", prefix, registerImage.Name, tag))
 			if !used {
 				unusedRegisterInfoList = append(unusedRegisterInfoList, RegisterImageInfo{
 					Name: registerImage.Name,
@@ -563,13 +546,7 @@ func (i *Image) cleanOldImages(registry string, runningContainers []string, regi
 
 	for _, registerImage := range registerInfoList {
 		for _, tag := range registerImage.Tags {
-			used := false
-			for _, container := range runningContainers {
-				if container == fmt.Sprintf("%s/%s:%s", prefix, registerImage.Name, tag) {
-					used = true
-					break
-				}
-			}
+			used := slices.Contains(runningContainers, fmt.Sprintf("%s/%s:%s", prefix, registerImage.Name, tag))
 			for _, unsupportImage := range unsupportImages {
 				if fmt.Sprintf("%s/%s", prefix, unsupportImage) == fmt.Sprintf("%s/%s:%s", prefix, registerImage.Name, tag) {
 					i.Logger.Warnf("%s/%s    unsupport", prefix, unsupportImage)

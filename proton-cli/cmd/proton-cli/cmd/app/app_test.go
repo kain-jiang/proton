@@ -19,12 +19,12 @@ func TestParseAccessAddressURL(t *testing.T) {
 	tests := []struct {
 		name string
 		raw  string
-		want map[string]interface{}
+		want map[string]any
 	}{
 		{
 			name: "https host only uses default https port and root path",
 			raw:  "https://1.1.1.1/",
-			want: map[string]interface{}{
+			want: map[string]any{
 				"host":   "1.1.1.1",
 				"port":   443,
 				"scheme": "https",
@@ -34,7 +34,7 @@ func TestParseAccessAddressURL(t *testing.T) {
 		{
 			name: "http path uses default http port",
 			raw:  "http://1.1.1.1/api",
-			want: map[string]interface{}{
+			want: map[string]any{
 				"host":   "1.1.1.1",
 				"port":   80,
 				"scheme": "http",
@@ -44,7 +44,7 @@ func TestParseAccessAddressURL(t *testing.T) {
 		{
 			name: "explicit port is preserved",
 			raw:  "https://1.1.1.1:8443/",
-			want: map[string]interface{}{
+			want: map[string]any{
 				"host":   "1.1.1.1",
 				"port":   8443,
 				"scheme": "https",
@@ -106,20 +106,20 @@ func TestResolveAccessAddress(t *testing.T) {
 	tests := []struct {
 		name         string
 		flags        appInstallFlags
-		existing     map[string]interface{}
+		existing     map[string]any
 		detectedHost string
-		want         map[string]interface{}
+		want         map[string]any
 	}{
 		{
 			name:  "preserves existing when no override flags are set",
 			flags: appInstallFlags{},
-			existing: map[string]interface{}{
+			existing: map[string]any{
 				"host":   "existing.example.com",
 				"port":   9443,
 				"scheme": "https",
 				"path":   "/portal",
 			},
-			want: map[string]interface{}{
+			want: map[string]any{
 				"host":   "existing.example.com",
 				"port":   9443,
 				"scheme": "https",
@@ -131,13 +131,13 @@ func TestResolveAccessAddress(t *testing.T) {
 			flags: appInstallFlags{
 				accessAddress: "https://1.1.1.1:8443/",
 			},
-			existing: map[string]interface{}{
+			existing: map[string]any{
 				"host":   "existing.example.com",
 				"port":   9443,
 				"scheme": "https",
 				"path":   "/portal",
 			},
-			want: map[string]interface{}{
+			want: map[string]any{
 				"host":   "1.1.1.1",
 				"port":   8443,
 				"scheme": "https",
@@ -154,13 +154,13 @@ func TestResolveAccessAddress(t *testing.T) {
 				accessScheme:    "http",
 				accessSchemeSet: true,
 			},
-			existing: map[string]interface{}{
+			existing: map[string]any{
 				"host":   "existing.example.com",
 				"port":   9443,
 				"scheme": "https",
 				"path":   "/portal",
 			},
-			want: map[string]interface{}{
+			want: map[string]any{
 				"host":   "1.1.1.1",
 				"port":   8443,
 				"scheme": "https",
@@ -174,13 +174,13 @@ func TestResolveAccessAddress(t *testing.T) {
 				accessScheme:    "http",
 				accessSchemeSet: true,
 			},
-			existing: map[string]interface{}{
+			existing: map[string]any{
 				"host":   "existing.example.com",
 				"port":   9443,
 				"scheme": "https",
 				"path":   "/portal",
 			},
-			want: map[string]interface{}{
+			want: map[string]any{
 				"host":   "override.example.com",
 				"port":   9443,
 				"scheme": "http",
@@ -191,7 +191,7 @@ func TestResolveAccessAddress(t *testing.T) {
 			name:         "falls back to detected host and defaults",
 			flags:        appInstallFlags{},
 			detectedHost: "10.0.0.10",
-			want: map[string]interface{}{
+			want: map[string]any{
 				"host":   "10.0.0.10",
 				"port":   443,
 				"scheme": "https",
@@ -201,7 +201,7 @@ func TestResolveAccessAddress(t *testing.T) {
 		{
 			name:  "falls back to localhost when detection is empty",
 			flags: appInstallFlags{},
-			want: map[string]interface{}{
+			want: map[string]any{
 				"host":   "localhost",
 				"port":   443,
 				"scheme": "https",
@@ -238,16 +238,16 @@ func TestParseAppInstallSetFlags(t *testing.T) {
 	if err != nil {
 		t.Fatalf("parseAppInstallSet() error = %v", err)
 	}
-	want := map[string]interface{}{
-		"auth": map[string]interface{}{
+	want := map[string]any{
+		"auth": map[string]any{
 			"enabled": false,
-			"tls": map[string]interface{}{
+			"tls": map[string]any{
 				"enabled": true,
 			},
 		},
-		"businessDomain": map[string]interface{}{"enabled": false},
-		"services":        map[string]interface{}{"replicas": 3},
-		"name":            "prod",
+		"businessDomain": map[string]any{"enabled": false},
+		"services":       map[string]any{"replicas": 3},
+		"name":           "prod",
 	}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("parseAppInstallSet() = %#v, want %#v", got, want)

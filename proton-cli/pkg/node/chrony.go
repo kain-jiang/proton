@@ -84,7 +84,7 @@ func (n *Node) UpdateChronyConfigFile(logger logrus.FieldLogger, f files.Interfa
 	originCommentExistingServers := commentAllServerPool(origin)
 
 	actual := file.GetManagedContent(origin, []byte(headFlag), []byte(tailFlag))
-	expect := []byte(fmt.Sprintf("include %s\n", filepath.Join(ChronyConfigDirectory, ChronyConfigProtonFilename)))
+	expect := fmt.Appendf(nil, "include %s\n", filepath.Join(ChronyConfigDirectory, ChronyConfigProtonFilename))
 	// 如果include部分一致且所有现有时间服务器已经被注释，就直接返回
 	if bytes.Equal(actual, expect) && bytes.Equal(origin, originCommentExistingServers) {
 		logger.Debug("The chrony config file already exists and updated")

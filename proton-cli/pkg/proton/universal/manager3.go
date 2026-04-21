@@ -11,7 +11,7 @@ type HelmV3Manager struct {
 	Namespace string
 	Helm3     helm3.Client
 
-	Values map[string]interface{}
+	Values map[string]any
 }
 
 func (m *HelmV3Manager) Apply() error {

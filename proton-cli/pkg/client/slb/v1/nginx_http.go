@@ -30,7 +30,7 @@ func newNginxHTTPs(c *SLB_V1Client) *nginxHTTPs {
 func (c *nginxHTTPs) Create(ctx context.Context, nh *NginxHTTP) error {
 	res := c.client.Post().
 		Resource("nginx/nginx").
-		Body(map[string]interface{}{
+		Body(map[string]any{
 			"conf": map[string]string{
 				"worker_processes": "auto",
 			},

@@ -8,13 +8,13 @@ package app
 // rds.database 字段的逻辑保持一致。
 //
 // 非 ISF 产品（kweaver-core / kweaver-dip 等）仍保留 database 字段。
-func StripISFRdsDatabase(values map[string]interface{}) map[string]interface{} {
+func StripISFRdsDatabase(values map[string]any) map[string]any {
 	out := deepCopyValues(values)
-	dep, ok := out["depServices"].(map[string]interface{})
+	dep, ok := out["depServices"].(map[string]any)
 	if !ok {
 		return out
 	}
-	rds, ok := dep["rds"].(map[string]interface{})
+	rds, ok := dep["rds"].(map[string]any)
 	if !ok {
 		return out
 	}
@@ -24,13 +24,13 @@ func StripISFRdsDatabase(values map[string]interface{}) map[string]interface{} {
 
 // deepCopyValues 对 values map 做递归深拷贝，仅处理 map[string]interface{} 嵌套；
 // 其它类型（slice/基本类型）原样引用，对本场景足够（values 不会在后续被原地改写）。
-func deepCopyValues(src map[string]interface{}) map[string]interface{} {
+func deepCopyValues(src map[string]any) map[string]any {
 	if src == nil {
 		return nil
 	}
-	out := make(map[string]interface{}, len(src))
+	out := make(map[string]any, len(src))
 	for k, v := range src {
-		if m, ok := v.(map[string]interface{}); ok {
+		if m, ok := v.(map[string]any); ok {
 			out[k] = deepCopyValues(m)
 		} else {
 			out[k] = v

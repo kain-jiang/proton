@@ -53,7 +53,7 @@ func (c *KeepalivedHA) Get(ctx context.Context, name string) (*slb.KeepalivedHA,
 	return &kha, nil
 }
 
-func (c *KeepalivedHA) GetRaw(ctx context.Context, name string) (map[string]interface{}, error) {
+func (c *KeepalivedHA) GetRaw(ctx context.Context, name string) (map[string]any, error) {
 	panic("unimplemented")
 }
 

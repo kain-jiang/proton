@@ -92,7 +92,7 @@ For example:
 		}
 
 		// 验证 YAML 格式
-		var configMap map[string]interface{}
+		var configMap map[string]any
 		if err := yaml.Unmarshal(editedConfig, &configMap); err != nil {
 			return fmt.Errorf("invalid YAML format: %v", err)
 		}

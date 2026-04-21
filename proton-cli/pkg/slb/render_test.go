@@ -62,7 +62,7 @@ func TestRenderNginxHTTPServer(t *testing.T) {
 			Server: slbv1.NginxServer{
 				Listen:            "10443 ssl",
 				ClientMaxBodySize: "0",
-				Locations: []map[string]map[string]interface{}{
+				Locations: []map[string]map[string]any{
 					{
 						"/": {
 							"proxy_pass": "http://eceph_https",

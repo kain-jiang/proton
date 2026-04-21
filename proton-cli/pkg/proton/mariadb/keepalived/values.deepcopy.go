@@ -1,13 +1,13 @@
 package keepalived
 
+import "maps"
+
 func (in *HelmValues) DeepCopyInto(out *HelmValues) {
 	*out = *in
 	if in.Env != nil {
 		in, out := &in.Env, &out.Env
 		*out = make(map[string]string, len(*in))
-		for key, val := range *in {
-			(*out)[key] = val
-		}
+		maps.Copy((*out), *in)
 	}
 	if in.Image != nil {
 		in, out := &in.Image, &out.Image
@@ -17,9 +17,7 @@ func (in *HelmValues) DeepCopyInto(out *HelmValues) {
 	if in.NodeSelector != nil {
 		in, out := &in.NodeSelector, &out.NodeSelector
 		*out = make(map[string]string, len(*in))
-		for key, val := range *in {
-			(*out)[key] = val
-		}
+		maps.Copy((*out), *in)
 	}
 	if in.RBAC != nil {
 		in, out := &in.RBAC, &out.RBAC

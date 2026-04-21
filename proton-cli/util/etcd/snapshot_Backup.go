@@ -173,7 +173,7 @@ func translateWAL(lg *zap.Logger, srcWAL string, walsnap walpb.Snapshot, v3 bool
 	re := path.Join(membership.StoreMembersPrefix, "[[:xdigit:]]{1,16}", "attributes")
 	memberAttrRE := regexp.MustCompile(re)
 
-	for i := 0; i < len(ents); i++ {
+	for i := range ents {
 
 		// Replacing WAL entries with 'dummy' entries allows to avoid
 		// complicated entries shifting and risk of other data (like consistent_index)

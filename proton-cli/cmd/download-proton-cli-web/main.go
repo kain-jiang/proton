@@ -107,8 +107,8 @@ func GenerateArchivePath(root, ref string) (string, error) {
 	if ref == MasterReference {
 		return path.Join(root, "MISSION", ArchiveFilename), nil
 	}
-	if strings.HasPrefix(ref, RefPrefix) {
-		refStripHeader := strings.TrimPrefix(ref, RefPrefix)
+	if after, ok := strings.CutPrefix(ref, RefPrefix); ok {
+		refStripHeader := after
 		return path.Join(root, refStripHeader, ArchiveFilename), nil
 	} else {
 		return "", fmt.Errorf("ref %s does not have a header of %s", ref, RefPrefix)

@@ -10,13 +10,13 @@ import (
 const InsecureRegistriesKeyName = "insecure-registries"
 
 func addDockerConfigInsecureHost(crhosts []string, port string, b []byte) ([]byte, error) {
-	conf := make(map[string]interface{})
+	conf := make(map[string]any)
 	if err := json.Unmarshal(b, &conf); err != nil {
 		return nil, fmt.Errorf("failed to Unmarshal docker daemon.json: %w", err)
 	}
 
 	switch t := conf[InsecureRegistriesKeyName].(type) {
-	case []interface{}:
+	case []any:
 		var hosts []string
 		for _, v := range t {
 			hosts = append(hosts, fmt.Sprintf("%v", v))

@@ -80,7 +80,7 @@ func (c *Cr) Apply() error {
 		hosts := c.ClusterConf.Nodes
 		var wg sync.WaitGroup
 		var errList []error
-		for i := 0; i < len(hosts); i++ {
+		for i := range hosts {
 			var host string
 			if hosts[i].IP4 != "" {
 				host = hosts[i].IP4
@@ -91,13 +91,11 @@ func (c *Cr) Apply() error {
 				Host:     host,
 				HostName: hosts[i].Name,
 			}
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
+			wg.Go(func() {
 				if err := c.setCr(sshConf, crConf); err != nil {
 					errList = append(errList, fmt.Errorf("%s: %w", host, err))
 				}
-			}()
+			})
 		}
 
 		wg.Wait()

@@ -24,15 +24,15 @@ func NewManager(helm3 helm3.Client, spec *configuration.CMS, registry string, se
 			ChartFile: filepath.Join(servicePackage, cmsChart.Path),
 			Namespace: configuration.GetProtonResourceNSFromFile(),
 			Helm3:     helm3,
-			Values: map[string]interface{}{
-				"image": map[string]interface{}{
+			Values: map[string]any{
+				"image": map[string]any{
 					"registry": registry,
 				},
-				"serviceAccount": map[string]interface{}{
+				"serviceAccount": map[string]any{
 					"create": false,
 					"name":   serviceaccount,
 				},
-				"service": map[string]interface{}{
+				"service": map[string]any{
 					"protoncliNamespace": configuration.GetProtonCliConfigNSFromFile(),
 				},
 				"namespace":    configuration.GetProtonResourceNSFromFile(),
@@ -45,11 +45,11 @@ func NewManager(helm3 helm3.Client, spec *configuration.CMS, registry string, se
 			ChartFile: filepath.Join(servicePackage, cmsChart.Path),
 			Namespace: configuration.GetProtonResourceNSFromFile(),
 			Helm3:     helm3,
-			Values: map[string]interface{}{
-				"image": map[string]interface{}{
+			Values: map[string]any{
+				"image": map[string]any{
 					"registry": registry,
 				},
-				"service": map[string]interface{}{
+				"service": map[string]any{
 					"protoncliNamespace": configuration.GetProtonCliConfigNSFromFile(),
 				},
 				"namespace":    configuration.GetProtonResourceNSFromFile(),

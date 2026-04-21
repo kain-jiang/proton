@@ -166,7 +166,7 @@ func renderNginxHTTPServer(server *slbv1.NginxHTTP) ([]byte, error) {
 	return []byte(b.String()), nil
 }
 
-func renderNginxLocation(b *strings.Builder, location map[string]map[string]interface{}) error {
+func renderNginxLocation(b *strings.Builder, location map[string]map[string]any) error {
 	names := make([]string, 0, len(location))
 	for name := range location {
 		names = append(names, name)
@@ -185,7 +185,7 @@ func renderNginxLocation(b *strings.Builder, location map[string]map[string]inte
 	return nil
 }
 
-func renderNginxDirectiveMap(b *strings.Builder, indent int, directives map[string]interface{}) error {
+func renderNginxDirectiveMap(b *strings.Builder, indent int, directives map[string]any) error {
 	keys := make([]string, 0, len(directives))
 	for key := range directives {
 		keys = append(keys, key)
@@ -206,19 +206,19 @@ func renderNginxDirectiveMap(b *strings.Builder, indent int, directives map[stri
 	return nil
 }
 
-func renderNginxIf(b *strings.Builder, indent int, value interface{}) error {
+func renderNginxIf(b *strings.Builder, indent int, value any) error {
 	if value == nil {
 		return nil
 	}
 
 	for _, item := range reflectSlice(value) {
 		switch typed := item.(type) {
-		case map[string]interface{}:
+		case map[string]any:
 			if err := renderNginxIfBlockMap(b, indent, typed); err != nil {
 				return err
 			}
 		case map[string]string:
-			converted := make(map[string]interface{}, len(typed))
+			converted := make(map[string]any, len(typed))
 			for key, val := range typed {
 				converted[key] = val
 			}
@@ -226,9 +226,9 @@ func renderNginxIf(b *strings.Builder, indent int, value interface{}) error {
 				return err
 			}
 		case map[string]map[string]string:
-			converted := make(map[string]interface{}, len(typed))
+			converted := make(map[string]any, len(typed))
 			for key, val := range typed {
-				body := make(map[string]interface{}, len(val))
+				body := make(map[string]any, len(val))
 				for innerKey, innerVal := range val {
 					body[innerKey] = innerVal
 				}
@@ -237,8 +237,8 @@ func renderNginxIf(b *strings.Builder, indent int, value interface{}) error {
 			if err := renderNginxIfBlockMap(b, indent, converted); err != nil {
 				return err
 			}
-		case map[string]map[string]interface{}:
-			converted := make(map[string]interface{}, len(typed))
+		case map[string]map[string]any:
+			converted := make(map[string]any, len(typed))
 			for key, val := range typed {
 				converted[key] = val
 			}
@@ -253,7 +253,7 @@ func renderNginxIf(b *strings.Builder, indent int, value interface{}) error {
 	return nil
 }
 
-func renderNginxIfBlockMap(b *strings.Builder, indent int, blocks map[string]interface{}) error {
+func renderNginxIfBlockMap(b *strings.Builder, indent int, blocks map[string]any) error {
 	conditions := make([]string, 0, len(blocks))
 	for cond := range blocks {
 		conditions = append(conditions, cond)
@@ -271,12 +271,12 @@ func renderNginxIfBlockMap(b *strings.Builder, indent int, blocks map[string]int
 			continue
 		}
 		switch typed := body.(type) {
-		case map[string]interface{}:
+		case map[string]any:
 			if err := renderNginxDirectiveMap(b, indent+1, typed); err != nil {
 				return err
 			}
 		case map[string]string:
-			converted := make(map[string]interface{}, len(typed))
+			converted := make(map[string]any, len(typed))
 			for key, val := range typed {
 				converted[key] = val
 			}
@@ -293,7 +293,7 @@ func renderNginxIfBlockMap(b *strings.Builder, indent int, blocks map[string]int
 	return nil
 }
 
-func renderNginxValue(b *strings.Builder, indent int, name string, value interface{}) error {
+func renderNginxValue(b *strings.Builder, indent int, name string, value any) error {
 	switch typed := value.(type) {
 	case string:
 		writeIndentedDirective(b, indent, name, typed)
@@ -303,13 +303,13 @@ func renderNginxValue(b *strings.Builder, indent int, name string, value interfa
 			writeIndentedDirective(b, indent, name, item)
 		}
 		return nil
-	case map[string]interface{}:
+	case map[string]any:
 		if name == "if" {
 			return renderNginxIf(b, indent, typed)
 		}
 	case map[string]string:
 		if name == "if" {
-			converted := make(map[string]interface{}, len(typed))
+			converted := make(map[string]any, len(typed))
 			for key, val := range typed {
 				converted[key] = val
 			}
@@ -343,7 +343,7 @@ func writeIndent(b *strings.Builder, indent int) {
 	}
 }
 
-func stringifySlice(value interface{}) []string {
+func stringifySlice(value any) []string {
 	items := reflectSlice(value)
 	result := make([]string, 0, len(items))
 	for _, item := range items {
@@ -354,16 +354,16 @@ func stringifySlice(value interface{}) []string {
 	return result
 }
 
-func reflectSlice(value interface{}) []interface{} {
+func reflectSlice(value any) []any {
 	if value == nil {
 		return nil
 	}
 	v := reflect.ValueOf(value)
 	if v.Kind() != reflect.Slice {
-		return []interface{}{value}
+		return []any{value}
 	}
 
-	result := make([]interface{}, 0, v.Len())
+	result := make([]any, 0, v.Len())
 	for i := range v.Len() {
 		result = append(result, v.Index(i).Interface())
 	}
