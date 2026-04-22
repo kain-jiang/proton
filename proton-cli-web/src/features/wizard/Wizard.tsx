@@ -1462,25 +1462,43 @@ function ServiceStep({
             {isLocal ? (
               <label>
                 <span>部署节点</span>
-                <input
-                  aria-label="MariaDB hosts"
-                  value={joinValues(state.services.mariadb.local.hosts)}
-                  onChange={(event) =>
-                    updateState(setState, (current) => ({
-                      ...current,
-                      services: {
-                        ...current.services,
-                        mariadb: {
-                          ...current.services.mariadb,
-                          local: {
-                            ...current.services.mariadb.local,
-                            hosts: splitValues(event.target.value),
-                          },
-                        },
-                      },
-                    }))
-                  }
-                />
+                <span className="legacy-checkbox-panel">
+                  {state.nodes.map((node) => {
+                    const checked = state.services.mariadb.local.hosts.includes(node.name)
+
+                    return (
+                      <label key={node.name} className="legacy-checkbox-panel__item">
+                        <input
+                          type="checkbox"
+                          aria-label={node.name}
+                          checked={checked}
+                          onChange={(event) =>
+                            updateState(setState, (current) => {
+                              const nextHosts = event.target.checked
+                                ? [...current.services.mariadb.local.hosts, node.name]
+                                : current.services.mariadb.local.hosts.filter((item) => item !== node.name)
+
+                              return {
+                                ...current,
+                                services: {
+                                  ...current.services,
+                                  mariadb: {
+                                    ...current.services.mariadb,
+                                    local: {
+                                      ...current.services.mariadb.local,
+                                      hosts: Array.from(new Set(nextHosts)),
+                                    },
+                                  },
+                                },
+                              }
+                            })
+                          }
+                        />
+                        {node.name}
+                      </label>
+                    )
+                  })}
+                </span>
               </label>
             ) : (
               <label>
@@ -1700,24 +1718,43 @@ function ServiceStep({
             {isLocal ? (
               <label>
                 <span>部署节点</span>
-                <input
-                  value={joinValues(state.services.redis.local.hosts)}
-                  onChange={(event) =>
-                    updateState(setState, (current) => ({
-                      ...current,
-                      services: {
-                        ...current.services,
-                        redis: {
-                          ...current.services.redis,
-                          local: {
-                            ...current.services.redis.local,
-                            hosts: splitValues(event.target.value),
-                          },
-                        },
-                      },
-                    }))
-                  }
-                />
+                <span className="legacy-checkbox-panel">
+                  {state.nodes.map((node) => {
+                    const checked = state.services.redis.local.hosts.includes(node.name)
+
+                    return (
+                      <label key={node.name} className="legacy-checkbox-panel__item">
+                        <input
+                          type="checkbox"
+                          aria-label={node.name}
+                          checked={checked}
+                          onChange={(event) =>
+                            updateState(setState, (current) => {
+                              const nextHosts = event.target.checked
+                                ? [...current.services.redis.local.hosts, node.name]
+                                : current.services.redis.local.hosts.filter((item) => item !== node.name)
+
+                              return {
+                                ...current,
+                                services: {
+                                  ...current.services,
+                                  redis: {
+                                    ...current.services.redis,
+                                    local: {
+                                      ...current.services.redis.local,
+                                      hosts: Array.from(new Set(nextHosts)),
+                                    },
+                                  },
+                                },
+                              }
+                            })
+                          }
+                        />
+                        {node.name}
+                      </label>
+                    )
+                  })}
+                </span>
               </label>
             ) : (
               <label>
@@ -1972,24 +2009,43 @@ function ServiceStep({
             {isLocal ? (
               <label>
                 <span>部署节点</span>
-                <input
-                  value={joinValues(state.services.opensearch.local.hosts)}
-                  onChange={(event) =>
-                    updateState(setState, (current) => ({
-                      ...current,
-                      services: {
-                        ...current.services,
-                        opensearch: {
-                          ...current.services.opensearch,
-                          local: {
-                            ...current.services.opensearch.local,
-                            hosts: splitValues(event.target.value),
-                          },
-                        },
-                      },
-                    }))
-                  }
-                />
+                <span className="legacy-checkbox-panel">
+                  {state.nodes.map((node) => {
+                    const checked = state.services.opensearch.local.hosts.includes(node.name)
+
+                    return (
+                      <label key={node.name} className="legacy-checkbox-panel__item">
+                        <input
+                          type="checkbox"
+                          aria-label={node.name}
+                          checked={checked}
+                          onChange={(event) =>
+                            updateState(setState, (current) => {
+                              const nextHosts = event.target.checked
+                                ? [...current.services.opensearch.local.hosts, node.name]
+                                : current.services.opensearch.local.hosts.filter((item) => item !== node.name)
+
+                              return {
+                                ...current,
+                                services: {
+                                  ...current.services,
+                                  opensearch: {
+                                    ...current.services.opensearch,
+                                    local: {
+                                      ...current.services.opensearch.local,
+                                      hosts: Array.from(new Set(nextHosts)),
+                                    },
+                                  },
+                                },
+                              }
+                            })
+                          }
+                        />
+                        {node.name}
+                      </label>
+                    )
+                  })}
+                </span>
               </label>
             ) : (
               <label>
@@ -2256,45 +2312,83 @@ function ServiceStep({
                 <>
                   <label>
                     <span>Kafka 部署节点</span>
-                    <input
-                      value={joinValues(state.services.kafka.local.hosts)}
-                      onChange={(event) =>
-                        updateState(setState, (current) => ({
-                          ...current,
-                          services: {
-                            ...current.services,
-                            kafka: {
-                              ...current.services.kafka,
-                              local: {
-                                ...current.services.kafka.local,
-                                hosts: splitValues(event.target.value),
-                              },
-                            },
-                          },
-                        }))
-                      }
-                    />
+                    <span className="legacy-checkbox-panel">
+                      {state.nodes.map((node) => {
+                        const checked = state.services.kafka.local.hosts.includes(node.name)
+
+                        return (
+                          <label key={node.name} className="legacy-checkbox-panel__item">
+                            <input
+                              type="checkbox"
+                              aria-label={node.name}
+                              checked={checked}
+                              onChange={(event) =>
+                                updateState(setState, (current) => {
+                                  const nextHosts = event.target.checked
+                                    ? [...current.services.kafka.local.hosts, node.name]
+                                    : current.services.kafka.local.hosts.filter((item) => item !== node.name)
+
+                                  return {
+                                    ...current,
+                                    services: {
+                                      ...current.services,
+                                      kafka: {
+                                        ...current.services.kafka,
+                                        local: {
+                                          ...current.services.kafka.local,
+                                          hosts: Array.from(new Set(nextHosts)),
+                                        },
+                                      },
+                                    },
+                                  }
+                                })
+                              }
+                            />
+                            {node.name}
+                          </label>
+                        )
+                      })}
+                    </span>
                   </label>
                   <label>
                     <span>ZooKeeper 部署节点</span>
-                    <input
-                      value={joinValues(state.services.zookeeper.local.hosts)}
-                      onChange={(event) =>
-                        updateState(setState, (current) => ({
-                          ...current,
-                          services: {
-                            ...current.services,
-                            zookeeper: {
-                              ...current.services.zookeeper,
-                              local: {
-                                ...current.services.zookeeper.local,
-                                hosts: splitValues(event.target.value),
-                              },
-                            },
-                          },
-                        }))
-                      }
-                    />
+                    <span className="legacy-checkbox-panel">
+                      {state.nodes.map((node) => {
+                        const checked = state.services.zookeeper.local.hosts.includes(node.name)
+
+                        return (
+                          <label key={node.name} className="legacy-checkbox-panel__item">
+                            <input
+                              type="checkbox"
+                              aria-label={node.name}
+                              checked={checked}
+                              onChange={(event) =>
+                                updateState(setState, (current) => {
+                                  const nextHosts = event.target.checked
+                                    ? [...current.services.zookeeper.local.hosts, node.name]
+                                    : current.services.zookeeper.local.hosts.filter((item) => item !== node.name)
+
+                                  return {
+                                    ...current,
+                                    services: {
+                                      ...current.services,
+                                      zookeeper: {
+                                        ...current.services.zookeeper,
+                                        local: {
+                                          ...current.services.zookeeper.local,
+                                          hosts: Array.from(new Set(nextHosts)),
+                                        },
+                                      },
+                                    },
+                                  }
+                                })
+                              }
+                            />
+                            {node.name}
+                          </label>
+                        )
+                      })}
+                    </span>
                   </label>
                 </>
               ) : (
