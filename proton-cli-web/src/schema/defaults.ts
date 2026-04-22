@@ -92,8 +92,8 @@ export const defaultWizardState: WizardState = {
         admin_passwd: '',
         config: {
           innodb_buffer_pool_size: '1G',
-          resource_requests_memory: '1G',
-          resource_limits_memory: '1G',
+          resource_requests_memory: '2G',
+          resource_limits_memory: '2G',
         },
       },
       managed: {
@@ -105,8 +105,8 @@ export const defaultWizardState: WizardState = {
         admin_passwd: '',
         config: {
           innodb_buffer_pool_size: '1G',
-          resource_requests_memory: '1G',
-          resource_limits_memory: '1G',
+          resource_requests_memory: '2G',
+          resource_limits_memory: '2G',
         },
       },
     },
