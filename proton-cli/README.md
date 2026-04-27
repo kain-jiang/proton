@@ -7,7 +7,9 @@ This README is written from the committed source code in this directory. It focu
 ## Quick Start
 
 ### OS Compatibility
-OpenEuler 24 x86/arm, Kylin V10 SP3 x86/arm, RHEL8.10 X86, OpenEuler 23 x86/arm
+OS: OpenEuler 24 x86/arm, Kylin V10 SP3 x86/arm, RHEL8.10 X86, OpenEuler 23 x86/arm
+Kernel: 4.11+
+ARCH: amd64/arm64
 
 ### Offline Installation Quick Start
 
